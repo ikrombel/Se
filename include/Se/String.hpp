@@ -1,5 +1,5 @@
-#ifndef SCXX_STRUTILS_H
-#define SCXX_STRUTILS_H
+#ifndef SE_STRING_HPP
+#define SE_STRING_HPP
 
 #include <cstring>
 #include <cassert>
@@ -57,7 +57,7 @@ public:
     String(String && str) : std::string(std::move(str)) {}
 
     /// Construct from a C string.
-    String(const char* str) : std::string(str) {}
+    String(const char* str) : std::string(str ? str : "") {}
 
     /// Construct from a C string.
     String(char* str) : std::string(str) {}
@@ -180,6 +180,8 @@ public:
     /// Return string with whitespace trimmed from the beginning and the end.
     String trimmed() const;
 
+    void remove();
+
     /// Return substrings split by a separator char. By default don't return empty strings.
     std::vector<String> split(char separator, bool keepEmptyStrings = false) const {
         return split(c_str(), separator, keepEmptyStrings); }
@@ -259,7 +261,7 @@ public:
         return *this;
     }
 
-    // inline operator const char*() const { return data(); }
+    inline operator const char*() const { return data(); }
     // inline operator const void*() const { return data(); }
 
     // String operator=(std::string& str) {
@@ -724,6 +726,12 @@ inline String String::trimmed() const
     return ret.substr(trimStart, trimEnd - trimStart).data();
 }
 
+inline void String::remove() {
+    assert(length() > 0 && "String::remove(): bad length");
+    resize(length()-1);
+    //data()[length()-1] = '\0';
+}
+
 //-------------------------------------
 
 class StringView : public std::string_view {
@@ -887,23 +895,6 @@ inline double ToDouble(const char* source)
     return strtod(source, nullptr);
 }
 
-inline String operator+(const String &s0, const String &s1) {
-    String ret = s0;
-	ret.append(s1);
-	return ret;
-}
-inline String operator+(const String &s0, const char *s1) {
-    String ret = s0;
-	ret.append(s1);
-	return ret;
-}
-
-inline String operator+(const char *s0, const String &s1) {
-	String ret = String(s0);
-	ret.append(s1);
-	return ret;
-}
-
 // String operator+(const char *s0,const String &s1);
 
 // int operator==(const String &s0, const String &s1);
@@ -954,5 +945,23 @@ struct hash<Se::String> {
     }
 };
 } // namespace std
+
+inline Se::String operator+(const Se::String &s0, const Se::String &s1) {
+    Se::String ret = s0;
+	ret.append(s1);
+	return ret;
+}
+inline Se::String operator+(const Se::String &s0, const char *s1) {
+    Se::String ret = s0;
+	ret.append(s1);
+	return ret;
+}
+
+inline Se::String operator+(const char *s0, const Se::String &s1) {
+	Se::String ret = Se::String(s0);
+	ret.append(s1);
+	return ret;
+}
+
 
 #endif
