@@ -14,8 +14,8 @@ enum FileChangeKind
 {
     /// New file was created.
     FILECHANGE_ADDED,
-    /// File was deleted.
-    FILECHANGE_REMOVED,
+    /// File was deleted or moved.
+    FILECHANGE_MOVED,
     /// File was renamed.
     FILECHANGE_RENAMED,
     /// File was modified.
@@ -33,11 +33,22 @@ struct FileChange
     String oldFileName_;
 };
 
+struct FileChangeInfo
+{
+    /// File change kind.
+    FileChangeKind kind_;
+    /// Name of modified file name. Always set.
+    String fileName_;
+    /// Previous file name in case of FILECHANGE_MODIFIED event. Empty otherwise.
+    String resourceName_;
+};
+
 /// Watches a directory and its subdirectories for files being modified.
 class FileWatcher : public Thread
 {
 
 public:
+
     /// Construct.
     explicit FileWatcher();
     /// Destruct.
@@ -47,9 +58,9 @@ public:
     void ThreadFunction() override;
 
     /// Start watching a directory. Return true if successful.
-    bool StartWatching(const String& pathName, bool watchSubDirs);
+    bool StartWatching(const String& pathName, bool watchSubDirs, bool restart = false);
     /// Stop watching the directory.
-    void StopWatching();
+    void StopWatching(bool restart = false);
     /// Set the delay in seconds before file changes are notified. This (hopefully) avoids notifying when a file save is still in progress. Default 1 second.
     void SetDelay(float interval);
     /// Add a file change into the changes queue.
@@ -81,7 +92,7 @@ private:
     /// Mutex for the change buffer.
     Mutex changesMutex_;
     /// Delay in seconds for notifying changes.
-    float delay_;
+    float delay_{1.0};
     /// Watch subdirectories flag.
     bool watchSubDirs_;
 

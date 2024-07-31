@@ -8,9 +8,6 @@
 #include <vector>
 #include <unordered_map>
 
-
-//#include "Urho3D/IO/Log.h"
-
 namespace Se
 {
 

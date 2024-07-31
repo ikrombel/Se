@@ -1083,22 +1083,22 @@ bool FileSystem::Reveal(const String& path)
 #endif
 }
 
-void FileSystem::ScanDirInternal(std::vector<String>& result, String path, const String& startPath,
+void FileSystem::ScanDirInternal(std::vector<String>& result, const String& path, const String& startPath,
     const String& filter, ScanFlags flags) const
 {
     const bool recursive = flags.Test(SCAN_RECURSIVE);
 
-    path = AddTrailingSlash(path);
+    String pathTmp = AddTrailingSlash(path);
     String deltaPath;
-    if (path.length() > startPath.length())
-        deltaPath = path.substr(startPath.length());
+    if (pathTmp.length() > startPath.length())
+        deltaPath = pathTmp.substr(startPath.length());
 
     const String filterExtension = GetExtensionFromFilter(filter);
 
 #ifdef __ANDROID__
-    if (SE_IS_ASSET(path))
+    if (SE_IS_ASSET(pathTmp))
     {
-        String assetPath(SE_ASSET(path));
+        String assetPath(SE_ASSET(pathTmp));
         assetPath = RemoveTrailingSlash(assetPath);       // AssetManager.list() does not like trailing slash
         int count;
         char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
@@ -1117,7 +1117,7 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, String path, const
                 if (flags & SCAN_DIRS)
                     result.push_back(deltaPath + fileName);
                 if (recursive)
-                    ScanDirInternal(result, path + fileName, startPath, filter, flags);
+                    ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
             }
             else if (flags & SCAN_FILES)
 #endif
@@ -1132,7 +1132,7 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, String path, const
 #endif
 #ifdef _WIN32
     WIN32_FIND_DATAW info;
-    HANDLE handle = FindFirstFileW(MultiByteToWide((path + "*")).c_str(), &info);
+    HANDLE handle = FindFirstFileW(MultiByteToWide((pathTmp + "*")).c_str(), &info);
     if (handle != INVALID_HANDLE_VALUE)
     {
         do
@@ -1147,7 +1147,7 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, String path, const
                     if (flags & SCAN_DIRS)
                         result.emplace_back(deltaPath + fileName);
                     if (recursive && fileName != "." && fileName != "..")
-                        ScanDirInternal(result, path + fileName, startPath, filter, flags);
+                        ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
                 }
                 else if (flags & SCAN_FILES)
                 {
@@ -1164,7 +1164,7 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, String path, const
     DIR* dir;
     struct dirent* de;
     struct stat st{};
-    dir = opendir(GetNativePath(path).c_str());
+    dir = opendir(GetNativePath(pathTmp).c_str());
     if (dir)
     {
         while ((de = readdir(dir)))
@@ -1174,7 +1174,7 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, String path, const
             bool normalEntry = fileName != "." && fileName != "..";
             if (normalEntry && !(flags & SCAN_HIDDEN) && fileName.starts_with("."))
                 continue;
-            String pathAndName = path + fileName;
+            String pathAndName = pathTmp + fileName;
             if (!stat(pathAndName.c_str(), &st))
             {
                 if (st.st_mode & S_IFDIR)
@@ -1182,7 +1182,7 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, String path, const
                     if (flags & SCAN_DIRS)
                         result.push_back(deltaPath + fileName);
                     if (recursive && normalEntry)
-                        ScanDirInternal(result, path + fileName, startPath, filter, flags);
+                        ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
                 }
                 else if (flags & SCAN_FILES)
                 {
@@ -1771,11 +1771,11 @@ std::vector<String> GetAbsolutePaths(const std::vector<String>& paths, const Str
 
 String GetExtensionFromFilter(const String& filter)
 {
-    const std::size_t dotPos = filter.find_last_of('.');
+    const std::size_t dotPos = filter.find_last('.');
     if (dotPos == String::npos)
         return String::EMPTY;
 
-    String filterExtension = String(filter.substr(dotPos).c_str());
+    String filterExtension = filter.substr(dotPos);
     if (filterExtension.contains('*'))
         return String::EMPTY;
 

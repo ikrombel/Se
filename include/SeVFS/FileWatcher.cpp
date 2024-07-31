@@ -15,7 +15,7 @@
     }
 #elif defined(__APPLE__) && !defined(IOS) && !defined(TVOS)
     extern "C" {
-    #include <GFrost/IO/MacFileWatcher.h>
+    #include <Se/IO/MacFileWatcher.h>
     }
 #endif
 
@@ -50,16 +50,16 @@ FileWatcher::~FileWatcher()
 #endif
 }
 
-bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs)
+bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs, bool restart)
 {
-    if (!fileSystem_)
-    {
-        SE_LOG_ERROR("No FileSystem, can not start watching");
-        return false;
+    if (restart) {
+        String pathBackup = path_;
+        // Stop any previous watching
+        StopWatching(restart);
+        path_ = pathBackup;
     }
-
-    // Stop any previous watching
-    StopWatching();
+    else
+        StopWatching();
 
 //    SetName("Watcher for " + pathName);
 
@@ -91,8 +91,8 @@ bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs)
         return false;
     }
 #elif defined(__linux__)
-    int flags = IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO;
-    int handle = inotify_add_watch(watchHandle_, pathName.c_str(), (unsigned)flags);
+    uint32_t flags = IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO;
+    int handle = inotify_add_watch(watchHandle_, pathName.c_str(), flags);
 
     if (handle < 0)
     {
@@ -109,7 +109,7 @@ bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs)
         if (watchSubDirs_)
         {
             std::vector<String> subDirs;
-            fileSystem_->ScanDir(subDirs, pathName, "*", SCAN_DIRS | SCAN_RECURSIVE);
+            FileSystem::Get().ScanDir(subDirs, pathName, "*", SCAN_DIRS | SCAN_RECURSIVE);
 
             for (unsigned i = 0; i < subDirs.size(); ++i)
             {
@@ -118,7 +118,7 @@ bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs)
                 // Don't watch ./ or ../ sub-directories
                 if (!subDirFullPath.ends_with("./"))
                 {
-                    handle = inotify_add_watch(watchHandle_, subDirFullPath.c_str(), (unsigned)flags);
+                    handle = inotify_add_watch(watchHandle_, subDirFullPath.c_str(), flags);
                     if (handle < 0)
                         SE_LOG_ERROR("Failed to start watching subdirectory path " + subDirFullPath);
                     else
@@ -129,9 +129,10 @@ bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs)
                 }
             }
         }
-        Run();
-
-        SE_LOG_DEBUG("Started watching path " + pathName);
+        if (!restart) {
+            Run();
+            SE_LOG_DEBUG("Started watching path " + pathName);
+        }
         return true;
     }
 #elif defined(__APPLE__) && !defined(IOS) && !defined(TVOS)
@@ -146,9 +147,10 @@ bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs)
     {
         path_ = AddTrailingSlash(pathName);
         watchSubDirs_ = watchSubDirs;
-        Run();
-
-        SE_LOG_DEBUG("Started watching path " + pathName);
+        if (!restart) {
+            Run();
+            SE_LOG_DEBUG("Started watching path " + pathName);
+        }
         return true;
     }
     else
@@ -166,26 +168,27 @@ bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs)
 #endif
 }
 
-void FileWatcher::StopWatching()
+void FileWatcher::StopWatching(bool restart)
 {
     if (handle_)
     {
-        shouldRun_ = false;
+        if (!restart)
+            shouldRun_ = false;
 
         // Create and delete a dummy file to make sure the watcher loop terminates
         // This is only required on Windows platform
         // TODO: Remove this temp write approach as it depends on user write privilege
 #ifdef _WIN32
         String dummyFileName = path_ + "dummy.tmp";
-        File file(context_, dummyFileName, FILE_WRITE);
+        File file(dummyFileName, FILE_WRITE);
         file.Close();
-        if (fileSystem_)
-            fileSystem_->Delete(dummyFileName);
+        FileSystem::Get().Delete(dummyFileName);
 #endif
 
 #if defined(__APPLE__) && !defined(IOS) && !defined(TVOS)
         // Our implementation of file watcher requires the thread to be stopped first before closing the watcher
-        Stop();
+        if (!restart)
+            Stop();
 #endif
 
 #ifdef _WIN32
@@ -198,11 +201,12 @@ void FileWatcher::StopWatching()
         CloseFileWatcher(watcher_);
 #endif
 
+        if (!restart) {
 #ifndef __APPLE__
-        Stop();
+            Stop();
 #endif
-
-        SE_LOG_DEBUG("Stopped watching path " + path_);
+            SE_LOG_DEBUG("Stopped watching path " + path_);
+        }
         path_.clear();
     }
 }
@@ -297,14 +301,22 @@ void FileWatcher::ThreadFunction()
 
             if (event->len > 0)
             {
-                if (event->mask & IN_MODIFY || event->mask & IN_MOVE)
+                if (   event->mask & IN_MODIFY 
+                    || event->mask & IN_MOVE
+                    || event->mask & IN_DELETE
+                    || event->mask & IN_CREATE)
                 {
                     String fileName;
                     fileName = dirHandle_[event->wd] + event->name;
-                    if ((event->mask & IN_CREATE) == IN_CREATE)
+                    if ((event->mask & IN_CREATE) == IN_CREATE) {
                         AddChange({FILECHANGE_ADDED, fileName, String::EMPTY});
-                    else if ((event->mask & IN_DELETE) == IN_DELETE)
-                        AddChange({FILECHANGE_REMOVED, fileName, String::EMPTY});
+                        if ((event->mask & IN_ISDIR) == IN_ISDIR) {
+                            StartWatching(path_, watchSubDirs_, true);
+                        }
+                    }
+                    else if ((event->mask & IN_MOVED_TO) == IN_MOVED_TO ||
+                            (event->mask & IN_MOVED_FROM) == IN_MOVED_FROM)
+                        AddChange({FILECHANGE_MOVED, fileName, String::EMPTY});
                     else if ((event->mask & IN_MODIFY) == IN_MODIFY || (event->mask & IN_ATTRIB) == IN_ATTRIB)
                         AddChange({FILECHANGE_MODIFIED, fileName, String::EMPTY});
                     else if (event->mask & IN_MOVE)
@@ -333,9 +345,9 @@ void FileWatcher::ThreadFunction()
         Time::Sleep(100);
 
         String changes = ReadFileWatcher(watcher_);
-        if (!changes.Empty())
+        if (!changes.empty())
         {
-            Vector<String> fileChanges = changes.Split('\n');
+            std::vector<String> fileChanges = changes.Split('\n');
             FileChange change{};
             for (const String& fileResult : fileChanges)
             {
@@ -343,12 +355,12 @@ void FileWatcher::ThreadFunction()
                 String fileName = &fileResult.At(1);
                 if (change.kind_ == FILECHANGE_RENAMED)
                 {
-                    if (GetSubsystem<FileSystem>()->FileExists(fileName))
+                    if (FileSystem::Get().FileExists(fileName))
                         change.fileName_ = std::move(fileName);
                     else
                         change.oldFileName_ = std::move(fileName);
 
-                    if (!change.fileName_.Empty() && !change.oldFileName_.Empty())
+                    if (!change.fileName_.empty() && !change.oldFileName_.empty())
                     {
                         AddChange(change);
                         change = {};

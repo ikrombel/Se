@@ -15,6 +15,9 @@ class MountedDirectory : public WatchableMountPoint
 {
 
 public:
+    using onFileChangedType = Signal<const FileChangeInfo&>;
+    onFileChangedType onFileChanged;
+
     /// Construct and open.
     MountedDirectory(const String& directory, String scheme = String::EMPTY);
     /// Destruct.
@@ -60,6 +63,8 @@ private:
     const String name_;
     /// File watcher for resource directory, if automatic reloading enabled.
     std::shared_ptr<FileWatcher> fileWatcher_;
+
+    Se::Signal<>::SlotId idOnStopWatching;
 };
 
 } // namespace Se

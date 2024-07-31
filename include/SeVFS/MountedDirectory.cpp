@@ -7,6 +7,8 @@
 #include <Se/IO/File.h>
 #include <Se/IO/FileSystem.h>
 #include <Se/Console.hpp>
+
+#include <Se/Application.hpp>
 //#include "Se/Resource/ResourceEvents.h"
 
 namespace Se
@@ -37,6 +39,8 @@ String MountedDirectory::SanitizeDirName(const String& name) const
     return fixedPath;
 }
 
+
+
 void MountedDirectory::StartWatching()
 {
     if (!fileWatcher_)
@@ -46,7 +50,10 @@ void MountedDirectory::StartWatching()
 
     // Subscribe BeginFrame for handling directory watcher
 //    SubscribeToEvent(E_BEGINFRAME, &MountedDirectory::ProcessUpdates);
-    assert(0);
+    idOnStopWatching = Application::onBeginFrame.connect([this](){
+        this->ProcessUpdates();
+    });
+    //assert(0);
 }
 
 void MountedDirectory::StopWatching()
@@ -54,8 +61,11 @@ void MountedDirectory::StopWatching()
     if (fileWatcher_)
         fileWatcher_->StopWatching();
 
+    Application::onBeginFrame.disconnect(idOnStopWatching);
+        
+
 //    UnsubscribeFromEvent(E_BEGINFRAME);
-    assert(0);
+//    assert(0);
 }
 
 void MountedDirectory::ProcessUpdates()
@@ -66,12 +76,12 @@ void MountedDirectory::ProcessUpdates()
     FileChange change;
     while (fileWatcher_->GetNextChange(change))
     {
-        // using namespace FileChanged;
+        FileChangeInfo tmp;
 
-        // VariantMap& eventData = GetEventDataMap();
-        // eventData[P_FILENAME] = fileWatcher_->GetPath() + change.fileName_;
-        // eventData[P_RESOURCENAME] = FileIdentifier{scheme_, change.fileName_}.ToUri();
-        // SendEvent(E_FILECHANGED, eventData);
+        tmp.fileName_ = fileWatcher_->GetPath() + change.fileName_;
+        tmp.resourceName_ = FileIdentifier{scheme_, change.fileName_}.ToUri();
+        tmp.kind_ = change.kind_;
+        onFileChanged(tmp);
     }
 }
 

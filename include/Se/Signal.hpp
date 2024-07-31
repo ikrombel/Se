@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+//#include <hash_set>
 
 namespace Se
 {
@@ -12,17 +13,40 @@ namespace Se
 template <typename... Args>
 class Signal {
 public:
-    using Slot = std::function<void(Args...)>;
+
+    using SlotFunc = std::function<void(Args...)>;
+    using SlotId = std::size_t;
+    struct Slot {
+        SlotId id;
+        SlotFunc func;
+    };
 
     /// Connect signal.
-    void connect(Slot slot) {
-        slots_.push_back(slot);
+    SlotId connect(SlotFunc slot) {
+        SlotId id{0};
+//        printf("%s: 0x%X\n", typeid(SlotFunc).name(), typeid(SlotFunc).hash_code());
+        hash_combine(id, typeid(SlotFunc).hash_code());
+        hash_combine(id, ++idGen);
+        slots_.push_back({id, slot});
+//        printf("0x%X\n", id);
+        return id;
+    }
+
+    bool disconnect(SlotId id) {
+        auto it = std::find_if(slots_.begin(), slots_.end(), [id](const Slot& rslot){
+            return rslot.id == id;
+        });
+        if (it == slots_.end())
+            return false;
+
+        slots_.erase(it);
+        return true;
     }
 
     /// Invoke signal.
     void operator()(Args... args) {
         for (const auto& slot : slots_) {
-            slot(args...);
+            slot.func(args...);
         }
     }
 
@@ -35,7 +59,15 @@ public:
     }
 
 private:
+    template <class T>
+    inline void hash_combine(std::size_t& seed, const T& v)
+    {
+        std::hash<T> hasher;
+        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+
     std::vector<Slot> slots_;
+    std::size_t idGen{0};
 };
 
 class EventSystem {
