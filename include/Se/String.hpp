@@ -92,8 +92,15 @@ public:
     }
     /// Return whether ends with a string.
     bool ends_with(const String& str, bool caseSensitive = true) const {
-        std::size_t pos = this->rfind(str.c_str(), length() - 1, caseSensitive);
-        return pos != String::npos && pos == length() - str.length();
+        String tmpThis = *this;
+        String tmpStr = str;
+        if (!caseSensitive) {
+            tmpThis.to_lower();
+            tmpStr.to_lower();
+        }
+
+        std::size_t pos = tmpThis.rfind(tmpStr.c_str(), tmpThis.length()-1);
+        return pos != String::npos && pos == tmpThis.length() - tmpStr.length();
     }
 
     bool starts_with(char c, bool caseSensitive = true) const {
@@ -280,14 +287,12 @@ public:
 //    }
 
 
-    String& operator+(const String& str) {
-        this->append(str);
-        return *this;
+    String operator+(const String& str) {
+        return String(*this).append(str);
     }
 
-    String& operator+(const std::string& str) {
-        this->append(str);
-        return *this;
+    String operator+(const std::string& str) {
+        return String(*this).append(str);
     }
 
 //    string operator+(std::string& str) {
@@ -295,9 +300,8 @@ public:
 //        return *this;
 //    }
 
-    String& operator+(const char* str) {
-        this->append(str);
-        return *this;
+    String operator+(const char* str) {
+        return String(*this).append(str);
     }
 
     // operator std::string()

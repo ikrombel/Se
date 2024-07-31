@@ -110,7 +110,7 @@ public:
 
 private:
     /// Scan directory, called internally.
-    void ScanDirInternal(std::vector<String>& result, String path, const String& startPath,
+    void ScanDirInternal(std::vector<String>& result, const String& path, const String& startPath,
         const String& filter, ScanFlags flags) const;
     // /// Handle begin frame event to check for completed async executions.
     // void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
