@@ -13,6 +13,14 @@
 #include <SeArc/ArchiveSerialization.hpp>
 #include <SeArcJson/JSONFile.h>
 
+#include <SeMath/Vector4.hpp>
+#include <SeMath/Quaternion.hpp>
+#include <SeMath/Matrix4.hpp>
+#include <SeMath/BoundingBox.hpp>
+#include <SeMath/Frustum.hpp>
+
+
+
 #include <Se/Debug.h>
 
 template<class T>
@@ -197,5 +205,12 @@ int main() {
 
     Se::FileSystem::Get().SystemRun("echo \"test 2\"", {}, output);
     //auto d = Debug::gDebug();
+
+    Se::Vector4 vec = Se::Vector4::ONE;
+
+    Se::Quaternion qua;
+    Se::Matrix4 mat4;
+    Se::BoundingBox box;
+    Se::Frustum fFrustum;
 
 }

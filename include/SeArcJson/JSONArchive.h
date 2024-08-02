@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <SeMath/MathDefs.hpp>
+
 #include <SeArc/ArchiveBase.hpp>
 #include <SeArcJson/JSONFile.h>
 #include <SeArcJson/JSONValue.h>

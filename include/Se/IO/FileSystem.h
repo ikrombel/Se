@@ -14,6 +14,14 @@ namespace Se
 
 class AsyncExecRequest;
 
+struct DirectoryNode
+{
+	Se::String FullPath;
+	Se::String FileName;
+	std::vector<DirectoryNode> Children;
+	bool IsDirectory{false};
+};
+
 /// Subsystem for file and directory operations and access control.
 class FileSystem
 {
@@ -78,8 +86,9 @@ public:
     /// Check if a directory exists.
     bool DirExists(const String& pathName) const;
     /// Scan a directory for specified files.
-    void ScanDir(
-        std::vector<String>& result, const String& pathName, const String& filter, ScanFlags flags) const;
+    void ScanDir(std::vector<String>& result, const String& pathName, const String& filter, ScanFlags flags) const;
+    /// Scan a directory for specified files.
+    void ScanDirTree(DirectoryNode& result, const String& pathName, const String& filter, ScanFlags flags) const;
     /// Return the program's directory.
     /// @property
     String GetProgramDir() const;
@@ -111,6 +120,9 @@ public:
 private:
     /// Scan directory, called internally.
     void ScanDirInternal(std::vector<String>& result, const String& path, const String& startPath,
+        const String& filter, ScanFlags flags) const;
+
+    void ScanDirInternalTree(DirectoryNode& result, const String& path, const String& startPath,
         const String& filter, ScanFlags flags) const;
     // /// Handle begin frame event to check for completed async executions.
     // void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
@@ -197,5 +209,7 @@ bool MatchFileName(const String& fileName, const String& path, const String& ext
 /// Trim prefix path following slash from the file name.
 /// No check is performed if the prefix path is actually a prefix of the file name.
 String TrimPathPrefix(const String& fileName, const String& prefixPath);
+
+String FindProgramPath(const String& name);
 
 }

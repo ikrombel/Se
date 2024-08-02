@@ -175,6 +175,18 @@ float Time::GetFramesPerSecond() const
     return 1.0f / timeStep_;
 }
 
+
+Time& Time::Get()
+{
+    static Time* ptr_;
+    if (!ptr_) {
+        //SE_LOG_INFO("Time initialized.");
+        ptr_ = new Time();
+    }
+    return *ptr_;
+}
+
+
 Timer::Timer()
 {
     Reset();

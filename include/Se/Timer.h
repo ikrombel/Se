@@ -117,6 +117,8 @@ public:
     /// return current time in microseconds
     static long long getTime();
 
+    static Time& Get();
+
 private:
     /// Elapsed time since program start.
     Timer elapsedTime_;

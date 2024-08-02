@@ -1,18 +1,13 @@
-//#include "Urho3D/Core/StopToken.h"
 #include "Se/Thread.h"
-//#include "Urho3D/Engine/EngineEvents.h"
+//#include "Se/Engine/EngineEvents.h"
 #include "File.h"
 #include "FileSystem.h"
-//#include "Urho3D/IO/IOEvents.h"
+//#include "Se/IO/IOEvents.h"
 #include <Se/Console.hpp>
 #include <Se/Finally.hpp>
 #include <Se/StopToken.hpp>
-//#include "Urho3D/Core/ProcessUtils.h"
-// #if SE_SYSTEMUI
-// #include "Urho3D/SystemUI/Console.h"
-// #endif
 
-//#include <finally>
+#include <SeMath/MathDefs.hpp>
 
 #include <future>
 #include <locale>
@@ -943,8 +938,7 @@ bool FileSystem::DirExists(const String& pathName) const
     return true;
 }
 
-void FileSystem::ScanDir(
-    std::vector<String>& result, const String& pathName, const String& filter, ScanFlags flags) const
+void FileSystem::ScanDir(std::vector<String>& result, const String& pathName, const String& filter, ScanFlags flags) const
 {
     if (!flags.Test(SCAN_APPEND))
         result.clear();
@@ -953,6 +947,18 @@ void FileSystem::ScanDir(
     {
         String initialPath = AddTrailingSlash(pathName);
         ScanDirInternal(result, initialPath, initialPath, filter, flags);
+    }
+}
+
+void FileSystem::ScanDirTree(DirectoryNode& result, const String& pathName, const String& filter, ScanFlags flags) const
+{
+    if (!flags.Test(SCAN_APPEND))
+        result.Children.clear();
+
+    if (CheckAccess(pathName))
+    {
+        String initialPath = AddTrailingSlash(pathName);
+        ScanDirInternalTree(result, initialPath, initialPath, filter, flags);
     }
 }
 
@@ -1188,6 +1194,146 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, const String& path
                 {
                     if (filterExtension.empty() || fileName.ends_with(filterExtension))
                         result.push_back(deltaPath + fileName);
+                }
+            }
+        }
+        closedir(dir);
+    }
+#endif
+}
+
+
+void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& path, const Se::String& startPath,
+    const Se::String& filter, Se::ScanFlags flags) const
+{
+    const bool recursive = flags.Test(Se::SCAN_RECURSIVE);
+
+    Se::String pathTmp = Se::AddTrailingSlash(path);
+    Se::String deltaPath;
+    if (pathTmp.length() > startPath.length())
+        deltaPath = pathTmp.substr(startPath.length());
+
+    const Se::String filterExtension = GetExtensionFromFilter(filter);
+
+#ifdef __ANDROID__
+    if (SE_IS_ASSET(pathTmp))
+    {
+        String assetPath(SE_ASSET(pathTmp));
+        assetPath = RemoveTrailingSlash(assetPath);       // AssetManager.list() does not like trailing slash
+        int count;
+        char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
+        for (int i = 0; i < count; ++i)
+        {
+            String fileName(list[i]);
+            if (!(flags & SCAN_HIDDEN) && fileName.starts_with("."))
+                continue;
+
+#ifdef ASSET_DIR_INDICATOR
+            // Patch the directory name back after retrieving the directory flag
+            bool isDirectory = fileName.ends_with(ASSET_DIR_INDICATOR);
+            if (isDirectory)
+            {
+                fileName.resize(fileName.length() - sizeof(ASSET_DIR_INDICATOR) / sizeof(char) + 1);
+                if (flags & SCAN_DIRS) {
+                    auto& node = result.Children.emplace_back();
+                    node.FullPath = deltaPath + fileName;
+                    node.FileName = fileName;
+                    node.IsDirectory = true;
+                    //result.push_back(deltaPath + fileName);
+                }
+                if (recursive)
+                    ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
+            }
+            else if (flags & SCAN_FILES)
+#endif
+            {
+                if (filterExtension.empty() || fileName.ends_with(filterExtension)) {
+                    auto& node = result.Children.emplace_back();
+                    node.FullPath = deltaPath + fileName;
+                    node.FileName = fileName;
+                    node.IsDirectory = false;
+                    //result.push_back(deltaPath + fileName);
+                }
+            }
+        }
+        SDL_Android_FreeFileList(&list, &count);
+        return;
+    }
+#endif
+#ifdef _WIN32
+    WIN32_FIND_DATAW info;
+    HANDLE handle = FindFirstFileW(MultiByteToWide((pathTmp + "*")).c_str(), &info);
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        do
+        {
+            String fileName = WideToMultiByte(info.cFileName);
+            if (!fileName.empty())
+            {
+                if (info.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN && !(flags & SCAN_HIDDEN))
+                    continue;
+                if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                {
+                    if (flags & SCAN_DIRS) {
+                        auto& node = result.Children.emplace_back();
+                        node.FullPath = deltaPath + fileName;
+                        node.FileName = fileName;
+                        node.IsDirectory = true;
+                    }
+                    if (recursive && fileName != "." && fileName != "..")
+                        ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
+                }
+                else if (flags & SCAN_FILES)
+                {
+                    if (filterExtension.empty() || fileName.ends_with(filterExtension)) {
+                        auto& node = result.Children.emplace_back();
+                        node.FullPath = deltaPath + fileName;
+                        node.FileName = fileName;
+                        node.IsDirectory = false;
+                    }
+                }
+            }
+        }
+        while (FindNextFileW(handle, &info));
+
+        FindClose(handle);
+    }
+#else
+    DIR* dir;
+    struct dirent* de;
+    struct stat st{};
+    dir = opendir(GetNativePath(pathTmp).c_str());
+    if (dir)
+    {
+        while ((de = readdir(dir)))
+        {
+            /// \todo Filename may be unnormalized Unicode on Mac OS X. Re-normalize as necessary
+            String fileName(de->d_name);
+            bool normalEntry = fileName != "." && fileName != "..";
+            if (normalEntry && !(flags & SCAN_HIDDEN) && fileName.starts_with("."))
+                continue;
+            String pathAndName = pathTmp + fileName;
+            if (!stat(pathAndName.c_str(), &st))
+            {
+                if (st.st_mode & S_IFDIR)
+                {
+                    if (recursive && normalEntry) {
+                        auto& node = result.Children.emplace_back();
+                        node.FullPath = deltaPath + fileName;
+                        node.FileName = fileName;
+                        node.IsDirectory = true;
+                        ScanDirInternalTree(node, pathTmp + fileName, startPath, filter, flags);
+                    }
+                }
+                else if (flags & SCAN_FILES)
+                {
+                    if (filterExtension.empty() || fileName.ends_with(filterExtension)) {
+                        auto& node = result.Children.emplace_back();
+                        node.FullPath = deltaPath + fileName;
+                        node.FileName = fileName;
+                        node.IsDirectory = false;
+                    }
+                        
                 }
             }
         }
@@ -1817,6 +1963,19 @@ String TrimPathPrefix(const String& fileName, const String& prefixPath)
         result = result.substr(1);
 
     return result;
+}
+
+String FindProgramPath(const String& name) {
+    auto fs = FileSystem::Get();
+#ifdef WIN32
+    String findCmd = "where";
+#else
+    String findCmd = "which";
+#endif
+    String output;
+    bool isOk = fs.SystemRun(findCmd, {name}, output) == 0;
+    output.replace("\n", "");
+    return isOk ? output : String::EMPTY;
 }
 
 }

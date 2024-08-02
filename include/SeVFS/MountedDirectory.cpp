@@ -49,11 +49,9 @@ void MountedDirectory::StartWatching()
     fileWatcher_->StartWatching(directory_, true);
 
     // Subscribe BeginFrame for handling directory watcher
-//    SubscribeToEvent(E_BEGINFRAME, &MountedDirectory::ProcessUpdates);
     idOnStopWatching = Application::onBeginFrame.connect([this](){
         this->ProcessUpdates();
     });
-    //assert(0);
 }
 
 void MountedDirectory::StopWatching()
@@ -62,10 +60,6 @@ void MountedDirectory::StopWatching()
         fileWatcher_->StopWatching();
 
     Application::onBeginFrame.disconnect(idOnStopWatching);
-        
-
-//    UnsubscribeFromEvent(E_BEGINFRAME);
-//    assert(0);
 }
 
 void MountedDirectory::ProcessUpdates()
