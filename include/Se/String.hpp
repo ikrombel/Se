@@ -916,21 +916,6 @@ template <> inline double FromString<double>(const char* source) { return ToDoub
 template <> inline int FromString<int>(const char* source) { return ToInt(source); }
 template <> inline unsigned FromString<unsigned>(const char* source) { return ToUInt(source); }
 
-//template <class T> T FromString(const String& source) { return FromString<T>(source.c_str()); }
-// template <> inline Color FromString<Color>(const char* source) { return ToColor(source); }
-// template <> inline IntRect FromString<IntRect>(const char* source) { return ToIntRect(source); }
-// template <> inline IntVector2 FromString<IntVector2>(const char* source) { return ToIntVector2(source); }
-// template <> inline IntVector3 FromString<IntVector3>(const char* source) { return ToIntVector3(source); }
-// template <> inline Quaternion FromString<Quaternion>(const char* source) { return ToQuaternion(source); }
-// template <> inline Rect FromString<Rect>(const char* source) { return ToRect(source); }
-// template <> inline Vector2 FromString<Vector2>(const char* source) { return ToVector2(source); }
-// template <> inline Vector3 FromString<Vector3>(const char* source) { return ToVector3(source); }
-// template <> inline Vector4 FromString<Vector4>(const char* source) { return ToVector4(source); }
-// template <> inline Variant FromString<Variant>(const char* source) { return ToVectorVariant(source); }
-// template <> inline Matrix3 FromString<Matrix3>(const char* source) { return ToMatrix3(source); }
-// template <> inline Matrix3x4 FromString<Matrix3x4>(const char* source) { return ToMatrix3x4(source); }
-// template <> inline Matrix4 FromString<Matrix4>(const char* source) { return ToMatrix4(source); }
-
 /// Parse type from a string.
 template <class T> T FromString(const String& source) { return FromString<T>(source.c_str()); }
 

@@ -333,22 +333,6 @@ inline void SerializeAsString(Archive& archive, const char* name, T& variant)
 
 }
 
-/// @name Serialize primitive array types
-/// @{
-// inline void SerializeValue(Archive& archive, const char* name, Vector2& value) { Detail::SerializeAsString<Vector2>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, Vector3& value) { Detail::SerializeAsString<Vector3>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, Vector4& value) { Detail::SerializeAsString<Vector4>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, Matrix3& value) { Detail::SerializeAsString<Matrix3>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, Matrix3x4& value) { Detail::SerializeAsString<Matrix3x4>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, Matrix4& value) { Detail::SerializeAsString<Matrix4>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, Rect& value) { Detail::SerializeAsString<Rect>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, Quaternion& value) { Detail::SerializeAsString<Quaternion>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, Color& value) { Detail::SerializeAsString<Color>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, IntVector2& value) { Detail::SerializeAsString<IntVector2>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, IntVector3& value) { Detail::SerializeAsString<IntVector3>(archive, name, value); }
-// inline void SerializeValue(Archive& archive, const char* name, IntRect& value) { Detail::SerializeAsString<IntRect>(archive, name, value); }
-/// @}
-
 /// Serialize object with standard interface as value.
 template <class T, std::enable_if_t<IsObjectSerializableInBlock<T>::value, int> = 0>
 inline void SerializeValue(Archive& archive, const char* name, T& value)
