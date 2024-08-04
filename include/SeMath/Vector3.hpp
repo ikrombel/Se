@@ -511,6 +511,11 @@ public:
     Vector3(const IntVector3& rhs) noexcept :
             IVector3<float>(rhs.x_, rhs.y_, rhs.z_) {}
 
+    /// Add a vector.
+    Vector3 operator +(const IVector3<float>& rhs) const {
+        return Vector3(x_ + rhs.x_, y_ + rhs.y_, z_ + rhs.z_);
+    }
+    
     /// Return as string.
     String ToString() const {
         return cformat("%g %g %g", x_, y_, z_);

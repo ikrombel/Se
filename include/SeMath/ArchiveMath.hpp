@@ -10,6 +10,23 @@
 namespace Se
 {
 
+Color ToColor(const String& source)
+{
+    Color ret;
+
+    auto elements = source.split(' ');
+    if (elements.size() < 3)
+        return ret;
+
+    ret.r_ = ToFloat(elements[0]);
+    ret.g_ = ToFloat(elements[1]);
+    ret.b_ = ToFloat(elements[2]);
+    if (elements.size() > 3)
+        ret.a_ = ToFloat(elements[3]);
+
+    return ret;
+}
+
 inline IntVector2 ToIntVector2(const String& source)
 {
     IntVector2 ret(IntVector2::ZERO);
@@ -52,6 +69,23 @@ inline Rect ToRect(const String& source)
     ret.min_.y_ = ToFloat(elements[1]);
     ret.max_.x_ = ToFloat(elements[2]);
     ret.max_.y_ = ToFloat(elements[3]);
+
+    return ret;
+}
+
+IntRect ToIntRect(const String& source)
+{
+    IntRect ret(IntRect::ZERO);
+
+    auto elements = source.split(' ');
+
+    if (elements.size() < 4)
+        return ret;
+
+    ret.left_ = ToInt(elements[0]);
+    ret.top_ = ToInt(elements[1]);
+    ret.right_ = ToInt(elements[2]);
+    ret.bottom_ = ToInt(elements[3]);
 
     return ret;
 }

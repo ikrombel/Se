@@ -19,7 +19,13 @@ public:
     }
 
     /// Copy-construct from another vector.
-    Vector4(const Vector4& vector) noexcept = default;
+    Vector4(const Vector4& vector) noexcept : 
+        x_(vector.x_),
+        y_(vector.y_),
+        z_(vector.z_),
+        w_(vector.w_)
+    {
+    };
 
     /// Construct from a 3-dimensional vector and the W coordinate.
     Vector4(const Vector3& vector, float w) noexcept :
@@ -271,11 +277,13 @@ public:
     };
 
     /// Zero vector.
-    inline static const Vector4 ZERO();
+    static const Vector4 ZERO;
     /// (1,1,1) vector.
     static const Vector4 ONE;
 };
 
+
+inline const Vector4 Vector4::ZERO{};
 inline const Vector4 Vector4::ONE{1.0f, 1.0f, 1.0f, 1.0f};
 
 /// Multiply Vector4 with a scalar.
@@ -682,11 +690,5 @@ inline Vector4 IntVector3::ToVector4(float w) const { return { static_cast<float
 
 /// Return Vector4 vector.
 inline Vector4 Vector3::ToVector4(float w) const { return { x_, y_, z_, w }; }
-
-
-
-
-
-
 
 }

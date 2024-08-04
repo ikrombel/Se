@@ -1026,19 +1026,65 @@ String FileSystem::GetUserDocumentsDir() const
 #endif
 }
 
+String FileSystem::GetENV(const String& envName) const
+{
+    String path;
+#ifdef __linux__
+    const char* env = getenv(envName.c_str());
+    if (env)
+        path = std::move(env);
+#elif WIN32
+    char buffer[1024];
+    DWORD bufferSize = 1024;
+
+    // Call GetEnvironmentVariable to retrieve the value
+    if (GetEnvironmentVariableA(envName.c_str(), buffer, bufferSize))
+        path = std::move(buffer);
+#else
+    SE_LOG_WARNING("Could not get environment: {}", envName);
+#endif
+    return path;
+}
+
 String FileSystem::GetAppPreferencesDir(const String& org, const String& app) const
 {
     String dir;
-#ifdef HAVE_SDL
+#ifdef __linux__
+    auto env  = GetENV("XDG_DATA_HOME");
+    if (env.empty())
+        env  = GetENV("HOME"); 
+    dir = format("{}/.local/share/", env);
+
+    //__ANDROID__ Windows
+#elif WIN32
+    // Specify the KNOWNFOLDERID for the application data directory
+    const GUID knownFolderId = FOLDERID_RoamingAppData;
+
+    // Buffer to hold the path
+    PWSTR buffer;
+    // Call SHGetKnownFolderPath to retrieve the path
+    if (SHGetKnownFolderPath(knownFolderId, 0, NULL, &buffer) == S_OK) {
+        if (env)
+            path = String(buffer);
+        CoTaskMemFree(buffer);
+    }
+
+#elif HAVE_SDL
     char* prefPath = SDL_GetPrefPath(org.c_str(), app.c_str());
     if (prefPath)
     {
         dir = GetInternalPath(String(prefPath));
         SDL_free(prefPath);
     }
-    else
-        SE_LOG_WARNING("Could not get application preferences directory");
+#else
+    SE_LOG_WARNING("Could not get application preferences directory. this platform don't support");
+    return dir;
 #endif
+    if (dir.empty())
+        SE_LOG_WARNING("Could not get application preferences directory");
+
+    dir += format("{}/{}/", org, app);
+
     return dir;
 }
 

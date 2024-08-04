@@ -97,6 +97,8 @@ public:
     /// Return the user documents directory.
     /// @property
     String GetUserDocumentsDir() const;
+    ///
+    String GetENV(const String& envName) const;
     /// Return the application preferences directory.
     String GetAppPreferencesDir(const String& org, const String& app) const;
     /// Check if a file or directory exists at the specified path
