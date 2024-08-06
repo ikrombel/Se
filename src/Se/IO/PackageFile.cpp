@@ -3,6 +3,8 @@
 #include <Se/Console.hpp>
 #include <Se/IO/FileSystem.h>
 
+#include <algorithm>
+
 namespace Se {
 
 PackageFile::PackageFile() :
@@ -164,81 +166,52 @@ void PackageFile::Scan(std::vector<String>& result, const String& pathName, cons
     }
 }
 
-// /// Checks if mount point accepts scheme.
-// bool PackageFile::AcceptsScheme(const String& scheme) const
-// {
-//     return scheme.empty() || scheme.comparei(GetName()) == 0;
-// }
+void createTreeNode(DirectoryNode* parent, const Se::String& path)
+{
+    std::vector<Se::String> components = path.split('/');
 
-// /// Check if a file exists within the mount point.
-// bool PackageFile::Exists(const FileIdentifier& fileName) const
-// {
-//     // If scheme defined then it should match package name. Otherwise this package can't open the file.
-//     if (!AcceptsScheme(fileName.scheme_))
-//         return {};
+    DirectoryNode *current = parent;
+    parent->IsDirectory = true;
 
-//     // Quit if file doesn't exists in the package.
-//     return Exists(fileName.fileName_);
-// }
+    for (std::size_t i = 0; i < components.size(); ++i)
+    {
+        std::string name = components[i];
 
-// /// Open package file. Returns null if file not found.
-// AbstractFilePtr PackageFile::OpenFile(const FileIdentifier& fileName, FileMode mode)
-// {
-//     // Package file can write files.
-//     if (mode != FILE_READ)
-//         return {};
+        auto it = std::find_if(current->Children.begin(), current->Children.end(), 
+            [name](const DirectoryNode& node) {
+                return     (name.size() == node.FileName.size())
+                        && (name == node.FileName);
+        });
 
-//     // If scheme defined it should match package name. Otherwise this package can't open the file.
-//     if (!fileName.scheme_.empty() && fileName.scheme_ != GetName())
-//         return {};
-
-//     // Quit if file doesn't exists in the package.
-//     if (!Exists(fileName.fileName_))
-//         return {};
-
-//     auto file = std::make_shared<File>(this, fileName.fileName_);
-//     return file;
-// }
-
-bool UnPack(PackageFile* pkg, const String& desteny_dir) {
-
-    SE_LOG_INFO("Unpack to dir: " + desteny_dir);
-    for (auto entry : pkg->GetEntries()) {
-        auto fs = FileSystem::Get();
-        auto filePkgName = entry.first;
-        auto fileName = desteny_dir + "/" + filePkgName;
-
-        if (!fs.CreateDirs(desteny_dir, GetPath(filePkgName)))
+        if (it != current->Children.end()) {
+            current = &(*it);
             continue;
+        }
+         
+        DirectoryNode& child = current->Children.emplace_back();
+        child.FileName = name;
+        child.parent = current;
 
-        SE_LOG_INFO("File: " + filePkgName);
+        if (i < components.size()-1)
+            child.IsDirectory = true;
 
-        File file(pkg, filePkgName);
-        unsigned int fileSize = file.GetSize();
-        char* fileData = new char[fileSize];
-        file.Read(fileData, fileSize);
-        file.Close();
+        if (current != parent)
+            child.FullPath = child.parent->FullPath + "/";
+        child.FullPath += name;     
 
-        File newFile(fileName, FileMode::FILE_WRITE);
-        newFile.Write(fileData, fileSize);
-        newFile.Close();
-
-        delete[] fileData;
+        current = &current->Children.back();
     }
-
-    SE_LOG_INFO("Unpack Done");
-
-    return true;
 }
 
-// std::optional<FileTime> PackageFile::GetLastModifiedTime(
-//     const FileIdentifier& fileName, bool creationIsModification) const
-// {
-//     if (!Exists(fileName))
-//         return std::nullopt;
+void PackageFile::ScanTree(DirectoryNode& result, const String& pathName, const String& filter, ScanFlags flags) const
+{
+    result.Children.clear();
 
-//     auto fileSystem = GetSubsystem<FileSystem>();
-//     return fileSystem->GetLastModifiedTime(fileName_, creationIsModification);
-// }
+    auto entries = GetEntries();
+    for (auto entry : entries) {
+        createTreeNode(&result, entry.first);
+    }
+}
+
 
 }

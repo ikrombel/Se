@@ -20,6 +20,8 @@ struct DirectoryNode
 	Se::String FileName;
 	std::vector<DirectoryNode> Children;
 	bool IsDirectory{false};
+
+    DirectoryNode* parent{nullptr};
 };
 
 /// Subsystem for file and directory operations and access control.

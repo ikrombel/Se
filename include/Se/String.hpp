@@ -45,13 +45,16 @@ public:
     String() noexcept : std::string() {}
 
     /// Construct from another string.
-    String(const String& str) : std::string(str.c_str()) {}
+    String(const String& str) : std::string() {
+        resize(str.length());
+        copy_chars(data(), str.c_str(), str.length());
+    }
 
-    String(String& str) : std::string(str.c_str()) {}
+    //String(String& str) : std::string(str) {}
 
-    String(const std::string& str) : std::string(str) {}
+    String(const std::string& str) : std::string(str.c_str(), str.length()) {}
 
-    String(std::string& str) : std::string(str) {}
+    //String(std::string& str) : std::string(str) {}
 
     /// Move-construct from another string.
     String(String && str) : std::string(std::move(str)) {}
@@ -727,7 +730,8 @@ inline String String::trimmed() const
         --trimEnd;
     }
 
-    return ret.substr(trimStart, trimEnd - trimStart).data();
+    ret = ret.substr(trimStart, trimEnd - trimStart);
+    return ret;
 }
 
 inline void String::remove() {

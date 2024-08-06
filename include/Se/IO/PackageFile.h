@@ -82,6 +82,9 @@ public:
     /// Scan package for specified files.
     void Scan(std::vector<String>& result, const String& pathName, const String& filter, ScanFlags flags) const;
 
+    void ScanTree(DirectoryNode& result, const String& path,
+                    const String& filter, ScanFlags flags) const;
+
 private:
     /// File entries.
     std::unordered_map<String, PackageEntry> entries_;
@@ -100,4 +103,17 @@ protected:
     String fileName_;
 };
 
-}
+
+
+
+//declarate in file PackageFile.Tool.cpp
+
+namespace Tool {
+
+bool Pack(const String& inputDir, const String& packageName, bool compress = true);
+
+void Unpack(const String& packageName, const String& dirName);
+
+} // namespace Tool
+
+} // namespace Se

@@ -100,7 +100,7 @@ void FileIdentifier::AppendPath(const String& path)
  String FileIdentifier::SanitizeFileName(const String& fileName)
 {
     // Resolve path and prevent references outside of data folder, except absolute path which is treated differently.
-    return ResolvePath(fileName.data()).c_str();
+    return ResolvePath(fileName);
 }
 
 } // namespace Se

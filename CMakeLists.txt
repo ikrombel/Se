@@ -18,6 +18,7 @@ set(SE_SOURCE
         src/Se/IO/File.cpp
         src/Se/IO/FileSystem.cpp
         src/Se/IO/PackageFile.cpp
+        src/Se/IO/PackageFile.Tool.cpp
         src/Se/Thread.cpp
         src/Se/Timer.cpp
         )
@@ -50,6 +51,10 @@ target_include_directories(Se PUBLIC
 target_compile_definitions(Se ${SE_DEFINED})
 target_compile_features(Se PRIVATE cxx_std_20)
 
+if (WIN32)
+        target_compile_features(Se PRIVATE user32.lib)
+endif()
+
 
 add_library(SeVFS STATIC
         include/SeVFS/FileIdentifier.cpp 
@@ -58,7 +63,7 @@ add_library(SeVFS STATIC
         include/SeVFS/MountedDirectory.cpp 
         include/SeVFS/MountedExternalMemory.cpp 
         include/SeVFS/MountedRoot.cpp 
-        include/SeVFS/MountPoint.cpp 
+        include/SeVFS/MountPoint.cpp
         include/SeVFS/VirtualFileSystem.cpp 
 )
 target_link_libraries(SeVFS PUBLIC
@@ -88,3 +93,14 @@ target_link_libraries(test.SeArc PUBLIC
         SeArcJson
         SeVFS
 )
+
+include(cmake/SeMath.cmake)
+
+
+add_subdirectory(src/SeGraphics/deps)
+add_subdirectory(src/SeGraphics/deps/meshoptimizer/)
+
+add_subdirectory(include/SeGraphics)
+add_subdirectory(include/SeGraphics.OpenGL)
+
+

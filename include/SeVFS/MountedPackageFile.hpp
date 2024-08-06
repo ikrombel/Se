@@ -52,10 +52,10 @@ inline bool MountedPackageFile::Exists(const FileIdentifier& fileName) const
 {
     // If scheme defined then it should match package name. Otherwise this package can't open the file.
     if (!AcceptsScheme(fileName.scheme_))
-        return {};
+        return false;
 
     // Quit if file doesn't exists in the package.
-    return Exists(fileName.fileName_);
+    return PackageFile::Exists(fileName.fileName_);
 }
 
 /// Open package file. Returns null if file not found.

@@ -688,7 +688,7 @@ bool FileSystem::SystemOpen(const String& fileName, const String& mode)
     {
         if (fileName.starts_with("http://") || fileName.starts_with("https://"))
         {
-            return OpenURL(fileName.c_str());
+            return OpenURL(fileName);
         }
 
         // allow opening of http and file urls
@@ -1531,7 +1531,7 @@ String GetParentPath(const String& path)
 {
     std::size_t pos = RemoveTrailingSlash(path).find_last_of('/');
     if (pos != String::npos)
-        return String(path.substr(0, pos + 1).c_str());
+        return path.substr(0, pos + 1);
     else
         return String();
 }
@@ -1988,7 +1988,7 @@ bool MatchFileName(
 
     if (!recursive)
     {
-        String relativeFileName = String(fileName.substr(path.length()).c_str());
+        String relativeFileName = fileName.substr(path.length());
         if (relativeFileName.starts_with('/'))
             relativeFileName = relativeFileName.substr(1);
 
@@ -2004,7 +2004,7 @@ String TrimPathPrefix(const String& fileName, const String& prefixPath)
     if (prefixPath.length() >= fileName.length())
         return String::EMPTY;
 
-    String result = String(fileName.substr(prefixPath.length()).c_str());
+    String result = fileName.substr(prefixPath.length());
     if (result.starts_with('/'))
         result = result.substr(1);
 
