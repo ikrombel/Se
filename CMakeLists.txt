@@ -94,7 +94,6 @@ target_link_libraries(test.SeArc PUBLIC
         SeVFS
 )
 
-include(cmake/SeMath.cmake)
 
 
 add_subdirectory(src/SeGraphics/deps)
