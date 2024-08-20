@@ -287,7 +287,7 @@ public:
     {
         this->fill(value);
     }
-    template <size_t N>
+    template <std::size_t N>
     constexpr EnumArray(const T (&values)[N])
         : base_type{std::to_array(values)}
     {

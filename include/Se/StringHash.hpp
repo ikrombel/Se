@@ -161,7 +161,7 @@ public:
     #ifdef SE_HASH_DEBUG
         return Se::GetGlobalStringHashRegister().GetStringCopy(*this);
     #else
-        return ""; //String::EMPTY;
+        return String::EMPTY;
     #endif
     }
 

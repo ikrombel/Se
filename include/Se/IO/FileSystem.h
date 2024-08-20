@@ -20,7 +20,7 @@ struct DirectoryNode
 	Se::String FileName;
 	std::vector<DirectoryNode> Children;
 	bool IsDirectory{false};
-
+    bool IsArchived{false};
     DirectoryNode* parent{nullptr};
 };
 

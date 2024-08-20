@@ -392,7 +392,7 @@ namespace Tool {
 
 bool Pack(const String& inputDir, const String& packageName, bool compress)
 {
-    PackageTool().Pack(inputDir, packageName, compress);
+    return PackageTool().Pack(inputDir, packageName, compress);
 }
 
 void Unpack(const String& packageName, const String& dirName)

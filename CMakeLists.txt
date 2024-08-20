@@ -21,6 +21,7 @@ set(SE_SOURCE
         src/Se/IO/PackageFile.Tool.cpp
         src/Se/Thread.cpp
         src/Se/Timer.cpp
+        src/Se/ProcessTaskManager.cpp
         )
 
 if (HAVE_LZ4) 
@@ -93,13 +94,3 @@ target_link_libraries(test.SeArc PUBLIC
         SeArcJson
         SeVFS
 )
-
-
-
-add_subdirectory(src/SeGraphics/deps)
-add_subdirectory(src/SeGraphics/deps/meshoptimizer/)
-
-add_subdirectory(include/SeGraphics)
-add_subdirectory(include/SeGraphics.OpenGL)
-
-

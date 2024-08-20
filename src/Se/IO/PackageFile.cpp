@@ -191,6 +191,7 @@ void createTreeNode(DirectoryNode* parent, const Se::String& path)
         DirectoryNode& child = current->Children.emplace_back();
         child.FileName = name;
         child.parent = current;
+        child.IsArchived = true;
 
         if (i < components.size()-1)
             child.IsDirectory = true;
