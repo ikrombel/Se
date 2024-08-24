@@ -1,5 +1,4 @@
-#ifndef SE_STRING_HPP
-#define SE_STRING_HPP
+#pragma once
 
 #include <cstring>
 #include <cassert>
@@ -11,12 +10,15 @@
 #include <Se/Format.hpp>
 
 #ifdef _WIN32
-#include <string.h>
+#include <windows.h>
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
 #else // assuming POSIX or BSD compliant system
 #include <strings.h>
 #endif
+ 
+typedef wchar_t WChar;
+typedef std::wstring WString; 
 
 #if __cplusplus >= 201103L
 #  define STRING_CXX11 1
@@ -477,7 +479,7 @@ inline String StringMemory(std::size_t size)
 
 inline std::wstring ToWString(const String& str)
 {
-    #ifdef _WIN32
+#ifdef _WIN32
     int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), nullptr, 0);
     std::wstring wstrTo( size_needed, 0 );
     MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
@@ -943,18 +945,6 @@ inline String cformat(const char * __restrict format, Args... args)
 
 #pragma clang diagnostic pop
 
-}
-
-// Register span with std::hash
-namespace std {
-template <>
-struct hash<Se::String> {
-    size_t operator()(const Se::String& s) const {
-        return std::hash<std::string>()(static_cast<std::string>(s));
-    }
-};
-} // namespace std
-
 inline Se::String operator+(const Se::String &s0, const Se::String &s1) {
     Se::String ret = s0;
 	ret.append(s1);
@@ -972,5 +962,186 @@ inline Se::String operator+(const char *s0, const Se::String &s1) {
 	return ret;
 }
 
+inline bool IsAlpha(unsigned ch)
+{
+    return ch < 256 ? isalpha(ch) != 0 : false;
+}
 
+inline bool IsDigit(unsigned ch)
+{
+    return ch < 256 ? isdigit(ch) != 0 : false;
+}
+
+inline void EncodeUTF16(WChar*& dest, unsigned unicodeChar)
+{
+    if (unicodeChar < 0x10000)
+        *dest++ = unicodeChar;
+    else
+    {
+        unicodeChar -= 0x10000;
+        *dest++ = 0xd800 | ((unicodeChar >> 10) & 0x3ff);
+        *dest++ = 0xdc00 | (unicodeChar & 0x3ff);
+    }
+}
+
+#define GET_NEXT_CONTINUATION_BYTE(ptr) *(ptr); if ((unsigned char)*(ptr) < 0x80 || (unsigned char)*(ptr) >= 0xc0) return '?'; else ++(ptr);
+inline unsigned DecodeUTF8(const char*& src)
+{
+    if (src == nullptr)
+        return 0;
+
+    unsigned char char1 = *src++;
+
+    // Check if we are in the middle of a UTF8 character
+    if (char1 >= 0x80 && char1 < 0xc0)
+    {
+        while ((unsigned char)*src >= 0x80 && (unsigned char)*src < 0xc0)
+            ++src;
+        return '?';
+    }
+
+    if (char1 < 0x80)
+        return char1;
+    else if (char1 < 0xe0)
+    {
+        unsigned char char2 = GET_NEXT_CONTINUATION_BYTE(src);
+        return (unsigned)((char2 & 0x3fu) | ((char1 & 0x1fu) << 6u));
+    }
+    else if (char1 < 0xf0)
+    {
+        unsigned char char2 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char3 = GET_NEXT_CONTINUATION_BYTE(src);
+        return (unsigned)((char3 & 0x3fu) | ((char2 & 0x3fu) << 6u) | ((char1 & 0xfu) << 12u));
+    }
+    else if (char1 < 0xf8)
+    {
+        unsigned char char2 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char3 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char4 = GET_NEXT_CONTINUATION_BYTE(src);
+        return (unsigned)((char4 & 0x3fu) | ((char3 & 0x3fu) << 6u) | ((char2 & 0x3fu) << 12u) | ((char1 & 0x7u) << 18u));
+    }
+    else if (char1 < 0xfc)
+    {
+        unsigned char char2 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char3 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char4 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char5 = GET_NEXT_CONTINUATION_BYTE(src);
+        return (unsigned)((char5 & 0x3fu) | ((char4 & 0x3fu) << 6u) | ((char3 & 0x3fu) << 12u) | ((char2 & 0x3fu) << 18u) |
+                          ((char1 & 0x3u) << 24u));
+    }
+    else
+    {
+        unsigned char char2 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char3 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char4 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char5 = GET_NEXT_CONTINUATION_BYTE(src);
+        unsigned char char6 = GET_NEXT_CONTINUATION_BYTE(src);
+        return (unsigned)((char6 & 0x3fu) | ((char5 & 0x3fu) << 6u) | ((char4 & 0x3fu) << 12u) | ((char3 & 0x3fu) << 18u) |
+                          ((char2 & 0x3fu) << 24u) | ((char1 & 0x1u) << 30u));
+    }
+}
+
+inline std::size_t NextUTF8Char(const Se::String& string, unsigned& byteOffset)
+{
+    if (string.empty())
+        return String::npos;
+
+    const char* src = string.c_str() + byteOffset;
+    unsigned ret = DecodeUTF8(src);
+    byteOffset = (unsigned)(src - string.c_str());
+
+    return ret;
+}
+
+inline WString Utf8ToUcs2(const char* string)
+{
+    WString result{};
+    unsigned neededSize = 0;
+    WChar temp[3];
+
+    unsigned byteOffset = 0;
+    auto length = std::strlen(string);
+    while (byteOffset < length)
+    {
+        WChar* dest = temp;
+        EncodeUTF16(dest,  NextUTF8Char(string, byteOffset));
+        neededSize += dest - temp;
+    }
+
+    result.resize(neededSize);
+
+    byteOffset = 0;
+    WChar* dest = &result[0];
+    while (byteOffset < length)
+        EncodeUTF16(dest, NextUTF8Char(string, byteOffset));
+
+    return result;
+}
+
+inline WString MultiByteToWide(const char* string)
+{
+#if _WIN32
+    return Utf8ToUcs2(string);
+#else
+    WString result{};
+    result.Resize(LengthUTF8(string));
+
+    unsigned byteOffset = 0;
+    WChar* dest = &result[0];
+    unsigned length = String::CStringLength(string);
+    while (byteOffset < length)
+        *dest++ = (wchar_t)NextUTF8Char(string, byteOffset);
+    return result;
 #endif
+}
+
+// String Ucs2ToUtf8(const WChar* string)
+// {
+//     String result{};
+//     char temp[7];
+
+//     if (!string)
+//         return result;
+
+//     while (*string)
+//     {
+//         unsigned unicodeChar = Helpers::DecodeUTF16(string);
+//         char* dest = temp;
+//         EncodeUTF8(dest, unicodeChar);
+//         *dest = 0;
+//         result.append(temp);
+//     }
+//     return result;
+// }
+
+inline String WideToMultiByte(const wchar_t* string)
+{
+#if _WIN32
+    return Ucs2ToUtf8(string);
+#else
+    String result{};
+    char temp[7];
+    while (*string) {
+        char* dest = temp;
+        EncodeUTF8(dest, (unsigned)*string++);
+        *dest = 0;
+        result +=String(temp);
+    }
+    return result;
+#endif
+}
+
+// #endif
+
+
+} //namespace Se
+
+// Register span with std::hash
+namespace std {
+template <>
+struct hash<Se::String> {
+    size_t operator()(const Se::String& s) const {
+        return std::hash<std::string>()(static_cast<std::string>(s));
+    }
+};
+} // namespace std

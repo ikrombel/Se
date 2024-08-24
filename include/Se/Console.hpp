@@ -6,7 +6,13 @@
 #include <functional>
 #include <string>
 
-#ifndef COLORED_TERMINAL
+#ifdef _WIN32
+#include <processenv.h>
+// #include <winbase.h>
+// #include <wincon.h>
+#endif
+
+#if !defined(COLORED_TERMINAL) && !defined(_WIN32)
 #  define COLORED_TERMINAL 1
 #endif
 
@@ -86,7 +92,7 @@ inline LogCallback DefaultColored = [](const Console::ConsoleInfo& info, const c
 #if defined(COLORED_TERMINAL)
 #  if defined(_WIN32)
     HANDLE var_name = GetStdHandle(STD_OUTPUT_HANDLE);
-    switch(type) {
+    switch(info.type_) {
         case MsgType::MsgNone: SetConsoleTextAttribute(var_name, 7); break;
         case MsgType::MsgInfo: SetConsoleTextAttribute(var_name, 10); break;
         case MsgType::MsgWarning: SetConsoleTextAttribute(var_name, 6); break;
