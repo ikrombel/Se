@@ -265,7 +265,7 @@ unsigned File::Write(const void* data, unsigned size)
 
     if (mode_ == FILE_READ)
     {
-//        SE_LOG_LOGERROR("File not opened for writing");
+        SE_LOG_ERROR("File not opened for writing");
         return 0;
     }
 
@@ -283,7 +283,7 @@ unsigned File::Write(const void* data, unsigned size)
     {
         // Return to the position where the write began
         fseek((FILE*)handle_, (long)position_ + offset_, SEEK_SET);
-//        SE_LOG_LOGERROR("Error while writing to file " + GetName());
+        SE_LOG_ERROR("Error while writing to file " + GetName());
         return 0;
     }
 
@@ -450,7 +450,7 @@ bool File::OpenInternal(const String& fileName, FileMode mode, bool fromPackage)
         fseek((FILE*)handle_, 0, SEEK_SET);
         if (size > std::numeric_limits<unsigned>::max())
         {
-            SE_LOG_ERROR("Could not open file %s which is larger than 4GB", fileName);
+            SE_LOG_ERROR("Could not open file {} which is larger than 4GB", fileName);
             Close();
             size_ = 0;
             return false;
