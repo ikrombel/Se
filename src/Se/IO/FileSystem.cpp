@@ -748,7 +748,7 @@ bool FileSystem::Copy(const String& srcFileName, const String& destFileName)
         return false;
 
     unsigned fileSize = srcFile->GetSize();
-    std::shared_ptr<unsigned char> buffer(new unsigned char[fileSize]);
+    std::shared_ptr<unsigned char> buffer(new unsigned char[fileSize], std::default_delete<unsigned char[]>());
 
     unsigned bytesRead = srcFile->Read(buffer.get(), fileSize);
     unsigned bytesWritten = destFile->Write(buffer.get(), fileSize);

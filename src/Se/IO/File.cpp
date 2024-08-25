@@ -121,7 +121,7 @@ unsigned File::Read(void* dest, unsigned size)
         // If not using a compressed package file, buffer file reads on Android for better performance
         if (!readBuffer_)
         {
-            readBuffer_ = std::shared_ptr<unsigned char>(new unsigned char[READ_BUFFER_SIZE]);
+            readBuffer_ = std::shared_ptr<unsigned char>(new unsigned char[READ_BUFFER_SIZE], std::default_delete<unsigned char[]>());
             readBufferOffset_ = 0;
             readBufferSize_ = 0;
         }
@@ -169,8 +169,8 @@ unsigned File::Read(void* dest, unsigned size)
 
                 if (!readBuffer_)
                 {
-                    readBuffer_ = std::shared_ptr<unsigned char>(new unsigned char[unpackedSize]);
-                    inputBuffer_ = std::shared_ptr<unsigned char>(new unsigned char[LZ4_compressBound(unpackedSize)]);
+                    readBuffer_ = std::shared_ptr<unsigned char>(new unsigned char[unpackedSize], std::default_delete<unsigned char[]>());
+                    inputBuffer_ = std::shared_ptr<unsigned char>(new unsigned char[LZ4_compressBound(unpackedSize)], std::default_delete<unsigned char[]>());
                 }
 
                 /// \todo Handle errors

@@ -11,7 +11,14 @@
 
 #define SE_PROFILE_FUNCTION() ((void)0)
 
-#define SE_PROFILE_SCOPE(s ...) ((void)0)
+#define SE_PROFILE_SCOPE(s, ...) ((void)0)
+
+#define SE_PROFILE(s) ((void)0)
+
+#define SE_PROFILE_C(s, ...) ((void)0)
+
+#define SE_PROFILE_ZONENAME(s) ((void)0)
+
 
 
 

@@ -50,6 +50,10 @@ public:
         }
     }
 
+    void disconnectAll() {
+        slots_.clear();
+    }
+
     bool empty() const {
         return slots_.empty();
     }

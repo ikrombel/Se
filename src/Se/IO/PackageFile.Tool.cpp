@@ -101,7 +101,7 @@ bool CheckChanges(const String& rootDir, std::vector<FileEntry> entries, String 
 
         unsigned dataSize = entries[i].size_;
         totalDataSize += dataSize;
-        std::shared_ptr<unsigned char> buffer(new unsigned char[dataSize]);
+        std::shared_ptr<unsigned char> buffer(new unsigned char[dataSize], std::default_delete<unsigned char[]>());
 
         if (srcFile.Read(buffer.get(), dataSize) != dataSize) {
             SE_LOG_ERROR("Could not read file " + fileFullPath);
@@ -251,7 +251,7 @@ void PackageTool::WritePackageFile(const String& fileName, const String& rootDir
 
         unsigned dataSize = entries_[i].size_;
         totalDataSize += dataSize;
-        std::shared_ptr<unsigned char> buffer(new unsigned char[dataSize]);
+        std::shared_ptr<unsigned char> buffer(new unsigned char[dataSize], std::default_delete<unsigned char[]>());
 
         if (srcFile.Read(buffer.get(), dataSize) != dataSize)
             SE_LOG_ERROR("Could not read file " + fileFullPath);
@@ -271,7 +271,7 @@ void PackageTool::WritePackageFile(const String& fileName, const String& rootDir
         }
         else
         {
-            std::shared_ptr<unsigned char> compressBuffer(new unsigned char[LZ4_compressBound(blockSize_)]);
+            std::shared_ptr<unsigned char> compressBuffer(new unsigned char[LZ4_compressBound(blockSize_)], std::default_delete<unsigned char[]>());
 
             unsigned pos = 0;
 
