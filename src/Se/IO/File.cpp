@@ -7,6 +7,18 @@
 #include <LZ4/lz4.h>
 #endif
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef _MSC_VER
+#define fseeko64 _fseeki64
+#endif
+
 namespace Se {
 
 File::File() :
@@ -556,7 +568,7 @@ int File::SeekSet(int offset) {
     
     return fseek((FILE*)handle_, offset, SEEK_SET);
 #else
-    return (fseeko64((FILE*)handle_,(long)offset,SEEK_SET) == 0);
+    return (fseeko64((FILE*)handle_, (long)offset, SEEK_SET) == 0);
 #endif
 }
 
@@ -570,7 +582,7 @@ int File::SeekEnd(int offset) {
     else 
         return fseek((FILE*)handle_, offset, SEEK_END);
 #else
-    return fseeko64((FILE*)handle_,(long)offset,SEEK_END);
+    return fseeko64((FILE*)handle_, (long)offset, SEEK_END);
 #endif
 }
 

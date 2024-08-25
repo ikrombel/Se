@@ -11,6 +11,14 @@
 #define NUM_FRUSTUM_PLANES 6
 #define NUM_FRUSTUM_VERTICES 8
 
+#ifdef near
+#undef near
+#endif
+
+#ifdef far
+#undef far
+#endif
+
 namespace Se
 {
 

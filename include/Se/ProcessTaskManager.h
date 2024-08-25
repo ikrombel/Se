@@ -4,6 +4,8 @@
 #include <Se/Timer.h>
 #include <Se/String.hpp>
 
+#include <memory>
+
 namespace Se {
 
 struct Process {

@@ -16,6 +16,10 @@
 
 #include <Se/Span.hpp>
 
+#ifdef max
+#undef max
+#endif
+
 
 
 namespace Se

@@ -6,6 +6,7 @@
 #include <Se/Console.hpp>
 #include <Se/Finally.hpp>
 #include <Se/StopToken.hpp>
+#include <Se/String.hpp>
 
 #include <SeMath/MathDefs.hpp>
 
@@ -34,6 +35,7 @@
 #include <shlobj.h>
 #include <sys/types.h>
 #include <sys/utime.h>
+#include <regex>
 #else
 #include <dirent.h>
 #include <cerrno>
@@ -62,6 +64,14 @@ const char* SDL_IOS_GetResourceDir();
 const char* SDL_IOS_GetDocumentsDir();
 #endif
 }
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 namespace Se
 {
@@ -349,7 +359,7 @@ int DoSystemRun(const String& fileName, const std::vector<String>& arguments, Sy
 
     if (flags & SR_READ_OUTPUT)
     {
-        stopGuard.execute();
+        stopGuard.Execute();
         output = futureOutput.get();
     }
 
@@ -1057,17 +1067,8 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
 
     //__ANDROID__ Windows
 #elif WIN32
-    // Specify the KNOWNFOLDERID for the application data directory
-    const GUID knownFolderId = FOLDERID_RoamingAppData;
 
-    // Buffer to hold the path
-    PWSTR buffer;
-    // Call SHGetKnownFolderPath to retrieve the path
-    if (SHGetKnownFolderPath(knownFolderId, 0, NULL, &buffer) == S_OK) {
-        if (env)
-            path = String(buffer);
-        CoTaskMemFree(buffer);
-    }
+    dir = GetENV("LOCALAPPDATA");
 
 #elif HAVE_SDL
     char* prefPath = SDL_GetPrefPath(org.c_str(), app.c_str());
@@ -1123,9 +1124,9 @@ bool FileSystem::SetLastModifiedTime(const String& fileName, FileTime newTime)
 bool FileSystem::Reveal(const String& path)
 {
 #ifdef _WIN32
-    return SystemCommand(Format("start explorer.exe /select,{}", GetNativePath(path))) == 0;
+    return SystemCommand(format("start explorer.exe /select,{}", GetNativePath(path))) == 0;
 #elif defined(__APPLE__)
-    return SystemCommand(Format("open -R {}", GetNativePath(path))) == 0;
+    return SystemCommand(format("open -R {}", GetNativePath(path))) == 0;
 #elif defined(__linux__)
     return SystemCommand(format("dbus-send "
         "--session --print-reply --dest=org.freedesktop.FileManager1 --type=method_call "
@@ -1288,7 +1289,7 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                     //result.push_back(deltaPath + fileName);
                 }
                 if (recursive)
-                    ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
+                    ScanDirInternalTree(result, pathTmp + fileName, startPath, filter, flags);
             }
             else if (flags & SCAN_FILES)
 #endif
@@ -1327,7 +1328,7 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                         node.IsDirectory = true;
                     }
                     if (recursive && fileName != "." && fileName != "..")
-                        ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
+                        ScanDirInternalTree(result, pathTmp + fileName, startPath, filter, flags);
                 }
                 else if (flags & SCAN_FILES)
                 {
@@ -1554,8 +1555,10 @@ std::wstring GetWideNativePath(const String& pathName)
 {
     std::wstring result;
 #ifdef _WIN32
-    result = MultiByteToWide(pathName);
-    result.replace(L'/', L'\\');
+    result = MultiByteToWide(pathName.c_str());
+
+    result = std::regex_replace(result, std::wregex(L"/"), L"\\");
+    //result.replace(L'/', L'\\');
 #endif
     return result;
 }
@@ -1864,8 +1867,18 @@ String FileSystem::GetTemporaryDir() const
 #if defined(_WIN32)
     wchar_t pathName[MAX_PATH];
     pathName[0] = 0;
-    GetTempPathW(SDL_arraysize(pathName), pathName);
-    return AddTrailingSlash(WideToMultiByte(pathName));
+
+    TCHAR tempPath[MAX_PATH];
+    DWORD tempPathLen = GetTempPath(MAX_PATH, tempPath);
+    if (tempPathLen > 0)
+    {
+        return AddTrailingSlash(WideToMultiByte((wchar_t*)tempPath));
+    }
+
+    assert(0 && "FileSystem::GetTemporaryDir() error");
+
+    //GetTempPathW(SDL_arraysize(pathName), pathName);
+    
 #else
     if (char* pathName = getenv("TMPDIR"))
         return AddTrailingSlash(pathName);

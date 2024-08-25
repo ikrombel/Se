@@ -52,9 +52,9 @@ target_include_directories(Se PUBLIC
 target_compile_definitions(Se ${SE_DEFINED})
 target_compile_features(Se PRIVATE cxx_std_20)
 
-if (WIN32)
-        target_compile_features(Se PRIVATE user32.lib)
-endif()
+# if (WIN32)
+#         target_compile_features(Se PRIVATE user32)
+# endif()
 
 
 add_library(SeVFS STATIC

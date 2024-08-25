@@ -6,6 +6,9 @@
 
 #ifdef _WIN32
 #  include <windows.h>
+#  ifdef max
+#    undef max
+#  endif
 #elif __linux__
 #  include <sys/inotify.h>
 #  include <sys/ioctl.h>
@@ -68,7 +71,7 @@ bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs, bool 
     String nativePath = GetNativePath(RemoveTrailingSlash(pathName));
 
     dirHandle_ = (void*)CreateFileW(
-        WString(nativePath).CString(),
+        Utf8ToUcs2(nativePath.c_str()).c_str(),
         FILE_LIST_DIRECTORY,
         FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
         nullptr,
@@ -246,7 +249,7 @@ void FileWatcher::ThreadFunction()
                 const wchar_t* src = record->FileName;
                 const wchar_t* end = src + record->FileNameLength / 2;
                 while (src < end)
-                    AppendUTF8(fileName, DecodeUTF16(src));
+                     fileName += Ucs2ToUtf8(src);
 
                 fileName = GetInternalPath(fileName);
 
@@ -255,13 +258,13 @@ void FileWatcher::ThreadFunction()
                 else if (record->Action == FILE_ACTION_ADDED)
                     AddChange({ FILECHANGE_ADDED, fileName, String::EMPTY });
                 else if (record->Action == FILE_ACTION_REMOVED)
-                    AddChange({ FILECHANGE_REMOVED, fileName, String::EMPTY });
+                    AddChange({ FILECHANGE_MOVED, fileName, String::EMPTY });
                 else if (record->Action == FILE_ACTION_RENAMED_OLD_NAME)
                     rename.oldFileName_ = fileName;
                 else if (record->Action == FILE_ACTION_RENAMED_NEW_NAME)
                     rename.fileName_ = fileName;
 
-                if (!rename.oldFileName_.Empty() && !rename.fileName_.Empty())
+                if (!rename.oldFileName_.empty() && !rename.fileName_.empty())
                 {
                     AddChange(rename);
                     rename = {};
