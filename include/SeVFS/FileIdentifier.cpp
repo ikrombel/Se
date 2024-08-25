@@ -5,6 +5,10 @@
 
 #include <Se/IO/FileSystem.h>
 
+#ifdef min
+#undef min
+#endif
+
 namespace Se
 {
 

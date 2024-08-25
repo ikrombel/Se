@@ -7,7 +7,7 @@
 #include <string>
 
 #ifdef _WIN32
-#include <processenv.h>
+//#include <processenv.h>
 // #include <winbase.h>
 // #include <wincon.h>
 #endif
@@ -136,23 +136,23 @@ inline LogCallback DefaultColored = [](const Console::ConsoleInfo& info, const c
 #define REGISTER_CONSOLE_GROUP(name, num) \
 namespace Console { \
     namespace name { \
-        struct info { \
+        struct reg { \
             inline static const char* name_ = #name; \
             inline static const int id_ = num; \
         }; \
         template<class... Args> static void error(const char* fStr, Args... args) { msg({MsgType::MsgError, num, #name}, fStr, args...); } \
         template<class... Args> static void print(const char *fStr, Args... args) { msg({MsgType::MsgNone, num, #name}, fStr, args...); } \
-        template<class... Args> static void info(const char *fStr, Args... args) { msg({MsgType::MsgInfo, num, #name}, fStr, args...); } \
+        template<class... Args> static void info(const char *fStr, Args... args) {    msg({MsgType::MsgInfo, num, #name}, fStr, args...); } \
         template<class... Args> static void warning(const char *fStr, Args... args) { msg({MsgType::MsgWarning, num, #name}, fStr, args...); } \
-        template<class... Args> static void debug(const char *fStr, Args... args) { msg({MsgType::MsgDebug, num, #name}, fStr, args...); } \
+        template<class... Args> static void debug(const char *fStr, Args... args) {   msg({MsgType::MsgDebug, num, #name}, fStr, args...); } \
     } \
 }
 
-#define LOG_ERROR(name, fStr, ...) Console::msg({Console::MsgType::MsgError, Console::name::info::id_, Console::name::info::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
-#define LOG_PRINT(name, fStr, ...) Console::msg({Console::MsgType::MsgNone, Console::name::info::id_, Console::name::info::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
-#define LOG_INFO(name, fStr, ...) Console::msg({Console::MsgType::MsgInfo, Console::name::info::id_, Console::name::info::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
-#define LOG_WARNING(name, fStr, ...) Console::msg({Console::MsgType::MsgWarning, Console::name::info::id_, Console::name::info::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
-#define LOG_DEBUG(name, fStr, ...) Console::msg({Console::MsgType::MsgDebug, Console::name::info::id_, Console::name::info::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
+#define LOG_ERROR(name, fStr, ...) Console::msg({Console::MsgType::MsgError, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
+#define LOG_PRINT(name, fStr, ...) Console::msg({Console::MsgType::MsgNone, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
+#define LOG_INFO(name, fStr, ...) Console::msg({Console::MsgType::MsgInfo, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
+#define LOG_WARNING(name, fStr, ...) Console::msg({Console::MsgType::MsgWarning, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
+#define LOG_DEBUG(name, fStr, ...) Console::msg({Console::MsgType::MsgDebug, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
 
 REGISTER_CONSOLE_GROUP(Se, 0)
 #define SE_LOG_INFO(formatStr, ...) LOG_INFO(Se, formatStr, ##__VA_ARGS__)

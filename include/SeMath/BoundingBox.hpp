@@ -473,7 +473,7 @@ inline float BoundingBox::SignedDistanceToPoint(const Vector3& point) const
     const Vector3 absOffset = VectorAbs(Center() - point);
     const Vector3 delta = absOffset - HalfSize();
     const float outerDistance = VectorMax(Vector3::ZERO, delta).Length();
-    const float innerDistance = -std::min(-delta.x_, std::min(-delta.y_, -delta.z_));
+    const float innerDistance = -Min(-delta.x_, Min(-delta.y_, -delta.z_));
     return innerDistance < 0 ? innerDistance : outerDistance;
 }
 
@@ -496,7 +496,7 @@ inline float BoundingBox::SignedDistanceToBoundingBox(const BoundingBox& box) co
     const Vector3 outerDelta = absOffset - maxHalfSize - minHalfSize;
     const float outerDistance = VectorMax(Vector3::ZERO, outerDelta).Length();
     const Vector3 innerDelta = maxHalfSize - absOffset - minHalfSize;
-    const float innerDistance = -std::min(innerDelta.x_, std::min(innerDelta.y_, innerDelta.z_));
+    const float innerDistance = -Min(innerDelta.x_, Min(innerDelta.y_, innerDelta.z_));
     return innerDistance < 0 ? innerDistance : outerDistance;
 }
 

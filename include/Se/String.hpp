@@ -930,8 +930,10 @@ template <class T> T FromString(const String& source) { return FromString<T>(sou
 // }
 
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-security"
+#endif
 
 template<class... Args>
 inline String cformat(const char * __restrict format, Args... args)
@@ -943,7 +945,9 @@ inline String cformat(const char * __restrict format, Args... args)
     return {tmp.c_str()};
 }
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 inline Se::String operator+(const Se::String &s0, const Se::String &s1) {
     Se::String ret = s0;

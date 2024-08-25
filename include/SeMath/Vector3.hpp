@@ -548,12 +548,12 @@ public:
     Vector2 ToXZ() const { return { x_, z_ }; }
 
     inline static Vector3 Min(const Vector3& lhs, const Vector3& rhs) { 
-        return {std::min(lhs.x_, rhs.x_), std::min(lhs.y_, rhs.y_), std::min(lhs.z_, rhs.z_)}; 
+        return { Se::Min(lhs.x_, rhs.x_), Se::Min(lhs.y_, rhs.y_), Se::Min(lhs.z_, rhs.z_)}; 
     }
 
 
     inline static Vector3 Max(const Vector3& lhs, const Vector3& rhs) {
-        return {std::max(lhs.x_, rhs.x_), std::max(lhs.y_, rhs.y_), std::max(lhs.z_, rhs.z_)};
+        return { Se::Max(lhs.x_, rhs.x_), Se::Max(lhs.y_, rhs.y_), Se::Max(lhs.z_, rhs.z_)};
     }
 
 

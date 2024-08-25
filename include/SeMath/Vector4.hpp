@@ -253,12 +253,12 @@ public:
     Vector3 ToVector3() const { return { x_, y_, z_ }; }
 
     inline static Vector4 Min(const Vector4& lhs, const Vector4& rhs) { 
-        return {std::min(lhs.x_, rhs.x_), std::min(lhs.y_, rhs.y_), std::min(lhs.z_, rhs.z_), std::min(lhs.w_, rhs.w_)}; 
+        return { Se::Min(lhs.x_, rhs.x_), Se::Min(lhs.y_, rhs.y_), Se::Min(lhs.z_, rhs.z_), Se::Min(lhs.w_, rhs.w_)}; 
     }
 
 
     inline static Vector4 Max(const Vector4& lhs, const Vector4& rhs) {
-        return {std::max(lhs.x_, rhs.x_), std::max(lhs.y_, rhs.y_), std::max(lhs.z_, rhs.z_), std::max(lhs.w_, rhs.w_)};
+        return { Se::Max(lhs.x_, rhs.x_), Se::Max(lhs.y_, rhs.y_), Se::Max(lhs.z_, rhs.z_), Se::Max(lhs.w_, rhs.w_)};
     }
 
 

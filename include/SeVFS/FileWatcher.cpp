@@ -6,6 +6,9 @@
 
 #ifdef _WIN32
 #  include <windows.h>
+#  ifdef max
+#    undef max
+#  endif
 #elif __linux__
 #  include <sys/inotify.h>
 #  include <sys/ioctl.h>
