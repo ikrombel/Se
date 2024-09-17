@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <algorithm>
 //#include <hash_set>
 
 namespace Se

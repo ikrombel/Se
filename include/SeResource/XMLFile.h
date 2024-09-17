@@ -16,7 +16,7 @@ namespace Se
 {
 
 /// XML document resource.
-class  XMLFile : public Resource //GFROST_API
+class XMLFile : public Resource //GFROST_API
 {
 public:
     /// Construct.

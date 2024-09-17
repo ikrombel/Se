@@ -36,7 +36,7 @@ struct FileIdentifier
     void AppendPath(const String& path);
 
     /// URI-like scheme. May be empty if not specified.
-     String scheme_;
+    String scheme_;
     /// URI-like path to the file.
     String fileName_;
 

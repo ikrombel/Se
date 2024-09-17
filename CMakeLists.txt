@@ -5,11 +5,20 @@ project(Se)
 set (CMAKE_CXX_STANDARD 20)
 
 option(HAVE_LZ4 "LZ4 Compression" ON)
+option(SE_THREADING "" ON)
+option(SE_FILEWATCHER "" ON)
 
-set(SE_DEFINED
-        PUBLIC SE_FILEWATCHER
-        PUBLIC SE_THREADING
-)
+if (SE_FILEWATCHER)
+        set(SE_DEFINED ${SE_DEFINED}
+                PUBLIC SE_FILEWATCHER
+        )
+endif()
+
+if (SE_THREADING)
+        set(SE_DEFINED ${SE_DEFINED}
+                PUBLIC SE_THREADING
+        )
+endif()
 
 set(SE_INCLUDE_DIRS )
 
@@ -56,6 +65,33 @@ target_compile_features(Se PRIVATE cxx_std_20)
 #         target_compile_features(Se PRIVATE user32)
 # endif()
 
+add_library(SeResource STATIC
+        src/SeResource/ETCPACK/source/etcdec.cxx
+        src/SeResource/ETCPACK/source/image.cxx
+
+        src/SeResource/Decompress.cpp
+        src/SeResource/Decompress.h
+        src/SeResource/Image.cpp
+        src/SeResource/Resource.cpp
+
+        src/SeResource/JSONValue.cpp
+        src/SeResource/JSONArchive.cpp
+        src/SeResource/JSONFile.cpp
+)
+
+target_include_directories(SeResource 
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/SeResource
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/SeResource/ETCPACK/source
+
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/SeResource/rapidjson/include
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/SeResource
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/SeResource/rapidjson/include   
+)
+
+target_link_libraries(SeResource PUBLIC
+        Se
+)
+
 
 add_library(SeVFS STATIC
         include/SeVFS/FileIdentifier.cpp 
@@ -71,26 +107,11 @@ target_link_libraries(SeVFS PUBLIC
         Se
 )
 
-add_library(SeArcJson STATIC
-        src/SeArcJson/JSONValue.cpp
-        include/SeArcJson/JSONArchive.cpp
-        src/SeArcJson/JSONFile.cpp
-)
-
-target_include_directories(SeArcJson PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/SeArcJson
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/SeArcJson/rapidjson/include
-)
-
-target_link_libraries(SeArcJson PUBLIC
-        Se
-)
-
-add_executable(test.SeArc tests/main.cpp
+add_executable(test.SeResource tests/main.cpp
         # include/SeVFS/PackageFile.hpp        
 )
 
-target_link_libraries(test.SeArc PUBLIC
-        SeArcJson
+target_link_libraries(test.SeResource PUBLIC
+        SeSeResource
         SeVFS
 )

@@ -2,7 +2,7 @@
 
 
 
-#include "JSONValue.h"
+#include <SeResource/JSONValue.h>
 
 #include <cassert>
 #include <cmath>

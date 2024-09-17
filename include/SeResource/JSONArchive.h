@@ -5,8 +5,8 @@
 #include <SeMath/MathDefs.hpp>
 
 #include <SeArc/ArchiveBase.hpp>
-#include <SeArcJson/JSONFile.h>
-#include <SeArcJson/JSONValue.h>
+#include <SeResource/JSONFile.h>
+#include <SeResource/JSONValue.h>
 #include <Se/Math.hpp>
 
 namespace Se

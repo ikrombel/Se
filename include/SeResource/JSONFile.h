@@ -8,7 +8,7 @@
 
 #include <Se/IO/AbstractFile.hpp>
 
-#include <SeArcJson/JSONValue.h>
+#include <SeResource/JSONValue.h>
 
 #include <functional>
 #include <string>

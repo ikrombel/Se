@@ -65,7 +65,7 @@ inline void msg(const ConsoleInfo& info, const std::string& fmt, Args... args) {
     if (!ConsolePrivate::signalConsole.empty())
         ConsolePrivate::signalConsole(info, f.c_str());
     else {
-        printf("%s", f.c_str());
+        printf("%s\n", f.c_str());
     }
 }
 

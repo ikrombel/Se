@@ -225,31 +225,4 @@ private:
     bool isHDR_{false};
 };
 
-struct ImageLoadDesc
-{
-    const char* filePath;
-    uint32_t outWidth;
-    uint32_t outHeight;
-    uint32_t outBits;
-    bool isHDR;
-    bool flipY         = false;
-    bool srgb          = true;
-    uint32_t maxWidth  = 2048;
-    uint32_t maxHeight = 2048;
-    uint8_t* outPixels;
-};
-
-
-#ifndef __ANDROID__
-GFROST_API uint8_t* LoadImageFromFile(const char* filename, uint32_t* width = nullptr, uint32_t* height = nullptr, uint32_t* bits = nullptr, bool* isHDR = nullptr, bool flipY = false, bool srgb = true);
-GFROST_API uint8_t* LoadImageFromFile(const String& filename, uint32_t* width = nullptr, uint32_t* height = nullptr, uint32_t* bits = nullptr, bool* isHDR = nullptr, bool flipY = false, bool srgb = true);
-
-GFROST_API bool LoadImageFromFile(ImageLoadDesc& desc);
-
-GFROST_API void SetMaxImageDimensions(uint32_t width, uint32_t height);
-
-GFROST_API void GetMaxImageDimensions(uint32_t& width, uint32_t& height);
-
-#endif
-
 }

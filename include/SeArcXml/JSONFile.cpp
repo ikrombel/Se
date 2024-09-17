@@ -1,21 +1,40 @@
+// Copyright (c) 2008-2020 the GFrost project.
+
+#include <GFrost/Precompiled.h>
+
+#include <GFrost/Container/ArrayPtr.h>
+#include <GFrost/Core/Profiler.h>
+#include <GFrost/Core/Context.h>
+#include <GFrost/IO/Deserializer.h>
+#include <GFrost/IO/Log.h>
+#include <GFrost/IO/MemoryBuffer.h>
+#include <GFrost/Resource/ResourceCache.h>
+
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
 
-#include <Se/Console.hpp>
-//#include <Se/IO/MemoryBuffer.hpp>
-
-#include <SeArcJson/JSONArchive.h>
-
 #include "JSONFile.h"
-//#include "JSONArchive.h"
+#include "JSONArchive.h"
 
-
-namespace Se
-{
+#include <GFrost/DebugNew.h>
 
 using namespace rapidjson;
 
+namespace GFrost
+{
+
+JSONFile::JSONFile(Context* context) :
+    Resource(context)
+{
+}
+
+JSONFile::~JSONFile() = default;
+
+void JSONFile::RegisterObject(Context* context)
+{
+    context->RegisterFactory<JSONFile>();
+}
 
 // Convert rapidjson value to JSON value.
 static void ToJSONValue(JSONValue& jsonValue, const rapidjson::Value& rapidjsonValue)
@@ -77,27 +96,27 @@ static void ToJSONValue(JSONValue& jsonValue, const rapidjson::Value& rapidjsonV
 bool JSONFile::BeginLoad(Deserializer& source)
 {
     unsigned dataSize = source.GetSize();
-    if (!dataSize && !source.GetName().empty())
+    if (!dataSize && !source.GetName().Empty())
     {
-        SE_LOG_ERROR("Zero sized JSON data in " + source.GetName());
+        GFROST_LOGERROR("Zero sized JSON data in " + source.GetName());
         return false;
     }
 
-    auto buffer = std::shared_ptr<char>(new char[dataSize + 1]);
-    if (source.Read(buffer.get(), dataSize) != dataSize)
+    SharedArrayPtr<char> buffer(new char[dataSize + 1]);
+    if (source.Read(buffer.Get(), dataSize) != dataSize)
         return false;
-    buffer.get()[dataSize] = '\0';
+    buffer[dataSize] = '\0';
 
     rapidjson::Document document;
-    if (document.Parse<kParseCommentsFlag | kParseTrailingCommasFlag>(buffer.get()).HasParseError())
+    if (document.Parse<kParseCommentsFlag | kParseTrailingCommasFlag>(buffer).HasParseError())
     {
-        SE_LOG_ERROR("Could not parse JSON data from " + source.GetName());
+        GFROST_LOGERROR("Could not parse JSON data from " + source.GetName());
         return false;
     }
 
     ToJSONValue(root_, document);
 
-    //SetMemoryUse(dataSize);
+    SetMemoryUse(dataSize);
 
     return true;
 }
@@ -158,11 +177,11 @@ static void ToRapidjsonValue(rapidjson::Value& rapidjsonValue, const JSONValue& 
             const JSONObject& jsonObject = jsonValue.GetObject();
 
             rapidjsonValue.SetObject();
-            for (auto i = jsonObject.begin(); i != jsonObject.end(); ++i)
+            for (JSONObject::ConstIterator i = jsonObject.Begin(); i != jsonObject.End(); ++i)
             {
-                const char* name = i->first.c_str();
+                const char* name = i->first_.CString();
                 rapidjson::Value value;
-                ToRapidjsonValue(value, i->second, allocator);
+                ToRapidjsonValue(value, i->second_, allocator);
                 rapidjsonValue.AddMember(StringRef(name), value, allocator);
             }
         }
@@ -185,7 +204,7 @@ bool JSONFile::Save(Serializer& dest, const String& indendation) const
 
     StringBuffer buffer;
     PrettyWriter<StringBuffer> writer(buffer);
-    writer.SetIndent(!indendation.empty() ? indendation.front() : '\0', indendation.length());
+    writer.SetIndent(!indendation.Empty() ? indendation.Front() : '\0', indendation.Length());
 
     document.Accept(writer);
     auto size = (unsigned)buffer.GetSize();
@@ -204,7 +223,7 @@ bool JSONFile::SaveObjectCallback(const std::function<void(Archive&)> serializeV
     catch (const ArchiveException& e)
     {
         root_.Clear();
-        //SE_LOG_ERROR("Failed to save object to JSON: {}", e.what());
+        GFROST_LOGERROR("Failed to save object to JSON: {}", e.what());
         return false;
     }
 }
@@ -219,21 +238,18 @@ bool JSONFile::LoadObjectCallback(const std::function<void(Archive&)> serializeV
     }
     catch (const ArchiveException& e)
     {
-        //SE_LOG_ERROR("Failed to load object from JSON: {}", e.what());
+        GFROST_LOGERROR("Failed to load object from JSON: {}", e.what());
         return false;
     }
 }
 
-bool JSONFile::FromString(const String& source)
+bool JSONFile::FromString(const String & source)
 {
-    if (source.empty())
+    if (source.Empty())
         return false;
 
-    // MemoryBuffer buffer(source.c_str(), source.length());
-    // return Load(buffer);
-    //return Load(source);
-
-    assert(0 && "TODO to implement");
+    MemoryBuffer buffer(source.CString(), source.Length());
+    return Load(buffer);
 }
 
 String JSONFile::ToString(const String& indendation) const
@@ -243,7 +259,7 @@ String JSONFile::ToString(const String& indendation) const
 
     StringBuffer buffer;
     PrettyWriter<StringBuffer> writer(buffer);
-    writer.SetIndent(!indendation.empty() ? indendation.front() : '\0', indendation.length());
+    writer.SetIndent(!indendation.Empty() ? indendation.Front() : '\0', indendation.Length());
 
     document.Accept(writer);
     return buffer.GetString();
@@ -256,7 +272,7 @@ String ToPrettyString(const JSONValue& json, const String& indendation)
 
     StringBuffer buffer;
     PrettyWriter<StringBuffer> writer(buffer);
-    writer.SetIndent(!indendation.empty() ? indendation.front() : '\0', indendation.length());
+    writer.SetIndent(!indendation.Empty() ? indendation.Front() : '\0', indendation.Length());
 
     document.Accept(writer);
     return buffer.GetString();

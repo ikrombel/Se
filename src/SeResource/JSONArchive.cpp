@@ -2,7 +2,7 @@
 
 //#include <GFrost/Core/StringUtils.h>
 #include <SeArc/ArchiveSerialization.hpp>
-#include <SeArcJson/JSONArchive.h>
+#include <SeResource/JSONArchive.h>
 
 #include <string>
 
