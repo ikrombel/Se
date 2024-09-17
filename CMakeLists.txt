@@ -1,6 +1,6 @@
 project(Se)
 
-
+include(cmake/SeOutputDirectoryStyle.cmake)
 
 set (CMAKE_CXX_STANDARD 20)
 
