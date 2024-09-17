@@ -77,6 +77,10 @@ add_library(SeResource STATIC
         src/SeResource/JSONValue.cpp
         src/SeResource/JSONArchive.cpp
         src/SeResource/JSONFile.cpp
+
+        # src/SeResource/PugiXml/pugixml.cpp
+        # src/SeResource/XMLElement.cpp
+        # src/SeResource/XMLFile.cpp
 )
 
 target_include_directories(SeResource 
@@ -112,6 +116,6 @@ add_executable(test.SeResource tests/main.cpp
 )
 
 target_link_libraries(test.SeResource PUBLIC
-        SeSeResource
+        SeResource
         SeVFS
 )

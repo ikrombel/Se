@@ -6,7 +6,7 @@
 
 #include <SeMath/ArchiveMath.hpp>
 
-#include <PugiXml/pugixml.hpp>
+#include "PugiXml/pugixml.hpp"
 
 namespace Se
 {

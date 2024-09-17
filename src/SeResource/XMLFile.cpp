@@ -1,10 +1,9 @@
-// Copyright (c) 2008-2020 the GFrost project.
-
 
 #include <Se/Profiler.hpp>
 #include <Se/IO/Deserializer.hpp>
 #include <Se/Console.hpp>
 #include <Se/IO/MemoryBuffer.hpp>
+#include <SeVFS/VirtualFileSystem.h>
 //#include <Se/IO/VectorBuffer.h>
 //#include <GFrost/Resource/ResourceCache.h>
 //#include <SeResource/XMLArchive.h>
@@ -12,7 +11,7 @@
 #include <SeResource/XMLFile.h>
 //#include <SeResource/XMLArchive.h>
 
-#include <PugiXml/pugixml.hpp>
+#include "PugiXml/pugixml.hpp"
 
 
 namespace Se
@@ -76,10 +75,13 @@ bool XMLFile::BeginLoad(Deserializer& source)
     if (!inherit.empty())
     {
         // The existence of this attribute indicates this is an RFC 5261 patch file
-        auto* cache = GetSubsystem<ResourceCache>();
+        //auto* cache = GetSubsystem<ResourceCache>();
+        //auto vfs = VirtualFileSystem::Get();
         // If being async loaded, GetResource() is not safe, so use GetTempResource() instead
-        XMLFile* inheritedXMLFile = GetAsyncLoadState() == ASYNC_DONE ? cache->GetResource<XMLFile>(inherit) :
-            cache->GetTempResource<XMLFile>(inherit);
+        auto inheritedXMLFile = std::make_shared<XMLFile>();
+        inheritedXMLFile->LoadFile(inherit);
+        //XMLFile* inheritedXMLFile = GetAsyncLoadState() == ASYNC_DONE ? cache->GetResource<XMLFile>(inherit) :
+        //    cache->GetTempResource<XMLFile>(inherit);
         if (!inheritedXMLFile)
         {
             SE_LOG_ERROR("Could not find inherited XML file: {}", inherit.c_str());
@@ -93,7 +95,7 @@ bool XMLFile::BeginLoad(Deserializer& source)
         Patch(rootElem);
 
         // Store resource dependencies so we know when to reload/repatch when the inherited resource changes
-        cache->StoreResourceDependency(this, inherit);
+        //cache->StoreResourceDependency(this, inherit);
 
         // Approximate patched data size
         dataSize += inheritedXMLFile->GetMemoryUse();
@@ -364,9 +366,9 @@ void XMLFile::AddAttribute(const pugi::xml_node& patch, const pugi::xpath_node& 
     }
 
     String name(attribute.value());
-    name = name.Substring(1);
+    name = name.substr(1);
 
-    pugi::xml_attribute newAttribute = original.node().append_attribute(name.CString());
+    pugi::xml_attribute newAttribute = original.node().append_attribute(name.c_str());
     newAttribute.set_value(patch.child_value());
 }
 
@@ -379,9 +381,9 @@ bool XMLFile::CombineText(const pugi::xml_node& patch, const pugi::xml_node& ori
         (patch.type() == pugi::node_cdata && original.type() == pugi::node_cdata))
     {
         if (prepend)
-            const_cast<pugi::xml_node&>(original).set_value(GFrost::ToString("%s%s", patch.value(), original.value()).CString());
+            const_cast<pugi::xml_node&>(original).set_value(cformat("%s%s", patch.value(), original.value()).c_str());
         else
-            const_cast<pugi::xml_node&>(original).set_value(GFrost::ToString("%s%s", original.value(), patch.value()).CString());
+            const_cast<pugi::xml_node&>(original).set_value(cformat("%s%s", original.value(), patch.value()).c_str());
 
         return true;
     }

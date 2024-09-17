@@ -8,10 +8,10 @@
 #include <Se/Signal.hpp>
 #include <functional>
 
-#include <SeArcJson/JSONArchive.h>
+#include <SeResource/JSONArchive.h>
 #include <SeArc/Archive.hpp>
 #include <SeArc/ArchiveSerialization.hpp>
-#include <SeArcJson/JSONFile.h>
+#include <SeResource/JSONFile.h>
 
 #include <SeMath/Vector4.hpp>
 #include <SeMath/Quaternion.hpp>
