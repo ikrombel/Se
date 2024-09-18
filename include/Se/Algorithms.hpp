@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include <algorithm>
+
 namespace Se {
 
     namespace Private {
@@ -31,7 +33,20 @@ inline void hash_combine(std::size_t& seed, const T& v)
     seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 }
 
+template <typename Container, typename Predicate>
+void EraseIf(Container& c, Predicate pred) {
+    
+    if (c.empty())
+        return;
+    
+    auto endIt = c.end();
+    endIt = std::next(endIt, -1);
+    for (auto it = endIt; it >= c.begin(); it = std::next(it, -1))
+        if (pred(*it))
+            c.erase(it);
 
+    //c.erase(RemoveIf(c.begin(), c.end(), pred), c.end());
+}
 
 // inline void StringToBuffer(std::vector<unsigned char>& dest, const char* source)
 // {

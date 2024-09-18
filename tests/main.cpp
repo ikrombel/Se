@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 
+#include <Se/Algorithms.hpp>
 #include <Se/IO/File.h>
 #include <Se/IO/FileSystem.h>
 #include <Se/Signal.hpp>
@@ -130,7 +131,27 @@ void TestArch() {
     SE_LOG_INFO("{}", "Info Test");
     SE_LOG_ERROR("{}", "Error Test");
     SE_LOG_ERROR("{}", "Error Test 2");
-    
+
+
+    {
+        //std::vector<int> testErase = { 0, 1, 2, 3, 2, 4, 5, 2};
+        std::vector<int> testErase = {  };
+
+        Se::String printStr = "----------------------\n";
+        for (auto a : testErase)
+            printStr += cformat(" %i", a);
+        SE_LOG_INFO(printStr);
+
+
+        Se::EraseIf(testErase, [](int item){
+            return item ==2;
+        });
+
+        printStr = "----------------------\n";
+        for (auto a : testErase)
+            printStr += cformat(" %i", a);
+        SE_LOG_INFO(printStr);
+    }
 //});
 }
 
@@ -213,4 +234,5 @@ int main() {
     Se::BoundingBox box;
     Se::Frustum fFrustum;
 
+    
 }

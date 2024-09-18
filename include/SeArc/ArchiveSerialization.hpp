@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020 the rbfx project.
+#pragma once
 
 //#include <GFrost/Precompiled.h>
 //#include <GFrost/Core/Format.h>

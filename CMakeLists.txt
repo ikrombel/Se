@@ -31,6 +31,7 @@ set(SE_SOURCE
         src/Se/Thread.cpp
         src/Se/Timer.cpp
         src/Se/ProcessTaskManager.cpp
+        src/Se/VectorBuffer.cpp
         )
 
 if (HAVE_LZ4) 
@@ -77,6 +78,9 @@ add_library(SeResource STATIC
         src/SeResource/JSONValue.cpp
         src/SeResource/JSONArchive.cpp
         src/SeResource/JSONFile.cpp
+
+        src/SeResource/BinaryArchive.cpp 
+        src/SeResource/Base64Archive.cpp
 
         # src/SeResource/PugiXml/pugixml.cpp
         # src/SeResource/XMLElement.cpp
