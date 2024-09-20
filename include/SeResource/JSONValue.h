@@ -52,14 +52,12 @@ class JSONValue
 
 public:
     /// Construct null value.
-    JSONValue() :
-        type_(0)
+    JSONValue()
     {
     }
 
     /// Construct a default value with defined type.
-    explicit JSONValue(JSONValueType valueType, JSONNumberType numberType = JSONNT_NAN) :
-        type_(0)
+    explicit JSONValue(JSONValueType valueType, JSONNumberType numberType = JSONNT_NAN)
     {
         SetType(valueType, numberType);
     }
@@ -286,7 +284,7 @@ public:
 
 protected:
     /// type.
-    unsigned type_{0};
+    unsigned type_{JSONValueType::JSON_NULL};
     union
     {
         /// Boolean value.
@@ -298,7 +296,7 @@ protected:
         /// Array value.
         JSONArray* arrayValue_;
         /// Object value.
-        JSONObject* objectValue_;
+        JSONObject* objectValue_{nullptr};
     };
 };
 
