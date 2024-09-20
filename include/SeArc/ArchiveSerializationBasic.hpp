@@ -259,6 +259,7 @@ struct EnumStringSafeCaster<unsigned>
 
 /// Check whether the object can be serialized from/to Archive block.
 SEARC_TYPE_TRAIT(IsObjectSerializableInBlock, std::declval<T&>().SerializeInBlock(std::declval<Archive&>()));
+SEARC_TYPE_TRAIT(IsObjectSerializableInBlockPtr, std::declval<T&>()->SerializeInBlock(std::declval<Archive&>()));
 
 /// Check whether the object has "empty" method.
 SEARC_TYPE_TRAIT(IsObjectEmptyCheckableSTD, std::declval<T&>().empty());
@@ -343,6 +344,14 @@ inline void SerializeValue(Archive& archive, const char* name, T& value)
 {
     ArchiveBlock block = archive.OpenUnorderedBlock(name);
     value.SerializeInBlock(archive);
+}
+
+/// Serialize object with standard interface as value.
+template <class T, std::enable_if_t<IsObjectSerializableInBlockPtr<T>::value, int> = 0>
+inline void SerializeValue(Archive& archive, const char* name, T& value)
+{
+    ArchiveBlock block = archive.OpenUnorderedBlock(name);
+    value->SerializeInBlock(archive);
 }
 
 /// Serialize value as another type.
