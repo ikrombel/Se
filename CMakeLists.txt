@@ -65,9 +65,9 @@ target_compile_definitions(Se
         )
 # target_compile_features(Se PRIVATE cxx_std_20)
 
-# if (WIN32)
-#         target_compile_features(Se PRIVATE user32)
-# endif()
+if (WIN32)
+        target_link_libraries(Se PRIVATE user32 winmm)
+endif()
 
 add_library(SeResource STATIC
         src/SeResource/ETCPACK/source/etcdec.cxx
@@ -105,7 +105,7 @@ target_link_libraries(SeResource PUBLIC
 
 
 add_library(SeVFS STATIC
-        include/SeVFS/FileIdentifier.cpp 
+        include/SeVFS/FileIdentifier.cpp
         include/SeVFS/MountedAliasRoot.cpp 
         include/SeVFS/MountedDirectory.cpp 
         include/SeVFS/MountedExternalMemory.cpp 
