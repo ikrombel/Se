@@ -44,13 +44,13 @@ enum JSONNumberType
 class JSONValue;
 
 /// JSON array type.
-using JSONArray = std::vector<JSONValue>;
+typedef std::vector<JSONValue> JSONArray;
 /// JSON object type.
-using JSONObject = std::unordered_map<String, JSONValue>;
+typedef std::unordered_map<String, JSONValue> JSONObject;
 /// JSON object iterator.
-using JSONObjectIterator = JSONObject::iterator;
+typedef JSONObject::iterator JSONObjectIterator;
 /// Constant JSON object iterator.
-using ConstJSONObjectIterator = JSONObject::const_iterator;
+typedef JSONObject::const_iterator ConstJSONObjectIterator;
 
 /// JSON value class.
 class JSONValue
