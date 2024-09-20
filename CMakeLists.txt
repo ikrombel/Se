@@ -59,8 +59,11 @@ target_include_directories(Se PUBLIC
         ${SE_INCLUDE_DIRS}
 )
 
-target_compile_definitions(Se ${SE_DEFINED})
-target_compile_features(Se PRIVATE cxx_std_20)
+target_compile_definitions(Se 
+        ${SE_DEFINED}
+        PUBLIC NOMINMAX
+        )
+# target_compile_features(Se PRIVATE cxx_std_20)
 
 # if (WIN32)
 #         target_compile_features(Se PRIVATE user32)
@@ -103,7 +106,6 @@ target_link_libraries(SeResource PUBLIC
 
 add_library(SeVFS STATIC
         include/SeVFS/FileIdentifier.cpp 
-        include/SeVFS/FileWatcher.cpp 
         include/SeVFS/MountedAliasRoot.cpp 
         include/SeVFS/MountedDirectory.cpp 
         include/SeVFS/MountedExternalMemory.cpp 

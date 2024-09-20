@@ -8,6 +8,9 @@
 #include <SeVFS/FileIdentifier.h>
 // #include <SeArcJson/JSONValue.h>
 
+#include <array>
+#include <unordered_map>
+
 #include <optional>
 
 #ifndef GFROST_API
