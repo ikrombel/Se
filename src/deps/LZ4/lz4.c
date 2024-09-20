@@ -102,7 +102,7 @@
 #  pragma warning(disable : 4127)        /* disable: C4127: conditional expression is constant */
 #  pragma warning(disable : 4293)        /* disable: C4293: too large shift (32-bits) */
 #else
-#  if defined(__GNUC__) || defined(__clang__)
+#  if defined(__clang__)
 #    define FORCE_INLINE static inline __attribute__((always_inline))
 #  elif defined(__cplusplus) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) /* C99 */)
 #    define FORCE_INLINE static inline

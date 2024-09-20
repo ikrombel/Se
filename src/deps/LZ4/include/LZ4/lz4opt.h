@@ -312,7 +312,7 @@ static int LZ4HC_compress_optimal (
                         price = opt[cur2].price + LZ4HC_sequencePrice(litlen, mlen);
                     }
 
-                    if (cur2 + mlen > last_pos || price < (size_t)opt[cur2 + mlen].price) { // || (((int)price == opt[cur2 + mlen].price) && (opt[cur2 + mlen-1].mlen == 1))) {
+                    if (cur2 + mlen > last_pos || price < (size_t)opt[cur2 + mlen].price) { /* || (((int)price == opt[cur2 + mlen].price) && (opt[cur2 + mlen-1].mlen == 1))) {*/
                         SET_PRICE(cur2 + mlen, mlen, matches[i].off, litlen, price);
                     }
                     mlen++;
