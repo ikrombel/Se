@@ -1,5 +1,3 @@
-// Copyright (c) 2017-2020 the rbfx project.
-
 #pragma once
 
 #include <SeMath/MathDefs.hpp>

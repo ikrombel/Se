@@ -217,3 +217,14 @@ inline constexpr StringHash operator"" _sh(const char* str, std::size_t len)
 static_assert(sizeof(StringHash) == sizeof(unsigned), "Unexpected StringHash size.");
 
 } // namespace Se
+
+// Register span with std::hash
+namespace std {
+template <>
+struct hash<Se::StringHash> {
+    size_t operator()(const Se::StringHash& s) const {
+        return s.ToHash();
+        //return std::hash<unsigned int>()(s.ToHash());
+    }
+};
+} // namespace std

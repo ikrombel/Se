@@ -1,5 +1,3 @@
-// Copyright (c) 2008-2020 the GFrost project.
-
 #pragma once
 
 #include <vector>

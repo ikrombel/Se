@@ -1,13 +1,8 @@
-// Copyright (c) 2008-2020 the GFrost project.
-
 #pragma once
-
-//#include <GFrost/Resource/Resource.h>
-//#include <GFrost/Resource/JSONValue.h>
-
 
 #include <Se/IO/AbstractFile.hpp>
 
+#include <SeResource/Resource.h>
 #include <SeResource/JSONValue.h>
 
 #include <functional>
@@ -19,19 +14,19 @@ namespace Se
 class Archive;
 
 /// JSON document resource.
-class JSONFile // : public Resource
+class JSONFile : public Resource
 {
 
 public:
     /// Construct.
-    explicit JSONFile() = default;
+    explicit JSONFile() : Resource() {};
     /// Destruct.
-    virtual ~JSONFile() = default;
+    ~JSONFile() override {};
 
     /// Load resource from stream. May be called from a worker thread. Return true if successful.
-    bool BeginLoad(Deserializer& source);
+    bool BeginLoad(Deserializer& source) override;
     /// Save resource with default indentation (one tab). Return true if successful.
-    bool Save(Serializer& dest) const;
+    bool Save(Serializer& dest) const override;
     /// Save resource with user-defined indentation, only the first character (if any) of the string is used and the length of the string defines the character count. Return true if successful.
     bool Save(Serializer& dest, const String& indendation) const;
 
