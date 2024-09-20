@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <string>
 #include <unordered_map>
 
 #include <Se/String.hpp>
@@ -66,68 +65,57 @@ public:
     }
 
     /// Construct with a boolean.
-    JSONValue(bool value) :         // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(bool value)        // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Construct with a integer.
-    JSONValue(int value) :          // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(int value)         // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Construct with a unsigned integer.
-    JSONValue(unsigned value) :     // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(unsigned value)    // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Construct with a float.
-    JSONValue(float value) :        // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(float value)       // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Construct with a double.
-    JSONValue(double value) :       // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(double value)      // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Construct with a string.
-    JSONValue(const String& value) :    // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(const String& value)   // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Construct with a C string.
-    JSONValue(const char* value) :      // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(const char* value)     // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Construct with a JSON array.
-    JSONValue(const JSONArray& value) :     // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(const JSONArray& value)    // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Construct with a JSON object.
-    JSONValue(const JSONObject& value) :    // NOLINT(google-explicit-constructor)
-        type_(0)
+    JSONValue(const JSONObject& value)   // NOLINT(google-explicit-constructor)
     {
         *this = value;
     }
     /// Copy-construct from another JSON value.
-    JSONValue(const JSONValue& value) :
-        type_(0)
+    JSONValue(const JSONValue& value)
     {
         *this = value;
     }
     /// Move-construct from another JSON value.
-    JSONValue(JSONValue && value) :
-        type_(0)
+    JSONValue(JSONValue && value)
     {
         *this = std::move(value);
     }
@@ -298,7 +286,7 @@ public:
 
 protected:
     /// type.
-    unsigned type_;
+    unsigned type_{0};
     union
     {
         /// Boolean value.

@@ -1,7 +1,3 @@
-// Copyright (c) 2008-2020 the GFrost project.
-
-
-
 #include <SeResource/JSONValue.h>
 
 #include <cassert>
