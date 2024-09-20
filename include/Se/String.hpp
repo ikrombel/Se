@@ -1155,7 +1155,45 @@ inline String WideToMultiByte(const wchar_t* string)
 // #endif
 
 
+template<typename T>
+inline std::string ToStringTypeId() {
+    std::string ret;
+
+    static auto typeIdIsNumber = [](char c) -> bool {
+        return c >= '0' && c <= '9';
+    };
+
+    std::string typeOrig = typeid(T).name();
+    const char *c = typeOrig.data();
+
+    std::string numStuck;
+
+    while(*c) {
+
+        if (typeIdIsNumber(*c)) {
+            numStuck.push_back(*c);
+        }
+        else if (!numStuck.empty()) {
+            size_t startPos = (c - typeOrig.data());
+            size_t sizeS = atoi(numStuck.c_str());
+            std::string tmp = typeOrig.substr(startPos, sizeS);
+            ret += ret.empty() ? tmp : "::" + tmp;
+            numStuck.clear();
+            c = typeOrig.data() + startPos + sizeS;
+            continue;
+        }
+    
+        c++;
+    }
+
+    return ret;
+}
+
+using StringVector = std::vector<String>;
+
 } //namespace Se
+
+
 
 // Register span with std::hash
 namespace std {
