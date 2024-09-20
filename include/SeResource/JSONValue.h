@@ -41,9 +41,6 @@ enum JSONNumberType
     JSONNT_FLOAT_DOUBLE
 };
 
-//class JSONValue;
-
-
 /// JSON value class.
 class JSONValue
 {
