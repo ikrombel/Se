@@ -112,6 +112,7 @@ add_library(SeVFS STATIC
         include/SeVFS/MountedRoot.cpp 
         include/SeVFS/MountPoint.cpp
         include/SeVFS/VirtualFileSystem.cpp 
+        include/SeVFS/FileWatcher.cpp 
 )
 target_link_libraries(SeVFS PUBLIC
         Se
