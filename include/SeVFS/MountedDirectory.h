@@ -15,8 +15,8 @@ class MountedDirectory : public WatchableMountPoint
 {
 
 public:
-    using onFileChangedType = Signal<const FileChangeInfo&>;
-    onFileChangedType onFileChanged;
+    /// Tracked file changed in the resource directories. E_FILECHANGED
+    //Signal<const FileChangeInfo&> onFileChanged;
 
     /// Construct and open.
     MountedDirectory(const String& directory, String scheme = String::EMPTY);

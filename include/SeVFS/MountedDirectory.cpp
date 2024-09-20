@@ -1,9 +1,5 @@
-// Copyright (c) 2022-2022 the Urho3D project.
-
 #include "MountedDirectory.h"
 
-// #include "Se/Core/Context.h"
-// #include "Se/Core/CoreEvents.h"
 #include <Se/IO/File.h>
 #include <Se/IO/FileSystem.h>
 #include <Se/Console.hpp>
@@ -39,8 +35,6 @@ String MountedDirectory::SanitizeDirName(const String& name) const
     return fixedPath;
 }
 
-
-
 void MountedDirectory::StartWatching()
 {
     if (!fileWatcher_)
@@ -71,11 +65,10 @@ void MountedDirectory::ProcessUpdates()
     while (fileWatcher_->GetNextChange(change))
     {
         FileChangeInfo tmp;
-
-        tmp.fileName_ = fileWatcher_->GetPath() + change.fileName_;
-        tmp.resourceName_ = FileIdentifier{scheme_, change.fileName_}.ToUri();
-        tmp.kind_ = change.kind_;
-        onFileChanged(tmp);
+        tmp.fileName = fileWatcher_->GetPath() + change.fileName_;
+        tmp.resourceName = FileIdentifier{scheme_, change.fileName_}.ToUri();
+        tmp.kind = change.kind_;
+        FileWatcher::onFileChanged(tmp);
     }
 }
 

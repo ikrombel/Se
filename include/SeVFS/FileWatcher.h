@@ -36,11 +36,11 @@ struct FileChange
 struct FileChangeInfo
 {
     /// File change kind.
-    FileChangeKind kind_;
+    FileChangeKind kind;
     /// Name of modified file name. Always set.
-    String fileName_;
+    String fileName;
     /// Previous file name in case of FILECHANGE_MODIFIED event. Empty otherwise.
-    String resourceName_;
+    String resourceName;
 };
 
 /// Watches a directory and its subdirectories for files being modified.
@@ -48,6 +48,8 @@ class FileWatcher : public Thread
 {
 
 public:
+    /// Tracked file changed in the resource directories. E_FILECHANGED
+    static Signal<const FileChangeInfo& /*FileInfo*/> onFileChanged;
 
     /// Construct.
     explicit FileWatcher();
