@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <utility>
 
 #include <Se/String.hpp>
 
@@ -37,6 +38,18 @@ enum JSONNumberType
     /// Float or double.
     JSONNT_FLOAT_DOUBLE
 };
+
+
+class JSONValue;
+
+/// JSON array type.
+using JSONArray = std::vector<JSONValue>;
+/// JSON object type.
+using JSONObject = std::unordered_map<String, JSONValue>;
+/// JSON object iterator.
+using JSONObjectIterator = JSONObject::iterator;
+/// Constant JSON object iterator.
+using ConstJSONObjectIterator = JSONObject::const_iterator;
 
 /// JSON value class.
 class JSONValue
@@ -299,14 +312,5 @@ protected:
         JSONObject* objectValue_{nullptr};
     };
 };
-
-/// JSON array type.
-using JSONArray = std::vector<JSONValue>;
-/// JSON object type.
-using JSONObject = std::unordered_map<String, JSONValue>;
-/// JSON object iterator.
-using JSONObjectIterator = JSONObject::iterator;
-/// Constant JSON object iterator.
-using ConstJSONObjectIterator = JSONObject::const_iterator;
 
 }
