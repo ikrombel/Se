@@ -9,6 +9,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
 #elif __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #else
