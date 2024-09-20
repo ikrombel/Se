@@ -41,20 +41,21 @@ enum JSONNumberType
     JSONNT_FLOAT_DOUBLE
 };
 
-class JSONValue;
+//class JSONValue;
 
-/// JSON array type.
-typedef std::vector<JSONValue> JSONArray;
-/// JSON object type.
-typedef std::unordered_map<String, JSONValue> JSONObject;
-/// JSON object iterator.
-typedef JSONObject::iterator JSONObjectIterator;
-/// Constant JSON object iterator.
-typedef JSONObject::const_iterator ConstJSONObjectIterator;
 
 /// JSON value class.
 class JSONValue
 {
+    /// JSON array type.
+    using JSONArray = std::vector<JSONValue>;
+    /// JSON object type.
+    using JSONObject = std::unordered_map<String, JSONValue>;
+    /// JSON object iterator.
+    using JSONObjectIterator = JSONObject::iterator;
+    /// Constant JSON object iterator.
+    using ConstJSONObjectIterator = JSONObject::const_iterator;
+
 public:
     /// Construct null value.
     JSONValue() :
@@ -317,5 +318,14 @@ protected:
         JSONObject* objectValue_;
     };
 };
+
+/// JSON array type.
+using JSONArray = std::vector<JSONValue>;
+/// JSON object type.
+using JSONObject = std::unordered_map<String, JSONValue>;
+/// JSON object iterator.
+using JSONObjectIterator = JSONObject::iterator;
+/// Constant JSON object iterator.
+using ConstJSONObjectIterator = JSONObject::const_iterator;
 
 }
