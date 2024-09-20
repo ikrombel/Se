@@ -20,6 +20,8 @@
 #include <SeMath/BoundingBox.hpp>
 #include <SeMath/Frustum.hpp>
 
+#include <SeReflection/Reflected.hpp>
+
 
 
 #include <Se/Debug.h>
@@ -156,6 +158,52 @@ void TestArch() {
 }
 
 
+
+class ReflObjectInvalid : public Se::Reflected<ReflObjectInvalid>
+{
+
+};
+
+class ReflObject0 : public Se::Reflected<ReflObject0>
+{
+    Se::String name = "test name";
+    int id = 1;
+public:
+    void SerializeInBlock(Se::Archive& archive) override {
+        Se::SerializeValue(archive, "Name", name);
+        Se::SerializeValue(archive, "Id", id);
+    }
+};
+
+void TestReflection() {
+
+    {
+        auto file = std::make_shared<Se::JSONFile>();
+        auto arc = Se::JSONOutputArchive(file.get());
+
+        ReflObjectInvalid obj;
+        Se::SerializeValue(arc, "ReflObject", obj);
+    }
+
+    {
+        auto file = std::make_shared<Se::JSONFile>();
+        auto arc = Se::JSONOutputArchive(file.get());
+
+        Se::ReflectedManager::Register<ReflObject0>();
+
+        auto obj0 = Se::ReflectedManager::Create("ReflObject0");
+        auto obj1 = Se::ReflectedManager::Create<ReflObject0>();
+
+        SE_LOG_ERROR("obj0: {} {}", obj0->GetType(), obj0->GetStaticType());
+        SE_LOG_ERROR("obj1: {} {}", obj1->GetType(), obj1->GetStaticType());
+        //ReflObject0& obj = *(obj0.get());
+        Se::SerializeValue(arc, "obj0", obj0);
+
+        auto output = file->ToString("  ");
+        SE_LOG_PRINT("{}", output.c_str());
+    }
+}
+
 int main() {
 
     // Se::Debug debug;
@@ -233,6 +281,9 @@ int main() {
     Se::Matrix4 mat4;
     Se::BoundingBox box;
     Se::Frustum fFrustum;
+
+
+    TestReflection();
 
     
 }
