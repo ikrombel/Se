@@ -125,34 +125,46 @@ void TestArch() {
     // PrintLine("-- " + var0.ToString());
 
     auto output = file->ToString("  ");
-    SE_LOG_PRINT("{}", output.c_str());
+    SE_LOG_PRINT(output.c_str());
 
-    SE_LOG_DEBUG("{}", "Debug Test");
-    SE_LOG_WARNING("{}", "Warning Test");
-    SE_LOG_WARNING("{}", "Warning Test2");
+    SE_LOG_DEBUG("Debug Test");
+    SE_LOG_WARNING("Warning Test");
     SE_LOG_INFO("{}", "Info Test");
     SE_LOG_ERROR("{}", "Error Test");
-    SE_LOG_ERROR("{}", "Error Test 2");
 
 
     {
-        //std::vector<int> testErase = { 0, 1, 2, 3, 2, 4, 5, 2};
-        std::vector<int> testErase = {  };
+        std::vector<int> testErase = { 2 };
 
-        Se::String printStr = "----------------------\n";
+        Se::EraseIf(testErase, [](int item){
+            return item ==2;
+        });
+
+        Se::String printStr;
         for (auto a : testErase)
             printStr += cformat(" %i", a);
-        SE_LOG_INFO(printStr);
+        assert(printStr == "");
+
+    }
+
+    {
+        std::vector<int> testErase = { 0, 1, 2, 3, 2, 4, 5, 2};
+        //std::vector<int> testErase = {  };
+
+        Se::String printStr;
+        for (auto a : testErase)
+            printStr += cformat(" %i", a);
+        assert(printStr == " 0 1 2 3 2 4 5 2");
 
 
         Se::EraseIf(testErase, [](int item){
             return item ==2;
         });
 
-        printStr = "----------------------\n";
+        printStr.clear();
         for (auto a : testErase)
             printStr += cformat(" %i", a);
-        SE_LOG_INFO(printStr);
+        assert(printStr == " 0 1 3 4 5");
     }
 //});
 }
@@ -175,6 +187,17 @@ public:
     }
 };
 
+class ReflObject1 : public Se::Reflected<ReflObject1>
+{
+    ReflObject0 object1_;
+    int id = 1;
+public:
+    void SerializeInBlock(Se::Archive& archive) override {
+        Se::SerializeValue(archive, "ReflObject_1", object1_);
+        Se::SerializeValue(archive, "Id", id);
+    }
+};
+
 void TestReflection() {
 
     {
@@ -192,15 +215,44 @@ void TestReflection() {
         Se::ReflectedManager::Register<ReflObject0>();
 
         auto obj0 = Se::ReflectedManager::Create("ReflObject0");
-        auto obj1 = Se::ReflectedManager::Create<ReflObject0>();
-
-        SE_LOG_ERROR("obj0: {} {}", obj0->GetType(), obj0->GetStaticType());
-        SE_LOG_ERROR("obj1: {} {}", obj1->GetType(), obj1->GetStaticType());
-        //ReflObject0& obj = *(obj0.get());
+        assert(obj0->GetType() == "ReflObject0"
+            || obj0->GetStaticType() == "Se::ReflectedObject"
+            );
         Se::SerializeValue(arc, "obj0", obj0);
 
+        auto obj1 = Se::ReflectedManager::Create<ReflObject0>();
+        assert(obj0->GetType() == "ReflObject0"
+            || obj0->GetStaticType() == "ReflObject0"
+            );
         auto output = file->ToString("  ");
-        SE_LOG_PRINT("{}", output.c_str());
+        assert(output ==
+            "{\n"
+            "  \"Id\": 1,\n"
+            "  \"Name\": \"test name\"\n"
+            "}");
+    }
+
+    {
+        auto file = std::make_shared<Se::JSONFile>();
+        auto arc = Se::JSONOutputArchive(file.get());
+
+        Se::ReflectedManager::Register<ReflObject1>();
+
+        auto obj0 = Se::ReflectedManager::Create("ReflObject1");
+        assert(obj0->GetType() == "ReflObject1"
+            || obj0->GetStaticType() == "Se::ReflectedObject"
+            );
+        Se::SerializeValue(arc, "obj1", obj0);
+
+        auto output = file->ToString("  ");
+        assert(output ==
+            "{\n"
+            "  \"Id\": 1,\n"
+            "  \"ReflObject_1\": {\n"
+            "    \"Id\": 1,\n"
+            "    \"Name\": \"test name\"\n"
+            "  }\n"
+            "}");
     }
 }
 
@@ -208,29 +260,27 @@ int main() {
 
     // Se::Debug debug;
     // auto onLog = debug.onLog();
-    Console::setOutputLog(Console::DefaultColored);//, onLog);
+    // Console::setOutputLog(Console::DefaultColored, onLog);
+    Console::setOutputLog(Console::DefaultColored);
 
     int64_t f = 0x000457dd;
 
     f = reverseBuff(f);
-    printf("0x%016lx\n", f);
+    assert(cformat("0x%016lx", f) == "0xdd57040000000000");
 
     f = reverseBuff(f);
-    printf("0x%016lx\n", f);
+    assert(cformat("0x%016lx", f) == "0x00000000000457dd");
 
     f = reverseBuff(0x7804dd00);
-    printf("0x%016lx\n", f);
+    assert(cformat("0x%016lx", f) == "0x0000000000dd0478");
 
     //std::vector<int> ar0 = {0x000457dd , 0x7804dd00};
     unsigned ar0[] = {0x000457dd , 0x7804dd00};
 
-    for (auto a : ar0)
-        printf("  0x%08x\n", a);
+    assert(cformat("0x%08x 0x%08x", ar0[0], ar0[1]) == "0x000457dd 0x7804dd00");
 
-    readArrayReverse(ar0, 2); 
-
-    for (auto a : ar0)
-        printf("r 0x%08x\n", a);
+    readArrayReverse(ar0, 2);
+    assert(cformat("0x%08x 0x%08x", ar0[0], ar0[1]) == "0xdd570400 0x00dd0478");
 
     // std::string str = "0123456789";
     // std::size_t str_size = str.length(); //strlen(str);

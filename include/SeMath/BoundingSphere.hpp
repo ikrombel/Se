@@ -78,7 +78,8 @@ public:
     void SetRadius(float radius) { m_Radius = radius; }
 
     template<typename T> bool IsInside(const T& box) const {
-        SE_LOG_ERROR("IsInside not implemented to this object"); }
+        SE_LOG_ERROR("IsInside not implemented to this object");
+        return false; }
 
     // bool IsInside(const BoundingBox& box) const;
     // bool IsInside(const Frustum& frustum) const;

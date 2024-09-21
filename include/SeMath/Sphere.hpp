@@ -107,9 +107,11 @@ public:
         SE_LOG_ERROR("Merge not implemented to this object"); }
 
     template<typename T> Intersection IsInside(const T& box) const {
-        SE_LOG_ERROR("IsInside not implemented to this object"); }
+        SE_LOG_ERROR("IsInside not implemented to this object");
+        return Intersection::OUTSIDE; }
     template<typename T> Intersection IsInsideFast(const T& box) const {
-        SE_LOG_ERROR("IsInsideFast not implemented to this object"); }
+        SE_LOG_ERROR("IsInsideFast not implemented to this object");
+        return Intersection::OUTSIDE; }
 
     /// Define from an array of vertices.
     void Define(const Vector3* vertices, unsigned count) {

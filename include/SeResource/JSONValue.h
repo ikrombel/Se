@@ -54,14 +54,6 @@ using ConstJSONObjectIterator = JSONObject::const_iterator;
 /// JSON value class.
 class JSONValue
 {
-    /// JSON array type.
-    using JSONArray = std::vector<JSONValue>;
-    /// JSON object type.
-    using JSONObject = std::unordered_map<String, JSONValue>;
-    /// JSON object iterator.
-    using JSONObjectIterator = JSONObject::iterator;
-    /// Constant JSON object iterator.
-    using ConstJSONObjectIterator = JSONObject::const_iterator;
 
 public:
     /// Construct null value.
