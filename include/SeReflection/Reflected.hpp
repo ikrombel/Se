@@ -114,7 +114,7 @@ public:
 //        auto ptr = new AttributeAccessorImpl<T, TGetFunction, TSetFunction>(getFunction, setFunction); 
         auto funcGet = std::bind(getFunction, object_);
         auto funcSet = std::bind(setFunction, object_, std::placeholders::_1);
-        auto ptr = new AttributeAccessorImpl<T, typeof(funcGet), typeof(funcSet)>(funcGet, funcSet);
+        auto ptr = new AttributeAccessorImpl<T, decltype(funcGet), decltype(funcSet)>(funcGet, funcSet);
         values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
     }
 
