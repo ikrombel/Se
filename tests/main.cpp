@@ -7,6 +7,8 @@
 #include <Se/IO/File.h>
 #include <Se/IO/FileSystem.h>
 #include <Se/Signal.hpp>
+#include <Se/Profiler.hpp>
+#include <SeMath/MathDefs.hpp>
 #include <functional>
 
 #include <SeResource/JSONArchive.h>
@@ -179,23 +181,56 @@ class ReflObjectInvalid : public Se::Reflected<ReflObjectInvalid>
 class ReflObject0 : public Se::Reflected<ReflObject0>
 {
     Se::String name = "test name";
-    int id = 1;
+    
 public:
+    ReflObject0() : Reflected<ReflObject0>() {
+        RegisterAttributes(this, attributes_);
+    }
+
+    
+
+    void RegisterAttributes(ReflObject0* obj, Se::Attributes<ReflObject0>& attr) override {
+        attr.Register("Id", &id);
+        attr.Register<float>("Param1", &ReflObject0::getParam1, &ReflObject0::setParam1);
+        // attr.Register<float>("Param1", 
+        //     std::bind(&ReflObject0::getParam1, this), 
+        //     std::bind(&ReflObject0::setParam1, this, std::placeholders::_1));
+    }
+
     void SerializeInBlock(Se::Archive& archive) override {
         Se::SerializeValue(archive, "Name", name);
         Se::SerializeValue(archive, "Id", id);
     }
+
+    int id = 0;
+
+    float getParam1() const { return param1_; }
+    void setParam1(const float& value) {
+        param1_ = value;
+    }
+
+private:
+    float param1_ = 0.001;
 };
 
 class ReflObject1 : public Se::Reflected<ReflObject1>
 {
     ReflObject0 object1_;
-    int id = 1;
+    
 public:
+    ReflObject1() : Reflected() {}
+
+    int id = 1;
+
     void SerializeInBlock(Se::Archive& archive) override {
         Se::SerializeValue(archive, "ReflObject_1", object1_);
         Se::SerializeValue(archive, "Id", id);
     }
+
+    // void RegisterAttributes()
+    // {
+        
+    // }
 };
 
 void TestReflection() {
@@ -212,7 +247,9 @@ void TestReflection() {
         auto file = std::make_shared<Se::JSONFile>();
         auto arc = Se::JSONOutputArchive(file.get());
 
-        Se::ReflectedManager::Register<ReflObject0>();
+        Se::ReflectedManager::Register<ReflObject0>(+[](ReflObject0* obj, Se::Attributes<ReflObject0>& attr){
+//           attr.Register("Id", &obj->id);
+        });
 
         auto obj0 = Se::ReflectedManager::Create("ReflObject0");
         assert(obj0->GetType() == "ReflObject0"
@@ -227,9 +264,26 @@ void TestReflection() {
         auto output = file->ToString("  ");
         assert(output ==
             "{\n"
-            "  \"Id\": 1,\n"
+            "  \"Id\": 0,\n"
             "  \"Name\": \"test name\"\n"
             "}");
+
+            int obj0_id = obj0->GetAttribute<int>("Id");
+            assert(obj0_id == 0);
+
+            obj0->SetAttribute("Id", 10);
+            obj0_id = obj0->GetAttribute<int>("Id");
+            assert(obj0_id == 10);
+
+            float obj0_param1 = obj0->GetAttribute<float>("Param1");
+            assert(Se::Equals(obj0_param1, 0.001f));
+
+            obj0->SetAttribute("Param1", 10.5);
+            assert(Se::Equals(obj0->GetAttribute<float>("Param1"), 0.0f)); // !Bug
+
+            obj0->SetAttribute("Param1", 10.5f);
+            assert(Se::Equals(obj0->GetAttribute<float>("Param1"), 10.5f)); 
+
     }
 
     {
@@ -249,7 +303,7 @@ void TestReflection() {
             "{\n"
             "  \"Id\": 1,\n"
             "  \"ReflObject_1\": {\n"
-            "    \"Id\": 1,\n"
+            "    \"Id\": 0,\n"
             "    \"Name\": \"test name\"\n"
             "  }\n"
             "}");
