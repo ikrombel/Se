@@ -2,7 +2,7 @@
 #include "Timer.h"
 
 //#include <GFrost/Core/CoreEvents.h>
-// #include <Se/Profiler.h>
+#include <Se/Profiler.hpp>
 
 #include <ctime>
 
@@ -21,6 +21,11 @@ namespace Se
 
 bool HiresTimer::supported(false);
 long long HiresTimer::frequency(1000);
+
+
+Signal<const TimeParams&> Time::onBeginFrame;
+Signal<> Time::onEndFrame;
+Signal<> Time::onEndFramePlugin;
 
 Time::Time() :
     frameNumber_(0),
@@ -87,7 +92,7 @@ void Time::BeginFrame(float timeStep)
     timeStep_ = timeStep;
 
     {
-//        SE_PROFILE("BeginFrame");
+        SE_PROFILE("BeginFrame");
 
         onBeginFrame({frameNumber_, timeStep_});
     }
@@ -96,13 +101,15 @@ void Time::BeginFrame(float timeStep)
 void Time::EndFrame()
 {
     {
-//        SE_PROFILE("EndFrame");
+        SE_PROFILE("EndFrame");
 
         // Frame end event
         onEndFrame();
 
-        // Internal frame end event used only by the engine/tools
-//        SendEvent(E_ENDFRAMEPRIVATE);
+        // Internal frame end event used only by the engine/tools 
+        // E_ENDFRAMEPLUGIN (old E_ENDFRAMEPRIVATE);
+        onEndFramePlugin();
+
     }
 }
 

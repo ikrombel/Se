@@ -69,8 +69,12 @@ struct TimeParams {
 class Time
 {
 public:
-    Signal<const TimeParams&> onBeginFrame;
-    Signal<> onEndFrame;
+    // E_BEGINFRAME
+    static Signal<const TimeParams&> onBeginFrame;
+    // E_ENDFRAME
+    static Signal<> onEndFrame;
+    // E_ENDFRAMEPLUGIN (old E_ENDFRAMEPRIVATE)
+    static Signal<> onEndFramePlugin;
 
 
     enum {
