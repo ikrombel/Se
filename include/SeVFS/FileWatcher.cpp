@@ -387,7 +387,7 @@ void FileWatcher::ThreadFunction()
 void FileWatcher::AddChange(const FileChange& change)
 {
     //MutexLock lock(changesMutex_);
-    LockGuard guard(changesMutex_);
+    MutexLock guard(changesMutex_);
 
     auto it = changes_.find(change.fileName_);
     if (it == changes_.end())
@@ -400,7 +400,7 @@ void FileWatcher::AddChange(const FileChange& change)
 bool FileWatcher::GetNextChange(FileChange& dest)
 {
     //MutexLock lock(changesMutex_);
-    LockGuard guard(changesMutex_);
+    MutexLock guard(changesMutex_);
 
     auto delayMsec = (unsigned)(delay_ * 1000.0f);
 

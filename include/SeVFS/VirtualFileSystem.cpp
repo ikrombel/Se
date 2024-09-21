@@ -1,15 +1,18 @@
 #include "VirtualFileSystem.h"
 
+#include <Se/Algorithms.hpp>
 #include <Se/Console.hpp>
 #include <Se/IO/FileSystem.h>
+#include <Se/IO/PackageFile.h>
+#include <Se/Mutex.hpp>
 
-#include <Se/Algorithms.hpp>
+
 #include <SeVFS/FileIdentifier.h>
 #include <SeVFS/MountPoint.h>
 #include <SeVFS/MountedDirectory.h>
 #include <SeVFS/MountedRoot.h>
 #include <SeVFS/MountedPackageFile.hpp>
-#include <Se/IO/PackageFile.h>
+
 
 //#include <adaptors.h>
 
@@ -21,7 +24,7 @@ namespace Se
 
 MountPointPtr VirtualFileSystem::MountAliasRoot()
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
     return std::dynamic_pointer_cast<MountPoint>(GetOrCreateAliasRoot());
 }
 
@@ -105,7 +108,7 @@ MountPointPtr VirtualFileSystem::MountPackageFile(const String& path)
 
 void VirtualFileSystem::Mount(MountPointPtr mountPoint)
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     //const MountPointPtr pointPtr{mountPoint};
     if (std::find(mountPoints_.begin(), mountPoints_.end(), mountPoint) != mountPoints_.end())
@@ -126,7 +129,7 @@ void VirtualFileSystem::Mount(MountPointPtr mountPoint)
 
 void VirtualFileSystem::MountAlias(const String& alias, MountPointPtr mountPoint, const String& scheme)
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     GetOrCreateAliasRoot()->AddAlias(alias, scheme, mountPoint);
 }
@@ -180,7 +183,7 @@ void VirtualFileSystem::MountExistingDirectoriesOrPackages(
 
 void VirtualFileSystem::Unmount(MountPointPtr mountPoint)
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     if (aliasMountPoint_)
         aliasMountPoint_->RemoveAliases(mountPoint);
@@ -195,7 +198,7 @@ void VirtualFileSystem::Unmount(MountPointPtr mountPoint)
 
 void VirtualFileSystem::UnmountAll()
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     mountPoints_.clear();
     aliasMountPoint_ = nullptr;
@@ -203,7 +206,7 @@ void VirtualFileSystem::UnmountAll()
 
 MountPointPtr VirtualFileSystem::GetMountPoint(unsigned index) const
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     return (index < mountPoints_.size()) ? mountPoints_[index] : nullptr;
 }
@@ -213,7 +216,7 @@ AbstractFilePtr VirtualFileSystem::OpenFile(const FileIdentifier& fileName, File
     if (!fileName)
         return nullptr;
 
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     for (MountPointPtr mountPoint : Reverse(mountPoints_))
     {
@@ -251,7 +254,7 @@ bool VirtualFileSystem::WriteAllText(const FileIdentifier& fileName, const Strin
 
 FileTime VirtualFileSystem::GetLastModifiedTime(const FileIdentifier& fileName, bool creationIsModification) const
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     for (MountPointPtr mountPoint : Reverse(mountPoints_))
     {
@@ -264,7 +267,7 @@ FileTime VirtualFileSystem::GetLastModifiedTime(const FileIdentifier& fileName, 
 
 String VirtualFileSystem::GetAbsoluteNameFromIdentifier(const FileIdentifier& fileName) const
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     for (MountPointPtr mountPoint : Reverse(mountPoints_))
     {
@@ -297,7 +300,7 @@ FileIdentifier VirtualFileSystem::GetCanonicalIdentifier(const FileIdentifier& f
 
 FileIdentifier VirtualFileSystem::GetIdentifierFromAbsoluteName(const String& absoluteFileName) const
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     for (MountPointPtr mountPoint : Reverse(mountPoints_))
     {
@@ -312,7 +315,7 @@ FileIdentifier VirtualFileSystem::GetIdentifierFromAbsoluteName(const String& ab
 FileIdentifier VirtualFileSystem::GetIdentifierFromAbsoluteName(
     const String& scheme, const String& absoluteFileName) const
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     for (MountPointPtr mountPoint : Reverse(mountPoints_))
     {
@@ -331,7 +334,7 @@ void VirtualFileSystem::SetWatching(bool enable)
 {
     if (isWatching_ != enable)
     {
-        LockGuard lock(mountMutex_);
+        MutexLock lock(mountMutex_);
 
         isWatching_ = enable;
         for (auto i = mountPoints_.rbegin(); i != mountPoints_.rend(); ++i)
@@ -344,7 +347,7 @@ void VirtualFileSystem::SetWatching(bool enable)
 void VirtualFileSystem::Scan(std::vector<String>& result, const String& scheme, const String& pathName,
     const String& filter, ScanFlags flags) const
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     if (!flags.Test(SCAN_APPEND))
         result.clear();
@@ -364,7 +367,7 @@ void VirtualFileSystem::Scan(std::vector<String>& result, const FileIdentifier& 
 
 bool VirtualFileSystem::Exists(const FileIdentifier& fileName) const
 {
-    LockGuard lock(mountMutex_);
+    MutexLock lock(mountMutex_);
 
     for (MountPointPtr mountPoint : Reverse(mountPoints_))
     {
