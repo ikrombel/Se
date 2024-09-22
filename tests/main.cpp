@@ -183,23 +183,18 @@ class ReflObject0 : public Se::Reflected<ReflObject0>
     Se::String name = "test name";
     
 public:
-    ReflObject0() : Reflected<ReflObject0>() {
-        RegisterAttributes(this, attributes_);
-    }
-
+    ReflObject0() = default;
     
-
-    void RegisterAttributes(ReflObject0* obj, Se::Attributes<ReflObject0>& attr) override {
-        attr.Register("Id", &id);
-        attr.Register<float>("Param1", &ReflObject0::getParam1, &ReflObject0::setParam1);
-        // attr.Register<float>("Param1", 
-        //     std::bind(&ReflObject0::getParam1, this), 
-        //     std::bind(&ReflObject0::setParam1, this, std::placeholders::_1));
-    }
-
     void SerializeInBlock(Se::Archive& archive) override {
         Se::SerializeValue(archive, "Name", name);
         Se::SerializeValue(archive, "Id", id);
+    }
+
+    void RegisterAttributes(Se::Attributes<ReflObject0>& attr) final {
+        // SE_LOG_ERROR("------------");
+        attributes_.Register("Id", &id);
+        attributes_.Register<float>("Param1", &ReflObject0::getParam1, &ReflObject0::setParam1);
+        attributes_.Register<bool>("Enabled", &ReflObject0::isEnabled, &ReflObject0::setEnabled);
     }
 
     int id = 0;
@@ -209,8 +204,15 @@ public:
         param1_ = value;
     }
 
+    bool isEnabled() const { return param1_; }
+    void setEnabled(const bool& value) {
+        param1_ = value;
+    }
+
 private:
+
     float param1_ = 0.001;
+    bool enabled_{true};
 };
 
 class ReflObject1 : public Se::Reflected<ReflObject1>
@@ -226,11 +228,6 @@ public:
         Se::SerializeValue(archive, "ReflObject_1", object1_);
         Se::SerializeValue(archive, "Id", id);
     }
-
-    // void RegisterAttributes()
-    // {
-        
-    // }
 };
 
 void TestReflection() {
@@ -253,13 +250,13 @@ void TestReflection() {
 
         auto obj0 = Se::ReflectedManager::Create("ReflObject0");
         assert(obj0->GetType() == "ReflObject0"
-            || obj0->GetStaticType() == "Se::ReflectedObject"
+            && obj0->GetStaticType() == "Se::ReflectedObject"
             );
         Se::SerializeValue(arc, "obj0", obj0);
 
         auto obj1 = Se::ReflectedManager::Create<ReflObject0>();
-        assert(obj0->GetType() == "ReflObject0"
-            || obj0->GetStaticType() == "ReflObject0"
+        assert(obj1->GetType() == "ReflObject0"
+            && obj1->GetStaticType() == "ReflObject0"
             );
         auto output = file->ToString("  ");
         assert(output ==
@@ -268,21 +265,34 @@ void TestReflection() {
             "  \"Name\": \"test name\"\n"
             "}");
 
-            int obj0_id = obj0->GetAttribute<int>("Id");
-            assert(obj0_id == 0);
+        // obj0->SetAttribute("Id", 0);
+        int obj0_id = obj0->GetAttribute<int>("Id");
+        assert(obj0_id == 0);
 
-            obj0->SetAttribute("Id", 10);
-            obj0_id = obj0->GetAttribute<int>("Id");
-            assert(obj0_id == 10);
+        obj0->SetAttribute("Id", 10);
+        obj0_id = obj0->GetAttribute<int>("Id");
+        assert(obj0_id == 10);
 
-            float obj0_param1 = obj0->GetAttribute<float>("Param1");
-            assert(Se::Equals(obj0_param1, 0.001f));
+        float obj0_param1 = obj0->GetAttribute<float>("Param1");
+        assert(Se::Equals(obj0_param1, 0.001f));
 
-            obj0->SetAttribute("Param1", 10.5);
-            assert(Se::Equals(obj0->GetAttribute<float>("Param1"), 0.0f)); // !Bug
+        obj0->SetAttribute("Param1", 10.7);
+        assert(Se::Equals(obj0->GetAttribute<float>("Param1"), 10.7f)); // !Bug
 
-            obj0->SetAttribute("Param1", 10.5f);
-            assert(Se::Equals(obj0->GetAttribute<float>("Param1"), 10.5f)); 
+        obj0->SetAttribute("Param1", 10.5f);
+        assert(Se::Equals(obj0->GetAttribute<float>("Param1"), 10.5f));
+
+        bool obj0_enabled = obj0->GetAttribute<bool>("Enabled");
+        assert(obj0_enabled == true);
+
+        obj0->SetAttribute("Enabled", false);
+        obj0_enabled = obj0->GetAttribute<bool>("Enabled");
+        assert(obj0_enabled == false);
+
+        Se::AttributeEmpty* attrEnabled =  obj0->FindAttribute("Enabled").get();
+        assert(attrEnabled->GetTypeName() == "bool");
+
+        assert(obj0->FindAttribute("Enabled0")== nullptr); //object has no attribute 'Enabled0'
 
     }
 

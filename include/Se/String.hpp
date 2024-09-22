@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <unordered_map>
 
 #include <Se/Format.hpp>
 
@@ -1163,8 +1164,24 @@ inline std::string ToStringTypeId() {
         return c >= '0' && c <= '9';
     };
 
+    static std::unordered_map<char, const char*> basicTypes_{
+        {'i', "int"},
+        {'l', "long"},
+        {'f', "float"},
+        {'d', "double"},
+        {'b', "bool"},
+        {'c', "char"},
+        {'s', "short"},
+        {'u', "unsigned"},
+        {'v', "void"},
+        {'w', "wchar_t"}
+    };
+
     std::string typeOrig = typeid(T).name();
     const char *c = typeOrig.data();
+
+    if (typeOrig.length() == 1)
+        return basicTypes_[typeOrig[0]];
 
     std::string numStuck;
 

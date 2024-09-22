@@ -6,19 +6,34 @@
 namespace Se {
 
 /// Abstract base class for invoking attribute accessors.
+
+class AttributeInfo 
+{
+public:
+    virtual String GetTypeName() const {
+        return ""; }
+};
+
 template<class ParameterType>
-class AttributeAccessor {
+class AttributeAccessor : public AttributeInfo {
 public:
     /// Construct.
     AttributeAccessor() = default;
+
     /// Get the attribute.
     virtual void Get(ParameterType* dest) const = 0;
     /// Set the attribute.
     virtual void Set(const ParameterType& src) = 0;
 
+    String GetTypeName() const override {
+        return type_;
+    }
+
 protected:
     /// @brief TODO
     ParameterType defaultValue_;
+
+    std::string type_{ToStringTypeId<ParameterType>()};
 };
 
 struct AttributeEmptyValue {};
@@ -40,7 +55,6 @@ public:
         : AttributeAccessor<ParameterType>()
         , value_(*value)
     {
-
     }
     /// Get the attribute.
     void Get(ParameterType* dest) const override {
@@ -56,16 +70,18 @@ private:
 };
 
 /// Template implementation of the variant attribute accessor.
-template </*class TClassType, */class ParameterType, class TGetFunction, class TSetFunction>
+template <class ParameterType, class TGetFunction, class TSetFunction>
 class AttributeAccessorImpl : public AttributeAccessor<ParameterType>
 {
 public:
     /// Construct.
-    AttributeAccessorImpl(/*TClassType* ptr,*/ TGetFunction getFunction, TSetFunction setFunction) 
-    : AttributeAccessor<ParameterType>()
-    //, ptr_(ptr)
-    , getFunction_(getFunction)
-    , setFunction_(setFunction) {}
+    AttributeAccessorImpl(TGetFunction getFunction, TSetFunction setFunction) 
+        : AttributeAccessor<ParameterType>()
+        , getFunction_(getFunction)
+        , setFunction_(setFunction)
+    {
+
+    }
 
     /// Invoke getter function.
     void Get(ParameterType* value) const override
@@ -78,8 +94,6 @@ public:
     /// Invoke setter function.
     void Set(const ParameterType& value) override
     {
-        // assert(ptr);
-        // auto classPtr = static_cast<TClassType*>(ptr);
         setFunction_(value);
     }
 
@@ -90,9 +104,13 @@ private:
     TSetFunction setFunction_;
 };
 
+template<class T>
+class Reflected;
+
 template<class ObjectType>
 class Attributes
 {
+    friend class Reflected<ObjectType>;
 public:
     Attributes() {}
 
@@ -105,25 +123,37 @@ public:
     {
         auto ptr = new AttributeValue<T>(value);
         values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
-        //values_[name] = std::dynamic_pointer_cast<AttributeEmpty>(std::make_shared<AttributeValue<T>>(value));
     }
 
     template<class T, class TGetFunction, class TSetFunction>
     void Register(const String& name, TGetFunction getFunction, TSetFunction setFunction/*, const T& defaultValue = T()*/)
     {
-//        auto ptr = new AttributeAccessorImpl<T, TGetFunction, TSetFunction>(getFunction, setFunction); 
         auto funcGet = std::bind(getFunction, object_);
         auto funcSet = std::bind(setFunction, object_, std::placeholders::_1);
         auto ptr = new AttributeAccessorImpl<T, decltype(funcGet), decltype(funcSet)>(funcGet, funcSet);
         values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
     }
 
+    std::shared_ptr<AttributeEmpty> FindAttribute(const String& name) {
+        auto attr = values_.find(name);
+        if (attr == values_.end())
+        {
+            SE_LOG_ERROR("Object has no attribute : {}", name);
+            return nullptr;
+        }
+        return attr->second;
+    }
+
     template<class T>
     T Get(const String& name)
     {
+        auto attr = FindAttribute(name);
+
+        if (!attr)
+            return {};
+
         T value{0};
-        //std::dynamic_pointer_cast<AttributeValue<T>>(values_[name])->Get(&value);
-        auto casted = reinterpret_cast<AttributeValue<T>*>(values_[name].get());
+        auto casted = reinterpret_cast<AttributeValue<T>*>(attr.get());
         casted->Get(&value);
         return value;
     }
@@ -131,8 +161,12 @@ public:
     template<class T>
     void Set(const String& name, const T& value)
     {
-        //std::dynamic_pointer_cast<AttributeValue<T>>(values_[name])->Set(value);
-        auto casted = reinterpret_cast<AttributeValue<T>*>(values_[name].get());
+        auto attr = FindAttribute(name);
+
+        if (!attr)
+            return;
+
+        auto casted = reinterpret_cast<AttributeValue<T>*>(attr.get());
         casted->Set(value);
     }
 
@@ -144,16 +178,19 @@ protected:
     ObjectType* object_;
 };
 
+class ReflectedObject;
+
 template<class T>
 class Reflected
 {
+
 public:
 
     Reflected() {
         Reflected* ptr = this;
         object_ = reinterpret_cast<T*>(ptr);
         attributes_ = Attributes(object_);
-        RegisterAttributes(object_, attributes_);
+        object_->RegisterAttributes(attributes_);
     }
 
     virtual void SerializeInBlock(Archive& archive)
@@ -161,9 +198,13 @@ public:
         SE_LOG_ERROR("{} is not reflected object. Need to override method: void SerializeInBlock(Archive& archive)", type_);
     }
 
-    virtual void RegisterAttributes(T* object, Attributes<T>& attributes)
+    virtual void RegisterAttributes(Attributes<T>& attributes) 
     {
         SE_LOG_WARNING("{} attributes is empty", type_);
+    }
+
+    std::shared_ptr<AttributeEmpty> FindAttribute(const String& name) {
+        return attributes_.FindAttribute(name);
     }
 
     template<class U>
@@ -175,7 +216,11 @@ public:
     template<class U>
     void SetAttribute(const String& name, const U& value)
     {
-        return attributes_.Set(name, value);
+        auto& attr = attributes_.values_[name];
+        if (attr->GetTypeName() == "float" && ToStringTypeId<U>() == "double") //TODO simplify
+            attributes_.Set(name, (float)value);
+        else
+            return attributes_.Set(name, value);
     } 
 
     static std::shared_ptr<T> Create() {
@@ -194,12 +239,12 @@ public:
     }
 
 protected:
+    
     String type_ = ToStringTypeId<T>();
 
     Attributes<T> attributes_;
 private:
     T* object_{dynamic_cast<T*>(this)};
-    
 };
 
 class ReflectedObject : public Reflected<ReflectedObject> {};
@@ -212,10 +257,6 @@ public:
     {
         registered_[T::GetStaticType()] = 
             reinterpret_cast<std::shared_ptr<ReflectedObject>(*)()>(&T::Create);
-
-        //Attributes attr;
-        //attributesFunc(attr);
-        //T::RegisterAttributes(attr);
     }
 
     static std::shared_ptr<ReflectedObject> Create(const String& type)
