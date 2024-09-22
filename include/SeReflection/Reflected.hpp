@@ -5,7 +5,6 @@
 
 namespace Se {
 
-/// Abstract base class for invoking attribute accessors.
 
 class AttributeInfo 
 {
@@ -14,11 +13,14 @@ public:
         return ""; }
 };
 
+/// Abstract base class for invoking attribute accessors.
 template<class ParameterType>
 class AttributeAccessor : public AttributeInfo {
 public:
     /// Construct.
-    AttributeAccessor() = default;
+    AttributeAccessor(ParameterType defaultValue) : AttributeInfo() {
+        defaultValue_ = defaultValue;
+    };
 
     /// Get the attribute.
     virtual void Get(ParameterType* dest) const = 0;
@@ -29,6 +31,19 @@ public:
         return type_;
     }
 
+    virtual bool IsDefault() const {
+        return false;
+    }
+
+    ParameterType GetDefaultValue() const {
+        return defaultValue_;
+    }
+
+    void ToDefault() {
+        this->Set(defaultValue_);
+    }
+
+
 protected:
     /// @brief TODO
     ParameterType defaultValue_;
@@ -36,11 +51,11 @@ protected:
     std::string type_{ToStringTypeId<ParameterType>()};
 };
 
-struct AttributeEmptyValue {};
+struct AttributeEmptyValue {}emptyValue;
 class AttributeEmpty : public AttributeAccessor<AttributeEmptyValue>
 {
     /// Construct.
-    AttributeEmpty() : AttributeAccessor() {}
+    AttributeEmpty() : AttributeAccessor<AttributeEmptyValue>(emptyValue) {}
     /// Get the attribute.
     void Get(AttributeEmptyValue* dest) const override {};
     /// Set the attribute.
@@ -51,21 +66,27 @@ template<class ParameterType>
 class AttributeValue : public AttributeAccessor<ParameterType> {
 public:
     /// Construct.
-    AttributeValue(ParameterType* value) 
-        : AttributeAccessor<ParameterType>()
-        , value_(*value)
+    AttributeValue(ParameterType* value, ParameterType defaultValue) 
+        : AttributeAccessor<ParameterType>(defaultValue)
+        , value_(value)
     {
+       // *value_ = defaultValue;
+        
     }
     /// Get the attribute.
     void Get(ParameterType* dest) const override {
-        *dest = value_;
+        *dest = *value_;
     };
     /// Set the attribute.
     void Set(const ParameterType& src) override {
-        value_ = src;
+        *value_ = src;
     };
+
+    bool IsDefault() const override {
+        return this->defaultValue_ == *value_;
+    }
 private:
-    ParameterType value_;
+    ParameterType* value_;
 
 };
 
@@ -75,19 +96,17 @@ class AttributeAccessorImpl : public AttributeAccessor<ParameterType>
 {
 public:
     /// Construct.
-    AttributeAccessorImpl(TGetFunction getFunction, TSetFunction setFunction) 
-        : AttributeAccessor<ParameterType>()
+    AttributeAccessorImpl(TGetFunction getFunction, TSetFunction setFunction, ParameterType defaultValue) 
+        : AttributeAccessor<ParameterType>(defaultValue)
         , getFunction_(getFunction)
         , setFunction_(setFunction)
     {
-
     }
 
     /// Invoke getter function.
     void Get(ParameterType* value) const override
     {
-        // assert(ptr);
-        // const ParameterType classPtr = static_cast<const TClassType*>(ptr);
+        assert(value);
         *value = getFunction_();
     }
 
@@ -95,6 +114,10 @@ public:
     void Set(const ParameterType& value) override
     {
         setFunction_(value);
+    }
+
+    bool IsDefault() const override {
+        return this->defaultValue_ == getFunction_();
     }
 
 private:
@@ -119,19 +142,21 @@ public:
     }
 
     template<class T>
-    void Register(const String& name, T* value)
+    void Register(const String& name, T* value, T defaultValue = T())
     {
-        auto ptr = new AttributeValue<T>(value);
+        auto ptr = new AttributeValue<T>(value, defaultValue);
         values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+        ptr->ToDefault();
     }
 
     template<class T, class TGetFunction, class TSetFunction>
-    void Register(const String& name, TGetFunction getFunction, TSetFunction setFunction/*, const T& defaultValue = T()*/)
+    void Register(const String& name, TGetFunction getFunction, TSetFunction setFunction, T defaultValue = T())
     {
         auto funcGet = std::bind(getFunction, object_);
         auto funcSet = std::bind(setFunction, object_, std::placeholders::_1);
-        auto ptr = new AttributeAccessorImpl<T, decltype(funcGet), decltype(funcSet)>(funcGet, funcSet);
+        auto ptr = new AttributeAccessorImpl<T, decltype(funcGet), decltype(funcSet)>(funcGet, funcSet, defaultValue);
         values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+        ptr->ToDefault();
     }
 
     std::shared_ptr<AttributeEmpty> FindAttribute(const String& name) {
@@ -153,8 +178,7 @@ public:
             return {};
 
         T value{0};
-        auto casted = reinterpret_cast<AttributeValue<T>*>(attr.get());
-        casted->Get(&value);
+        reinterpret_cast<AttributeValue<T>*>(attr.get())->Get(&value);
         return value;
     }
 
@@ -166,8 +190,7 @@ public:
         if (!attr)
             return;
 
-        auto casted = reinterpret_cast<AttributeValue<T>*>(attr.get());
-        casted->Set(value);
+        reinterpret_cast<AttributeValue<T>*>(attr.get())->Set(value);
     }
 
     
@@ -253,7 +276,7 @@ class ReflectedManager
 {
 public:
     template<class T>
-    static void Register(std::function<void(T* ,Attributes<T>&)> attributesFunc = [](T*, Attributes<T>&){})
+    static void Register()
     {
         registered_[T::GetStaticType()] = 
             reinterpret_cast<std::shared_ptr<ReflectedObject>(*)()>(&T::Create);
