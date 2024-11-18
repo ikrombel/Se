@@ -16,4 +16,28 @@
 #  define LIB_IMPORT_API __declspec(dllimport)
 #endif
 
+#ifndef CONCATENATE
+#define CONCATENATE(PRIFIX, NAME)  {PRIFIX ## NAME}
+#endif
+
+// #define MODULE_LIB(name) \
+//     #ifdef CONCATENATE(name, _STATIC_LIB) \
+//     #  define CONCATENATE(name, _API) \
+//     #elif defined CONCATENATE(name, _EXPORT) \
+//     #  define CONCATENATE(name, _API) LIB_EXPORT_API \
+//     #else \
+//     #  define CONCATENATE(name, _API) LIB_IMPORT_API \
+//     #endif
+
+// MODULE_LIB(SEA)
+
+#if SE_STATIC_LIB
+#  define SE_API
+#elif SE_EXPORT
+#  define SE_API LIB_EXPORT_API
+#else
+#  define SE_API LIB_IMPORT_API
+#endif
+
+
 #endif //LIB_STATIC

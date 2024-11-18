@@ -232,7 +232,7 @@ bool CompressedLevel::Decompress(unsigned char* dest) const
 }
 
 Image::Image() 
-//    : Resource()
+    : Resource("Image")
 {
 }
 
@@ -2124,7 +2124,7 @@ std::shared_ptr<Image> Image::GetDecompressedImageLevel(unsigned index) const
 }
 
 
-Image* Image::GetSubimage(const IntRect& rect) const
+std::shared_ptr<Image> Image::GetSubimage(const IntRect& rect) const
 {
     if (!data_)
         return nullptr;
@@ -2148,7 +2148,7 @@ Image* Image::GetSubimage(const IntRect& rect) const
         int width = rect.Width();
         int height = rect.Height();
 
-        auto* image = new Image();
+        auto image = std::make_shared<Image>();
         image->SetSize(width, height, components_);
 
         unsigned char* dest = image->GetData();
@@ -2217,7 +2217,7 @@ Image* Image::GetSubimage(const IntRect& rect) const
             return nullptr;
         }
 
-        auto* image = new Image();
+        auto image = std::make_shared<Image>();
         image->width_ = paddedRect.Width();
         image->height_ = paddedRect.Height();
         image->depth_ = 1;

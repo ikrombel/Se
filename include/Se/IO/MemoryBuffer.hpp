@@ -58,6 +58,11 @@ public:
     // /// Construct from a read-only vector buffer, which must not go out of scope before MemoryBuffer.
     // explicit MemoryBuffer(const VectorBuffer& data);
 
+    ~MemoryBuffer() override {
+        // if (buffer_)
+        //     delete[] buffer_;
+    }
+
     /// Read bytes from the memory area. Return number of bytes actually read.
     unsigned Read(void* dest, unsigned size) override
     {
@@ -108,11 +113,21 @@ public:
     /// Return whether buffer is read-only.
     bool IsReadOnly() { return readOnly_; }
 
-private:
+protected:
     /// Pointer to the memory area.
     unsigned char* buffer_;
     /// Read-only flag.
     bool readOnly_;
 };
+
+// class MemoryBufferFile : public MemoryBuffer
+// {
+
+//     ~MemoryBufferFile() override {
+//         if (buffer_)
+//             delete[] buffer_;
+//     }
+
+// };
 
 }

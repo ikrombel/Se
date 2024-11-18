@@ -29,7 +29,7 @@ enum CompressedFormat
 };
 
 /// Compressed image mip level.
-struct GFROST_API CompressedLevel
+struct SE_API CompressedLevel
 {
     /// Decompress to RGBA. The destination buffer required is width * height * 4 bytes. Return true if successful.
     bool Decompress(unsigned char* dest) const;
@@ -55,7 +55,7 @@ struct GFROST_API CompressedLevel
 };
 
 /// %Image resource.
-class GFROST_API Image : public Resource
+class SE_API Image : public Resource
 {
 
 public:
@@ -169,7 +169,7 @@ public:
     /// Return LOD of decompressed image in RGBA format.
     std::shared_ptr<Image> GetDecompressedImageLevel(unsigned index) const;
     /// Return subimage from the image by the defined rect or null if failed. 3D images are not supported. You must free the subimage yourself.
-    Image* GetSubimage(const IntRect& rect) const;
+    std::shared_ptr<Image> GetSubimage(const IntRect& rect) const;
     /// Precalculate the mip levels. Used by asynchronous texture loading.
     void PrecalculateLevels();
     /// Whether this texture has an alpha channel

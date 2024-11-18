@@ -16,7 +16,7 @@
 namespace Se {
 
 #if _WIN32
-    namespace Detail
+namespace Detail
 {
 struct CriticalSection
 {

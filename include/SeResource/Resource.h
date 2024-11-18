@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Se/Export.hpp>
 #include <Se/Algorithms.hpp>
 #include <Se/StringHash.hpp>
 #include <Se/Timer.h>
@@ -12,10 +13,6 @@
 #include <unordered_map>
 
 #include <optional>
-
-#ifndef GFROST_API
-#define GFROST_API
-#endif
 
 namespace Se
 {
@@ -40,12 +37,12 @@ enum class InternalResourceFormat
 /// Size of the magic number for binary resources.
 static constexpr unsigned BinaryMagicSize = 4;
 using BinaryMagic = std::array<unsigned char, BinaryMagicSize>;
-GFROST_API extern const BinaryMagic DefaultBinaryMagic;
+SE_API extern const BinaryMagic DefaultBinaryMagic;
 
 /// Peek into resource file and determine its internal format.
 /// It's optimized for the case when the file is either Binary, JSON or XML.
 /// Deserializer is left in the same state as it was before the call.
-GFROST_API InternalResourceFormat PeekResourceFormat(
+SE_API InternalResourceFormat PeekResourceFormat(
     Deserializer& source, BinaryMagic binaryMagic = DefaultBinaryMagic);
 
 /// Asynchronous loading state of a resource.
@@ -64,12 +61,40 @@ enum AsyncLoadState
 };
 
 /// Base class for resources.
-class GFROST_API Resource
+class SE_API Resource
 {
 
 public:
+    /// Resource reloading started. E_RELOADSTARTED
+    Signal<> onReloadStarted;
+    /// Resource reloading finished successfully. E_RELOADFINISHED
+    Signal<> onReloadFinished;
+    /// Resource reloading failed. E_RELOADFAILED
+    Signal<> onReloadFailed;
+
+    // /// Resource reloading failed. E_RELOADFAILED
+    // static std::unordered_map<String, std::shared_ptr<Resource>(*)(void)> registered_;
+
+    // static void Register(const String& resourceType, std::shared_ptr<Resource> (*func)(void))
+    // {
+    //     if (std::find(registered_.begin(), registered_.end(), resourceType) != registered_.end()) {
+    //         return;
+    //     }
+    //     registered_[resourceType] = func;
+    // }
+
+    // static std::shared_ptr<Resource> Create(const String& resourceType)
+    // {
+    //     if (std::find(registered_.begin(), registered_.end(), resourceType) == registered_.end()) {
+    //         SE_LOG_ERROR("Uknown Resource type: {}", resourceType);
+    //         return nullptr;
+    //     }
+    //     return std::make_shared<Resource>(registered_[resourceType]);
+    // }
+
+
     /// Construct.
-    explicit Resource();
+    explicit Resource(const String& typeName);
 
     virtual ~Resource() = default;
 
@@ -100,6 +125,10 @@ public:
     void SetAsyncLoadState(AsyncLoadState newState);
     /// Set absolute file name.
     void SetAbsoluteFileName(const String& fileName) { absoluteFileName_ = fileName; }
+
+    String GetType() const { return type_; }
+
+    StringHash GetTypeHash() { return StringHash(type_); }
 
     /// Return name.
     const String& GetName() const { return name_; }
@@ -132,12 +161,14 @@ private:
     unsigned memoryUse_;
     /// Asynchronous loading state.
     AsyncLoadState asyncLoadState_;
+    /// Resource type name.
+    String type_;
 };
 
 #ifdef DISABLED
 
 /// Base class for simple resource that uses Archive serialization.
-class GFROST_API SimpleResource : public Resource
+class SE_API SimpleResource : public Resource
 {
 
 public:
@@ -175,7 +206,7 @@ private:
 };
 
 /// Base class for resources that support arbitrary metadata stored. Metadata serialization shall be implemented in derived classes.
-class GFROST_API ResourceWithMetadata : public Resource
+class SE_API ResourceWithMetadata : public Resource
 {
 
 public:
@@ -260,7 +291,7 @@ namespace std {
 template <>
 struct hash<Se::Resource> {
     size_t operator()(const Se::Resource& res) const {
-        std::size_t hash;
+        std::size_t hash{0};
         Se::hash_combine(hash, res.GetName());
         //Se::hash_combine(hash, res.Size());
         return hash;

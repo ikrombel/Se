@@ -32,6 +32,7 @@ set(SE_SOURCE
         src/Se/Timer.cpp
         src/Se/ProcessTaskManager.cpp
         src/Se/VectorBuffer.cpp
+        src/Se/WorkQueue.cpp
         )
 
 if (HAVE_LZ4) 
@@ -85,6 +86,10 @@ add_library(SeResource STATIC
         src/SeResource/BinaryArchive.cpp 
         src/SeResource/Base64Archive.cpp
 
+        src/SeResource/BackgroundLoader.cpp
+        src/SeResource/ResourceCache.cpp
+        src/SeResource/ResourceCache.reg.cpp
+
         # src/SeResource/PugiXml/pugixml.cpp
         # src/SeResource/XMLElement.cpp
         # src/SeResource/XMLFile.cpp
@@ -118,7 +123,9 @@ target_link_libraries(SeVFS PUBLIC
         Se
 )
 
-add_executable(test.SeResource tests/main.cpp
+add_executable(test.SeResource 
+        tests/main.cpp
+        tests/test.Reflection.cpp
         # include/SeVFS/PackageFile.hpp        
 )
 

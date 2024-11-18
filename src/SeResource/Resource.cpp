@@ -83,10 +83,12 @@ InternalResourceFormat PeekResourceFormat(Deserializer& source, BinaryMagic bina
     return InternalResourceFormat::Unknown;
 }
 
-Resource::Resource() :
+Resource::Resource(const String& typeName) :
     memoryUse_(0),
-    asyncLoadState_(ASYNC_DONE)
+    asyncLoadState_(ASYNC_DONE),
+    type_(typeName)
 {
+
 }
 
 
@@ -94,9 +96,9 @@ bool Resource::Load(Deserializer& source)
 {
     // Because BeginLoad() / EndLoad() can be called from worker threads, where profiling would be a no-op,
     // create a type name -based profile block here
-//    SE_PROFILE_C("Load", PROFILER_COLOR_RESOURCES);
-//    String eventName = format("{}::Load(\"{}\")", "GetTypeName()", GetName());
-//    SE_PROFILE_ZONENAME(eventName);
+    SE_PROFILE_C("Load", PROFILER_COLOR_RESOURCES);
+    String eventName = format("{}::Load(\"{}\")", GetType(), GetName());
+    SE_PROFILE_ZONENAME(eventName);
 
     // If we are loading synchronously in a non-main thread, behave as if async loading (for example use
     // GetTempResource() instead of GetResource() to load resource dependencies)
@@ -123,7 +125,7 @@ bool Resource::EndLoad()
 
 bool Resource::Save(Serializer& dest) const
 {
-//    SE_LOG_ERROR("Save not supported for " + GetTypeName());
+    SE_LOG_ERROR("Save not supported for {}", this->GetType());
     return false;
 }
 

@@ -107,6 +107,8 @@ public:
     #endif
     }
 
+    // Copy constructor
+    StringHash(const StringHash& other) : value_(other.value_) {}
 
     /// Test for equality with another hash.
     constexpr bool operator==(const StringHash& rhs) const { return value_ == rhs.value_; }

@@ -208,7 +208,7 @@ std::future<String> ReadFileAsync(FileDescriptor fileHandle, StopToken& stopToke
 
 int DoSystemCommand(const String& commandLine, bool redirectToLog)
 {
-#if defined(TVOS) || defined(IOS) || defined(UWP) || !defined(HAVE_SDL)
+#if defined(TVOS) || defined(IOS) || defined(UWP) //|| !defined(HAVE_SDL)
     return -1;
 #else
 #  if !defined(__EMSCRIPTEN__)
@@ -218,15 +218,17 @@ int DoSystemCommand(const String& commandLine, bool redirectToLog)
 
 
 #  if !defined(__EMSCRIPTEN__)
+
+    auto fs = FileSystem::Get();
     // Get a platform-agnostic temporary file name for stderr redirection
     String stderrFilename;
     String adjustedCommandLine(commandLine);
-    char* prefPath = SDL_GetPrefPath("Se", "temp");
-    if (prefPath)
+   auto prefPath = fs.GetAppPreferencesDir("Se", "temp");
+    if (!prefPath.empty())
     {
         stderrFilename = String(prefPath) + "command-stderr";
         adjustedCommandLine += " 2>" + stderrFilename;
-        SDL_free(prefPath);
+        //SDL_free(prefPath);
     }
 
 #    ifdef _MSC_VER

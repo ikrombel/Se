@@ -1,10 +1,3 @@
-//
-// Copyright (c) 2008-2019 the GFrost project.
-//
-
-
-/// \file
-
 #pragma once
 
 #ifdef _MSC_VER
@@ -16,7 +9,7 @@
 //#include <GFrost/Math/Random.h>
 
 #include <cstdlib>
-#include <cmath>
+#include <math.h>
 #include <limits>
 #include <type_traits>
 #include <cstring>

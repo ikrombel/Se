@@ -19,7 +19,7 @@ class JSONFile : public Resource
 
 public:
     /// Construct.
-    explicit JSONFile() : Resource() {};
+    explicit JSONFile() : Resource("JSONFile") {};
     /// Destruct.
     ~JSONFile() override {};
 

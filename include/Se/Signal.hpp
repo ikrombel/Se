@@ -109,4 +109,30 @@ private:
 };
 
 
+template <typename... Args>
+class SignalGuard
+{
+    SignalGuard() {}
+
+    SignalGuard(Signal<Args...>& signal, typename Signal<Args...>::SlotFunc func)
+    {
+        connect(signal, func);
+    }
+
+    ~SignalGuard() {
+        if (signal_)
+            signal_->disconnect(id_);
+    }
+
+    void connect(Signal<Args...>& signal, typename Signal<Args...>::SlotFunc func)
+    {
+        signal_ = &signal;
+        id_ = signal_->connect(func);
+    }
+
+private:
+    Signal<Args...>* signal_{nullptr};
+    typename Signal<Args...>::SlotId id_;
+};
+
 }

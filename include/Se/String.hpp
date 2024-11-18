@@ -7,6 +7,7 @@
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
+#include <cxxabi.h>
 
 #include <Se/Format.hpp>
 
@@ -82,9 +83,16 @@ public:
 
     std::size_t find_last(const String& str, std::size_t startPos = npos, bool caseSensitive  = true) const;
 
-#ifndef STRING_CXX23
+#if __cplusplus >= 202207L
     /// Return whether contains a specific occurrence of a string.
-    bool contains(const String& str, bool caseSensitive = true) const {
+    bool contains(const char* str, bool caseSensitive) const {
+        return find(str, 0, caseSensitive) != String::npos; }
+    /// Return whether contains a specific character.
+    bool contains(char c, bool caseSensitive) const {
+        return find(c, 0, caseSensitive) != String::npos; }
+#else
+    /// Return whether contains a specific occurrence of a string.
+    bool contains(const char* str, bool caseSensitive = true) const {
         return find(str, 0, caseSensitive) != String::npos; }
     /// Return whether contains a specific character.
     bool contains(char c, bool caseSensitive = true) const {
@@ -170,6 +178,16 @@ public:
 
         return (caseSensitive ? strncmp(c_str(), rsh.c_str(), size()) :
             strncasecmp(c_str(), rsh.c_str(), size())) == 0;
+    }
+
+    void pop_front() 
+    {
+        if (empty()) {
+            throw std::out_of_range("Cannot pop from an empty string");
+        }
+            
+        // Remove the first character from the string
+        erase(begin());
     }
 
     void replace(std::size_t pos, std::size_t length, const char *srcStart, std::size_t srcLength);
@@ -1156,6 +1174,19 @@ inline String WideToMultiByte(const wchar_t* string)
 // #endif
 
 
+inline String ParcerTypeBlock(const char *c, const char *beginBlock, const char *endBlock)
+{
+    String output;
+    if (strcmp(c, "IN") == 0)
+        output += "<";
+
+    if (strcmp(c, "EE") == 0)
+        output += ">";
+
+    return output;
+}
+
+
 template<typename T>
 inline std::string ToStringTypeId() {
     std::string ret;
@@ -1185,6 +1216,8 @@ inline std::string ToStringTypeId() {
 
     std::string numStuck;
 
+    bool isTemplate = false;
+
     while(*c) {
 
         if (typeIdIsNumber(*c)) {
@@ -1194,7 +1227,9 @@ inline std::string ToStringTypeId() {
             size_t startPos = (c - typeOrig.data());
             size_t sizeS = atoi(numStuck.c_str());
             std::string tmp = typeOrig.substr(startPos, sizeS);
-            ret += ret.empty() ? tmp : "::" + tmp;
+            if (!ret.empty())
+                ret += "::";
+            ret += tmp;
             numStuck.clear();
             c = typeOrig.data() + startPos + sizeS;
             continue;
