@@ -5,7 +5,10 @@
 #  define LIB_IMPORT_API
 #else
 
-#if defined _WIN32 || defined __CYGWIN__
+#if _MSC_VER
+        #define LIB_EXPORT_API __declspec(dllexport)
+		#define LIB_IMPORT_API __declspec(dllimport)
+#elif defined _WIN32 || defined __CYGWIN__
 #  define LIB_EXPORT_API __attribute__ ((dllexport))
 #  define LIB_IMPORT_API __attribute__ ((dllimport))
 #elif (__GNUC__ >= 4)

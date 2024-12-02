@@ -59,11 +59,17 @@ void MountedAliasRoot::RemoveAliases(MountPointPtr mountPoint)
 
     // aliases_.erase()
 
-    //std::erase_if
+#ifdef _WIN32
+    for (auto a = aliases_.begin(); a != aliases_.end(); ++a)
+        if (a->second.first == mountPoint)
+            aliases_.erase(a);
+#else
     std::erase_if(aliases_, [mountPoint](const auto& pair) { 
         return pair.second.first == mountPoint; });
-    // std::remove_if(aliases_.begin(), aliases_.end(), [mountPoint](const AliasesType::mapped_type& pair) {
-    //      return pair.second.first.get() == mountPoint.get(); });
+#endif
+
+    // std::remove_if(aliases_.begin(), aliases_.end(), [mountPoint](const auto& pair) { 
+    //     return pair.second.first == mountPoint; });
     //assert(0 && "TODO");
 }
 

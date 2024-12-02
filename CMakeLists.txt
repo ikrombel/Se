@@ -2,7 +2,7 @@ project(Se)
 
 include(cmake/SeOutputDirectoryStyle.cmake)
 
-set (CMAKE_CXX_STANDARD 20)
+set (CMAKE_CXX_STANDARD 17)
 
 option(HAVE_LZ4 "LZ4 Compression" ON)
 option(SE_THREADING "" ON)
@@ -63,6 +63,7 @@ target_include_directories(Se PUBLIC
 target_compile_definitions(Se 
         ${SE_DEFINED}
         PUBLIC NOMINMAX
+        PUBLIC SE_STATIC_LIB
         )
 # target_compile_features(Se PRIVATE cxx_std_20)
 
@@ -103,6 +104,10 @@ target_include_directories(SeResource
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/SeResource
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/SeResource/rapidjson/include   
 )
+
+# target_compile_definitions(SeResource 
+#         PUBLIC SE_STATIC_LIB
+# )
 
 target_link_libraries(SeResource PUBLIC
         Se

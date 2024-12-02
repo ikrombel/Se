@@ -23,7 +23,7 @@ class Thread
 {
 public:
     /// Construct. Does not start the thread yet.
-    Thread();
+    Thread(const std::string& mame = "");
     /// Destruct. If running, stop and wait for thread to finish.
     virtual ~Thread();
 
@@ -39,6 +39,8 @@ public:
 
     /// Return whether thread exists.
     bool IsStarted() const { return handle_ != nullptr; }
+    /// Set name of the platform thread on supported platforms. Must be called before Run().
+    void SetName(const std::string& name);
 
     /// Set the current thread as the main thread.
     static void SetMainThread();
@@ -47,7 +49,15 @@ public:
     /// Return whether is executing in the main thread.
     static bool IsMainThread();
 
+#if _WIN32
+    static DWORD ThreadFunctionStatic(void* data);
+#else
+    static void* ThreadFunctionStatic(void* data);
+#endif
+
 protected:
+    /// Name of the thread. It will be propagated to underlying OS thread if possible.
+    std::string name_{};
     /// Thread handle.
     void* handle_;
     /// Running flag.

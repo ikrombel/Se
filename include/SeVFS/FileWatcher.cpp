@@ -37,11 +37,11 @@ FileWatcher::FileWatcher() :
     watchSubDirs_(false)
 {
 #ifdef SE_FILEWATCHER
-#ifdef __linux__
+#  ifdef __linux__
     watchHandle_ = inotify_init();
-#elif defined(__APPLE__) && !defined(IOS) && !defined(TVOS)
+#  elif defined(__APPLE__) && !defined(IOS) && !defined(TVOS)
     supported_ = IsFileWatcherSupported();
-#endif
+#  endif
 #endif
 }
 
@@ -49,9 +49,9 @@ FileWatcher::~FileWatcher()
 {
     StopWatching();
 #ifdef SE_FILEWATCHER
-#ifdef __linux__
+#  ifdef __linux__
     close(watchHandle_);
-#endif
+#  endif
 #endif
 }
 
@@ -66,7 +66,7 @@ bool FileWatcher::StartWatching(const String& pathName, bool watchSubDirs, bool 
     else
         StopWatching();
 
-//    SetName("Watcher for " + pathName);
+    SetName("Watcher for " + pathName);
 
 #if defined(SE_FILEWATCHER) && defined(SE_THREADING)
 #ifdef _WIN32

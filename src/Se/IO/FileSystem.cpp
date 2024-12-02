@@ -1045,7 +1045,7 @@ String FileSystem::GetENV(const String& envName) const
     const char* env = getenv(envName.c_str());
     if (env)
         path = std::move(env);
-#elif WIN32
+#elif _WIN32
     char buffer[1024];
     DWORD bufferSize = 1024;
 
@@ -1068,7 +1068,7 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
     dir = format("{}/.local/share/", env);
 
     //__ANDROID__ Windows
-#elif WIN32
+#elif _WIN32
 
     dir = GetENV("LOCALAPPDATA");
 
@@ -1323,14 +1323,16 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                     continue;
                 if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 {
-                    if (flags & SCAN_DIRS) {
+                    if (flags & SCAN_DIRS && recursive && fileName != "." && fileName != "..") {
+
                         auto& node = result.Children.emplace_back();
                         node.FullPath = deltaPath + fileName;
                         node.FileName = fileName;
                         node.IsDirectory = true;
+
+                        if (recursive)
+                            ScanDirInternalTree(node, pathTmp + fileName, startPath, filter, flags);
                     }
-                    if (recursive && fileName != "." && fileName != "..")
-                        ScanDirInternalTree(result, pathTmp + fileName, startPath, filter, flags);
                 }
                 else if (flags & SCAN_FILES)
                 {
@@ -1884,19 +1886,20 @@ String FileSystem::GetTemporaryDir() const
 #else
     if (char* pathName = getenv("TMPDIR"))
         return AddTrailingSlash(pathName);
-#ifdef P_tmpdir
+#  ifdef P_tmpdir
     return AddTrailingSlash(P_tmpdir);
-#else
+#  else
     return "/tmp/";
+#  endif
 #endif
-#endif
+    return "";
 }
 
 String FileSystem::FindResourcePrefixPath() const
 {
     const auto isFileSystemRoot = [](const String& path)
     {
-#if WIN32
+#if _WIN32
         return path.length() <= 3;  // Root path of any drive
 #else
         return path == "/";         // Filesystem root

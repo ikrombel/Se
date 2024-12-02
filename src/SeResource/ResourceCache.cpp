@@ -24,6 +24,7 @@
 //#include <GFrost/DebugNew.h>
 
 #include <cstdio>
+#include <memory>
 
 namespace Se
 {

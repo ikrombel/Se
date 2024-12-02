@@ -219,7 +219,7 @@ Intersection Sphere::IsInside(const Vector3& point) const
 
 /// Test if another sphere is inside, outside or intersects.
 template<>
-Intersection Sphere::IsInside(const Sphere& sphere) const
+inline Intersection Sphere::IsInside(const Sphere& sphere) const
 {
     float dist = (sphere.center_ - center_).Length();
     if (dist >= sphere.radius_ + radius_)
@@ -232,7 +232,7 @@ Intersection Sphere::IsInside(const Sphere& sphere) const
 
 /// Test if another sphere is (partially) inside or outside.
 template<>
-Intersection Sphere::IsInsideFast(const Sphere& sphere) const
+inline Intersection Sphere::IsInsideFast(const Sphere& sphere) const
 {
     float distSquared = Vector3(sphere.center_ - center_).LengthSquared();
     float combined = sphere.radius_ + radius_;
@@ -244,7 +244,7 @@ Intersection Sphere::IsInsideFast(const Sphere& sphere) const
 }
 
 template<>
-void Sphere::Merge(const Sphere& sphere)
+inline void Sphere::Merge(const Sphere& sphere)
 {
     if (radius_ < 0.0f)
     {
