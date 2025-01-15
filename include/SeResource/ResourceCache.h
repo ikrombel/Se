@@ -296,7 +296,7 @@ template <class T> void ResourceCache::ReleaseResource(const String& name, bool 
 template <class T> std::shared_ptr<T> ResourceCache::GetTempResource(const String& name, bool sendEventOnFailure)
 {
     StringHash type = T::GetTypeStatic();
-    return static_cast<T>(GetTempResource(type, name, sendEventOnFailure));
+    return std::dynamic_pointer_cast<T>(GetTempResource(type, name, sendEventOnFailure));
 }
 
 template <class T> bool ResourceCache::BackgroundLoadResource(const String& name, bool sendEventOnFailure, Resource* caller)

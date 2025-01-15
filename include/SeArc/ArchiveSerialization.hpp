@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include <cstring>
-#include <ranges>
+//#include <ranges>
 
 namespace Se
 {

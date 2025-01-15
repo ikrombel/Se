@@ -64,6 +64,9 @@ public:
     /// Destruct.
     ~Image(); // override;
 
+
+    inline static String GetTypeStatic() { return "Image"; }
+
     /// Load resource from stream. May be called from a worker thread. Return true if successful.
     bool BeginLoad(Deserializer& source) override;
     /// Save the image to a stream. Regardless of original format, the image is saved as png. Compressed image data is not supported. Return true if successful.

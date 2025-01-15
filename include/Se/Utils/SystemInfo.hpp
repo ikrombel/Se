@@ -6,7 +6,6 @@
 
 #ifdef __linux__
 #include <stdlib.h>
-#include <uuid/uuid.h>
 #include <sys/utsname.h>
 
 #include <unicode/ustring.h>

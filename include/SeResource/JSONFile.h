@@ -19,9 +19,11 @@ class JSONFile : public Resource
 
 public:
     /// Construct.
-    explicit JSONFile() : Resource("JSONFile") {};
+    explicit JSONFile() : Resource("JSONFile") {}
     /// Destruct.
     ~JSONFile() override {};
+
+    inline static String GetTypeStatic() { return "JSONFile"; }
 
     /// Load resource from stream. May be called from a worker thread. Return true if successful.
     bool BeginLoad(Deserializer& source) override;

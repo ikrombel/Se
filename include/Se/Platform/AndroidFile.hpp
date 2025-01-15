@@ -1,6 +1,6 @@
-#include <SDL2/SDL.h>
+//#include <SDL2/SDL.h>
 
-struct SDL_RWops;
+//struct SDL_RWops;
 
 inline static const char* APK = "/apk/";
 // Macro for checking if a given pathname is inside APK's assets directory

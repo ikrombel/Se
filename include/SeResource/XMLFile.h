@@ -24,6 +24,8 @@ public:
     /// Destruct.
     ~XMLFile() override;
 
+    inline static String GetTypeStatic() { return "XMLFile"; }
+
     /// Load resource from stream. May be called from a worker thread. Return true if successful.
     bool BeginLoad(Deserializer& source) override;
     /// Save resource with default indentation (one tab). Return true if successful.

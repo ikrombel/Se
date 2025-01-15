@@ -9,7 +9,7 @@
 //#include <GFrost/Math/Random.h>
 
 #include <cstdlib>
-#include <math.h>
+#include <cmath>
 #include <limits>
 #include <type_traits>
 #include <cstring>

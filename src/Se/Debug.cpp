@@ -5,7 +5,9 @@
 
 
 #include <Se/IO/File.h>
+#ifndef ANDROID
 #include <Se/Utils/SystemInfo.hpp>
+#endif
 
 namespace Se
 {
@@ -179,7 +181,7 @@ table td
 
 		// if(Time::isStarted())
 		// 	stream << "<p>Started on: " << gTime().getAppStartUpDateString(false) << "</p>\n";
-
+#ifndef ANDROID
 		SystemInfo systemInfo = Platform::getSystemInfo();
 		stream << format("<p>OS version: {} {}</p>\n", systemInfo.osName, systemInfo.osIs64Bit ? "64-bit" : "32-bit");
 		stream << "<h3>CPU information:</h3>\n";
@@ -190,7 +192,7 @@ table td
 			"<p>CPU core count: {}</p>\n", 
 			systemInfo.cpuManufacturer, systemInfo.cpuModel, 
 			systemInfo.cpuClockSpeedMhz, systemInfo.cpuNumCores);
-
+#endif
 		// stream << "<h3>GPU List:</h3>\n";
 		// if (systemInfo.gpuInfo.numGPUs == 1)
 		//  	stream << format("<p>GPU: {}</p>\n", systemInfo.gpuInfo.names[0]);

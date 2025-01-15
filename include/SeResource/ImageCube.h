@@ -3,7 +3,11 @@
 //#include <GFrost.Graphics/GraphicsDefs.h>
 #include <SeResource/Image.h>
 #include <SeResource/Resource.h>
-//#include <SeMath/SphericalHarmonics.h>
+#if __has_include(<SeMath/SphericalHarmonics.h>)
+#include <SeMath/SphericalHarmonics.h>
+#define IMAGECUBE_SPHERICAL_HARMONICS
+#endif
+
 
 #include <vector>
 
@@ -45,8 +49,8 @@ public:
     explicit ImageCube();
     /// Destruct.
     ~ImageCube() override;
-    /// Register object factory.
-//    static void RegisterObject(Context* context);
+
+    inline static String GetTypeStatic() { return "ImageCube"; }
 
     /// Load resource from stream. May be called from a worker thread. Return true if successful.
     bool BeginLoad(Deserializer& source) override;
@@ -72,8 +76,10 @@ public:
     Vector3 ProjectTexelOnCubeLevel(CubeMapFace face, int x, int y, unsigned level) const;
     /// Project direction on texel of cubemap face.
     std::pair<CubeMapFace, IntVector2> ProjectDirectionOnFaceTexel(const Vector3& direction) const;
-    // /// Calculate spherical harmonics for the cube map.
-    // SphericalHarmonicsColor9 CalculateSphericalHarmonics() const;
+#ifdef IMAGECUBE_SPHERICAL_HARMONICS
+    /// Calculate spherical harmonics for the cube map.
+    SphericalHarmonicsColor9 CalculateSphericalHarmonics() const;
+#endif
 
     /// Project UV onto cube.
     static Vector3 ProjectUVOnCube(CubeMapFace face, const Vector2& uv);

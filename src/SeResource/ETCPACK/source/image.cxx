@@ -118,7 +118,7 @@ bool fReadPPM(char *filename, int &width, int &height, unsigned char *&pixels, i
 
 		if(strcmp(line, "P6")!=0)
 		{
-			printf("Error: %s is not binary\n");
+			printf("Error: %s is not binary\n", filename);
 			printf("(Binary .ppm files start with P6).\n");
 			fclose(f1);
 			return false;
@@ -130,7 +130,7 @@ bool fReadPPM(char *filename, int &width, int &height, unsigned char *&pixels, i
 		fscanf(f1, "%d %d", &width, &height);
 		if( width<=0 || height <=0)
 		{
-			printf("Error: width or height negative. File: %s\n",filename);
+			printf("Error: width or height negative. File: %s\n", filename);
 			fclose(f1);
 			return false;
 		}
@@ -142,7 +142,7 @@ bool fReadPPM(char *filename, int &width, int &height, unsigned char *&pixels, i
 		fscanf(f1, "%d", &maximum);
 		if( maximum!= 255&&maximum!=(1<<16)-1)
 		{
-			printf("Error: Color resolution must be 255. File: %s\n",filename);
+			printf("Error: Color resolution must be 255. File: %s\n", filename);
 			fclose(f1);
 			return false;
 		}

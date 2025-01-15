@@ -78,6 +78,7 @@ add_library(SeResource STATIC
         src/SeResource/Decompress.cpp
         src/SeResource/Decompress.h
         src/SeResource/Image.cpp
+        src/SeResource/ImageCube.cpp
         src/SeResource/Resource.cpp
 
         src/SeResource/JSONValue.cpp
@@ -86,6 +87,9 @@ add_library(SeResource STATIC
 
         src/SeResource/BinaryArchive.cpp 
         src/SeResource/Base64Archive.cpp
+
+        src/SeResource/YAMLFile.cpp
+
 
         src/SeResource/BackgroundLoader.cpp
         src/SeResource/ResourceCache.cpp
