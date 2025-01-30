@@ -269,7 +269,7 @@ int DoSystemCommand(const String& commandLine, bool redirectToLog)
     }
 
     return exitCode;
-#endif
+#  endif
 #endif
 }
 
@@ -1372,7 +1372,8 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                         auto& node = result.Children.emplace_back();
                         node.FullPath = deltaPath + fileName;
                         node.FileName = fileName;
-                        node.IsDirectory = true;
+                        //node.IsDirectory = true;
+                        node.Flags |= FSIF_DIRECTORY;
                         ScanDirInternalTree(node, pathTmp + fileName, startPath, filter, flags);
                     }
                 }
@@ -1382,7 +1383,8 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                         auto& node = result.Children.emplace_back();
                         node.FullPath = deltaPath + fileName;
                         node.FileName = fileName;
-                        node.IsDirectory = false;
+                        if (node.Flags.Test(FSIF_DIRECTORY)) 
+                            node.Flags.Unset(FSIF_DIRECTORY); //IsDirectory = false;
                     }
                         
                 }
@@ -2040,6 +2042,108 @@ String FindProgramPath(const String& name) {
     bool isOk = fs.SystemRun(findCmd, {name}, output) == 0;
     output.replace("\n", "");
     return isOk ? output : String::EMPTY;
+}
+
+void TreeNodeAddPath(DirectoryNode* parent, const Se::String& path)
+{
+    std::vector<Se::String> components = path.split('/');
+
+    DirectoryNode *current = parent;
+    parent->Flags.Set(FSIF_DIRECTORY);
+
+    // if (components.size() > 1)
+    //     parent->Flags |= FSIF_DIRECTORY;
+
+    for (std::size_t i = 0; i < components.size(); ++i)
+    {
+        std::string name = components[i];
+
+        auto it = std::find_if(current->Children.begin(), current->Children.end(), 
+            [name](const DirectoryNode& node) {
+                return     (name.size() == node.FileName.size())
+                        && (name == node.FileName);
+        });
+
+        if (it != current->Children.end()) {
+            current = &(*it);
+            continue;
+        }
+         
+        DirectoryNode& child = current->Children.emplace_back();
+        child.FileName = name;
+        child.parent = current;
+        if (parent->Flags.Test(FSIF_ARCHIVE) || parent->Flags.Test(FSIF_READONLY) )
+        child.Flags = FSIF_READONLY; //IsArchived = true;
+
+        if (i < components.size()-1)
+            child.Flags |= FSIF_DIRECTORY;
+//            child.IsDirectory = true;
+
+        if (current != parent)
+            child.FullPath = child.parent->FullPath + "/";
+        child.FullPath += name;     
+
+        current = &current->Children.back();
+    }
+}
+
+void TreeNodeScanTree(DirectoryNode& result, const String& pathName, const String& filter, ScanFlags flags)
+{
+    result.Children.clear();
+
+    std::vector<String> filesList;
+
+    for (auto entry : filesList) {
+        TreeNodeAddPath(&result, entry);
+    }
+}
+
+template <typename ForwardIterator, typename T>
+ForwardIterator FindLast(ForwardIterator first, ForwardIterator last,  T pred)
+{
+    ForwardIterator result = last; // Initialize result to last (not found)
+
+    for (ForwardIterator it = first; it != last; ++it) {
+        if (pred(*it)) {
+            result = it; // Update result to the current iterator
+        }
+    }
+
+    return result; // Return the last found iterator or last if not found
+}
+
+void SortTreeByName(Se::DirectoryNode& node)
+{
+    if (node.Children.size() < 2)
+        return;
+
+    auto sortByFileName = [](const Se::DirectoryNode& a, const Se::DirectoryNode& b) {
+        auto lf = a.FileName; lf.to_lower();
+        auto rf = b.FileName; rf.to_lower();
+        return (lf < rf);
+    };
+
+    // sort by type
+    std::sort(node.Children.begin(), node.Children.end(), [](const Se::DirectoryNode& lnode, const Se::DirectoryNode& rnode){
+        return lnode.Flags.Test(FSIF_DIRECTORY) > rnode.Flags.Test(FSIF_DIRECTORY);
+    });
+
+    // sort folders
+    auto it = FindLast(node.Children.begin(), node.Children.end(), [](const Se::DirectoryNode& n) {
+        return n.Flags.Test(FSIF_DIRECTORY);
+    });
+    std::sort(node.Children.begin(), it, sortByFileName);
+
+    // sort files
+    it = std::find_if(it, node.Children.end(), [](const Se::DirectoryNode& n) {
+        return !n.Flags.Test(FSIF_DIRECTORY);
+    });
+    std::sort(it, node.Children.end(), sortByFileName);
+
+    for (auto& node : node.Children)
+        if (node.Flags.Test(FSIF_DIRECTORY))
+            SortTreeByName(node);
+
 }
 
 }

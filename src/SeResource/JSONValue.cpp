@@ -516,9 +516,7 @@ bool JSONValue::Compare(const JSONValue& lhs, const JSONValue& rhs) {
                 return false;
 
             for (auto& it : lhs.GetObject()) {
-                if (
-                        rhs.Contains(it.first) &&
-                        JSONValue::Compare(it.second, rhs[it.first]))
+                if (rhs.Contains(it.first) && JSONValue::Compare(it.second, rhs[it.first]))
                     continue;
 
                 return false;

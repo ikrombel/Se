@@ -14,14 +14,41 @@ namespace Se
 
 class AsyncExecRequest;
 
+enum FSItemType
+{
+    FSIT_FILE,
+    FSIT_DIR,
+    FSIT_LINK,
+    FSIT_FILECUSTOM, 
+    FSIT_UNKNOWN
+};
+
+enum FSItemFlag
+{
+    FSIF_NONE = 0,
+    FSIF_READONLY = 0x1,
+    FSIF_DIRECTORY = 0x2,
+    FSIF_EXECUTABLE = 0x4,
+    FSIF_HIDDEN = 0x8,
+    FSIF_ARCHIVE = 0x10,
+    FSIF_COMPRESSED = 0x20,
+    FSIF_ENCRYPTED = 0x40,
+    FSIF_SYSTEM = 0x80,
+    FSIF_TEMPORARY = 0x100,
+    FSIF_CHANGED = 0x200,
+    FSIF_OPENED = 0x400,
+    FSIF_HAS_ERROR = 0x800,
+    FSIF_HAS_WARNING = 0x1000,
+};
+SE_FLAGSET(FSItemFlag, FSItemFlags);
+
 struct DirectoryNode
 {
 	Se::String FullPath;
 	Se::String FileName;
 	std::vector<DirectoryNode> Children;
-	bool IsDirectory{false};
-    bool IsArchived{false};
     DirectoryNode* parent{nullptr};
+    FSItemFlags Flags{FSItemFlag::FSIF_NONE};
 };
 
 /// Subsystem for file and directory operations and access control.
@@ -215,5 +242,12 @@ bool MatchFileName(const String& fileName, const String& path, const String& ext
 String TrimPathPrefix(const String& fileName, const String& prefixPath);
 
 String FindProgramPath(const String& name);
+
+/// Create a tree node from a path.
+void TreeNodeAddPath(DirectoryNode* parent, const Se::String& path);
+/// TODO not implement filter, flags
+//void TreeNodeScanTree(DirectoryNode& result, const String& pathName, const String& filter, ScanFlags flags);
+/// Sort tree nodes.
+void SortTreeByName(Se::DirectoryNode& node);
 
 }

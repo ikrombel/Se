@@ -166,43 +166,6 @@ void PackageFile::Scan(std::vector<String>& result, const String& pathName, cons
     }
 }
 
-void createTreeNode(DirectoryNode* parent, const Se::String& path)
-{
-    std::vector<Se::String> components = path.split('/');
-
-    DirectoryNode *current = parent;
-    parent->IsDirectory = true;
-
-    for (std::size_t i = 0; i < components.size(); ++i)
-    {
-        std::string name = components[i];
-
-        auto it = std::find_if(current->Children.begin(), current->Children.end(), 
-            [name](const DirectoryNode& node) {
-                return     (name.size() == node.FileName.size())
-                        && (name == node.FileName);
-        });
-
-        if (it != current->Children.end()) {
-            current = &(*it);
-            continue;
-        }
-         
-        DirectoryNode& child = current->Children.emplace_back();
-        child.FileName = name;
-        child.parent = current;
-        child.IsArchived = true;
-
-        if (i < components.size()-1)
-            child.IsDirectory = true;
-
-        if (current != parent)
-            child.FullPath = child.parent->FullPath + "/";
-        child.FullPath += name;     
-
-        current = &current->Children.back();
-    }
-}
 
 void PackageFile::ScanTree(DirectoryNode& result, const String& pathName, const String& filter, ScanFlags flags) const
 {
@@ -210,7 +173,7 @@ void PackageFile::ScanTree(DirectoryNode& result, const String& pathName, const 
 
     auto entries = GetEntries();
     for (auto entry : entries) {
-        createTreeNode(&result, entry.first);
+        TreeNodeAddPath(&result, entry.first);
     }
 }
 

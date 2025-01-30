@@ -80,7 +80,7 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     void JSONOutputArchiveBlock::Close(ArchiveBase& archive)
     {
         // TODO: Uncomment when PluginManager is fixed
-        //GFROST_ASSERT(expectedElementCount_ == M_MAX_UNSIGNED || numElements_ == expectedElementCount_);
+        //SE_ASSERT(expectedElementCount_ == M_MAX_UNSIGNED || numElements_ == expectedElementCount_);
     }
 
     void JSONOutputArchive::BeginBlock(const char* name, unsigned& sizeHint, bool safe, ArchiveBlockType type)
@@ -131,24 +131,24 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     }
 
 // Generate serialization implementation (JSON output)
-#define GFROST_JSON_OUT_IMPL(type, function) \
+#define SE_JSON_OUT_IMPL(type, function) \
     void JSONOutputArchive::Serialize(const char* name, type& value) \
     { \
         CreateElement(name, JSONValue{ value }); \
     }
 
-    GFROST_JSON_OUT_IMPL(bool, SetBool);
-    GFROST_JSON_OUT_IMPL(signed char, SetInt);
-    GFROST_JSON_OUT_IMPL(short, SetInt);
-    GFROST_JSON_OUT_IMPL(int, SetInt);
-    GFROST_JSON_OUT_IMPL(unsigned char, SetUInt);
-    GFROST_JSON_OUT_IMPL(unsigned short, SetUInt);
-    GFROST_JSON_OUT_IMPL(unsigned int, SetUInt);
-    GFROST_JSON_OUT_IMPL(float, SetFloat);
-    GFROST_JSON_OUT_IMPL(double, SetDouble);
-    GFROST_JSON_OUT_IMPL(String, SetString);
+    SE_JSON_OUT_IMPL(bool, SetBool);
+    SE_JSON_OUT_IMPL(signed char, SetInt);
+    SE_JSON_OUT_IMPL(short, SetInt);
+    SE_JSON_OUT_IMPL(int, SetInt);
+    SE_JSON_OUT_IMPL(unsigned char, SetUInt);
+    SE_JSON_OUT_IMPL(unsigned short, SetUInt);
+    SE_JSON_OUT_IMPL(unsigned int, SetUInt);
+    SE_JSON_OUT_IMPL(float, SetFloat);
+    SE_JSON_OUT_IMPL(double, SetDouble);
+    SE_JSON_OUT_IMPL(String, SetString);
 
-#undef GFROST_JSON_OUT_IMPL
+#undef SE_JSON_OUT_IMPL
 
     JSONInputArchiveBlock::JSONInputArchiveBlock(const char* name, ArchiveBlockType type, const JSONValue* value)
             : ArchiveBlockBase(name, type)
@@ -263,7 +263,7 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     }
 
 // Generate serialization implementation (JSON input)
-#define GFROST_JSON_IN_IMPL(type, function, jsonType) \
+#define SE_JSON_IN_IMPL(type, function, jsonType) \
     void JSONInputArchive::Serialize(const char* name, type& value) \
     { \
         const JSONValue& jsonValue = ReadElement(name); \
@@ -271,17 +271,17 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
         value = jsonValue.function(); \
     }
 
-    GFROST_JSON_IN_IMPL(bool, GetBool, JSON_BOOL);
-    GFROST_JSON_IN_IMPL(signed char, GetInt, JSON_NUMBER);
-    GFROST_JSON_IN_IMPL(short, GetInt, JSON_NUMBER);
-    GFROST_JSON_IN_IMPL(int, GetInt, JSON_NUMBER);
-    GFROST_JSON_IN_IMPL(unsigned char, GetUInt, JSON_NUMBER);
-    GFROST_JSON_IN_IMPL(unsigned short, GetUInt, JSON_NUMBER);
-    GFROST_JSON_IN_IMPL(unsigned int, GetUInt, JSON_NUMBER);
-    GFROST_JSON_IN_IMPL(float, GetFloat, JSON_NUMBER);
-    GFROST_JSON_IN_IMPL(double, GetDouble, JSON_NUMBER);
-    GFROST_JSON_IN_IMPL(String, GetString, JSON_STRING);
+    SE_JSON_IN_IMPL(bool, GetBool, JSON_BOOL);
+    SE_JSON_IN_IMPL(signed char, GetInt, JSON_NUMBER);
+    SE_JSON_IN_IMPL(short, GetInt, JSON_NUMBER);
+    SE_JSON_IN_IMPL(int, GetInt, JSON_NUMBER);
+    SE_JSON_IN_IMPL(unsigned char, GetUInt, JSON_NUMBER);
+    SE_JSON_IN_IMPL(unsigned short, GetUInt, JSON_NUMBER);
+    SE_JSON_IN_IMPL(unsigned int, GetUInt, JSON_NUMBER);
+    SE_JSON_IN_IMPL(float, GetFloat, JSON_NUMBER);
+    SE_JSON_IN_IMPL(double, GetDouble, JSON_NUMBER);
+    SE_JSON_IN_IMPL(String, GetString, JSON_STRING);
 
-#undef GFROST_JSON_IN_IMPL
+#undef SE_JSON_IN_IMPL
 
 }
