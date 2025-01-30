@@ -79,6 +79,7 @@ add_library(SeResource STATIC
         src/SeResource/Decompress.h
         src/SeResource/Image.cpp
         src/SeResource/ImageCube.cpp
+        src/SeResource/ImageSVG.cpp
         src/SeResource/Resource.cpp
 
         src/SeResource/JSONValue.cpp
