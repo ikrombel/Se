@@ -1,3 +1,4 @@
+#pragma once
 #include <Se/String.hpp>
 #include <SeArc/ArchiveSerializationBasic.hpp>
 
@@ -10,7 +11,7 @@
 namespace Se
 {
 
-Color ToColor(const String& source)
+inline Color ToColor(const String& source)
 {
     Color ret;
 
@@ -42,21 +43,6 @@ inline IntVector2 ToIntVector2(const String& source)
     return ret;
 }
 
-inline Vector2 ToVector2(const String& source)
-{
-    Vector2 ret(IntVector2::ZERO);
-
-    auto elements = source.split(' ');
-    
-    if (elements.size() < 2)
-        return ret;
-        
-    ret.x_ = ToFloat(elements[0]);
-    ret.y_ = ToFloat(elements[1]);
-
-    return ret;
-}
-
 inline Rect ToRect(const String& source)
 {
     Rect ret(Rect::ZERO);
@@ -73,7 +59,7 @@ inline Rect ToRect(const String& source)
     return ret;
 }
 
-IntRect ToIntRect(const String& source)
+inline IntRect ToIntRect(const String& source)
 {
     IntRect ret(IntRect::ZERO);
 

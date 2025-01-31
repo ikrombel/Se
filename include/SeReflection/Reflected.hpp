@@ -356,9 +356,11 @@ public:
 
     template<class Parent>
     bool IsClassBase() {
-        SE_LOG_INFO("-+ {}\n-+ {} {}", ToStringTypeId<Parent>(), GetType(), baseType_);
-        SE_LOG_INFO("-+ {}\n-+ {}", baseType_, GetType()); 
-        SE_LOG_INFO("-+ {}\n-+ {}", ToStringTypeId<T>(), GetType()); 
+        String outString;
+        outString = format("-+ {}\n-+ {} {}", ToStringTypeId<Parent>(), GetType(), baseType_);
+        outString += format("-+ {}\n-+ {}", baseType_, GetType()); 
+        outString += format("-+ {}\n-+ {}", ToStringTypeId<T>(), GetType());
+        SE_LOG_INFO(outString);
         return std::is_base_of<Parent, T>::value;
         //typeid(T) == typeid(U);
     }

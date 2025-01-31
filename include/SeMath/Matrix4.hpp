@@ -951,7 +951,7 @@ inline Matrix4 &ComposeTransform(Matrix4 &ret,const Vector4 &xyz,const Quaternio
     return ret;
 }
 
-Matrix4 &ComposeTransform(Matrix4 &ret, const Vector3 &xyz, const Quaternion &rot, const Vector3 &s)
+inline Matrix4 &ComposeTransform(Matrix4 &ret, const Vector3 &xyz, const Quaternion &rot, const Vector3 &s)
 {
     Matrix3 rotation,scale;
     scale.SetDiagonal(s);

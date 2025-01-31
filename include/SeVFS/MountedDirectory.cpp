@@ -4,7 +4,7 @@
 #include <Se/IO/FileSystem.h>
 #include <Se/Console.hpp>
 
-#include <Se/Application.hpp>
+//#include <Se/Application.hpp>
 //#include "Se/Resource/ResourceEvents.h"
 
 namespace Se
@@ -43,7 +43,7 @@ void MountedDirectory::StartWatching()
     fileWatcher_->StartWatching(directory_, true);
 
     // Subscribe BeginFrame for handling directory watcher
-    idOnStopWatching = Application::onBeginFrame.connect([this](){
+    idOnStopWatching = Time::onBeginFrame.connect([this](const TimeParams& params){
         this->ProcessUpdates();
     });
 }
@@ -53,7 +53,7 @@ void MountedDirectory::StopWatching()
     if (fileWatcher_)
         fileWatcher_->StopWatching();
 
-    Application::onBeginFrame.disconnect(idOnStopWatching);
+    Time::onBeginFrame.disconnect(idOnStopWatching);
 }
 
 void MountedDirectory::ProcessUpdates()
