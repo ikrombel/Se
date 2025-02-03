@@ -1576,7 +1576,7 @@ bool IsAbsolutePath(const String& pathName)
 
     String path = GetInternalPath(pathName);
 
-    if (path[0] == '/')
+    if (path.at(0) == '/')
         return true;
 
 #ifdef _WIN32

@@ -24,45 +24,45 @@ struct FileEntry
 static const unsigned COMPRESSED_BLOCK_SIZE = 32768;
 unsigned blockSize_ = COMPRESSED_BLOCK_SIZE;
 
-    String SimplifyPath(String path) {
-        std::vector<String> folders;
-        int idx = 0;
-        while (idx < path.length()) {
-            while (idx < path.length() && path[idx] == '/')
-                idx++;
-            String f = "";
-            while (idx < path.length() && path[idx] != '/') {
-                f += path[idx];
-                idx++;
-            }
-            if (f == ".") {
-                continue;
-            } else if (f == "..") {
-                if (!folders.empty()) {
-                    folders.pop_back();
-                }
-            } else if (f.length()) {
-                folders.push_back(f);
-            }
+String SimplifyPath(String path) {
+    std::vector<String> folders;
+    int idx = 0;
+    while (idx < path.length()) {
+        while (idx < path.length() && path.at(idx) == '/')
+            idx++;
+        String f = "";
+        while (idx < path.length() && path.at(idx) != '/') {
+            f += path.at(idx);
+            idx++;
         }
-
-        String result = "";
-        int i = 0;
-        for (auto fo : folders) {
-#ifdef WIN32
-            if (i == 0) {
-                i = 1;
+        if (f == ".") {
+            continue;
+        } else if (f == "..") {
+            if (!folders.empty()) {
+                folders.pop_back();
             }
-            else
-#endif
-                result += "/";
-            result += fo;
+        } else if (f.length()) {
+            folders.push_back(f);
         }
-        if (result.empty()) {
-            result = "/";
-        }
-        return result;
     }
+
+    String result = "";
+    int i = 0;
+    for (auto fo : folders) {
+#ifdef WIN32
+        if (i == 0) {
+            i = 1;
+        }
+        else
+#endif
+            result += "/";
+        result += fo;
+    }
+    if (result.empty()) {
+        result = "/";
+    }
+    return result;
+}
 
 
 String ignoreExtensions_[] = {

@@ -132,7 +132,7 @@ public:
     String ReadFileID() {
         String ret;
         ret.resize(4);
-        Read(&ret[0], 4);
+        Read(&ret.data()[0], 4);
         return ret;
     }
     // /// Read a 32-bit StringHash.

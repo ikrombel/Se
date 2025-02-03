@@ -9,6 +9,8 @@ if (NOT ANDROID)
         set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${BUILD_DIR}) # *.dll
     endif()
 
+    set(SEPLUGINS_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${BUILD_DIR}/plugins/) 
+
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${BUILD_DIR}/lib/) # *.a, *.lib
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${BUILD_DIR})
 
@@ -27,4 +29,11 @@ if (NOT ANDROID)
             endif ()
         endforeach ()
     endif ()
+endif()
+
+
+
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    add_definitions(-DSE_64BIT) 
+    message(STATUS "64 bit")
 endif()

@@ -58,7 +58,7 @@ File::File(PackageFile* package, const String& fileName) :
     mode_(FILE_READ),
     handle_(nullptr),
 #ifdef __ANDROID__
-    assetHandle_(0),
+    assetHandle_{nullptr},
 #endif
     readBufferOffset_(0),
     readBufferSize_(0),

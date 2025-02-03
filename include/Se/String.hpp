@@ -121,7 +121,7 @@ public:
         if (empty())
             return false;
 
-        char cTmp = (*this)[0];
+        char cTmp = (*this).front();
 
         if (caseSensitive)
             return (std::tolower(cTmp) == std::tolower(c));
@@ -133,7 +133,7 @@ public:
         if (empty())
             return false;
 
-        char cTmp = (*this)[length() -1];
+        char cTmp = (*this).back();
 
         if (caseSensitive)
             return (std::tolower(cTmp) == std::tolower(c));
@@ -155,12 +155,12 @@ public:
 
     void to_lower() {
         for (auto i = 0; i < this->length(); i++)
-            (*this)[i] = std::tolower((*this)[i]);
+            (*this).data()[i] = std::tolower((*this).data()[i]);
     }
 
     void to_upper() {
         for(auto i = 0; i < this->length(); i++)
-            (*this)[i] = std::toupper((*this)[i]);
+            (*this).data()[i] = std::toupper((*this).at(i));
     }
 
     bool comparei(const String& rsh) const
@@ -647,7 +647,7 @@ inline std::size_t String::find(const String &str, std::size_t startPos, bool ca
     if (!str.length() || str.length() > base.length())
         return String::npos;
 
-    char first = str[0];
+    char first = str.front();
     if (!caseSensitive)
         first = (char) tolower(first);
 
