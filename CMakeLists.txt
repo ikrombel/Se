@@ -67,8 +67,20 @@ target_compile_definitions(Se
         )
 # target_compile_features(Se PRIVATE cxx_std_20)
 
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        target_compile_definitions(Se PUBLIC SE_64BIT)
+        message(STATUS "64 bit")
+endif()
+
 if (WIN32)
         target_link_libraries(Se PRIVATE user32 winmm)
+    if (MSVC)
+        target_compile_definitions(Se PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
+endif()
+
+if (NOT ANDROID)
+        target_compile_definitions(Se PUBLIC SE_DESKTOP)
 endif()
 
 add_library(SeResource STATIC

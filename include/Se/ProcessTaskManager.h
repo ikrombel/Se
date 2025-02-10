@@ -23,13 +23,16 @@ struct Process {
         std::function<bool()> func_;
 
         ProcessStatus status_;
+        /// @brief  if onTerminate is set, where process is stopped
+        std::function<void()> onTerminate;
     };
 
     std::vector<Subprocess> subprocesses_;
     
     volatile ProcessStatus status_{ProcessStatus::PStatusIdle};
 
-    void AddProcess(const String& title, std::function<bool()> func);
+    void AddProcess(const String& title, std::function<bool()> func, 
+            std::function<void()> onTerminate = nullptr);
 
     bool Run();
 
@@ -62,7 +65,7 @@ protected:
 
     bool busy_{false};
 
-    static std::unordered_map<String, std::shared_ptr<Process>> processes_;
+    inline static std::unordered_map<String, std::shared_ptr<Process>> processes_;
 
     String inProgress_;
     unsigned progress_{0};

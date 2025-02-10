@@ -43,6 +43,10 @@ void ProcessTaskManager::ThreadFunction()
 
                 subproc.status_ = ProcessStatus::PStatusInProgress;
                 bool isOk = subproc.func_();
+                if (!isOk && subproc.onTerminate){
+                    subproc.onTerminate();
+                    break;
+                }
                 subproc.status_ = isOk ? ProcessStatus::PStatusDone : ProcessStatus::PStatusError;
                 progress_++;
 
@@ -56,8 +60,10 @@ void ProcessTaskManager::ThreadFunction()
     }
 }
 
-void Process::AddProcess(const String& title, std::function<bool()> func) {
-    subprocesses_.push_back({title, func, ProcessStatus::PStatusIdle});
+void Process::AddProcess(const String& title, std::function<bool()> func, 
+        std::function<void()> onTerminate)
+{
+    subprocesses_.push_back({title, func, ProcessStatus::PStatusIdle, onTerminate});
 }
 
 

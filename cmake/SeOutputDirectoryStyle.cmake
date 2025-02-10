@@ -30,10 +30,3 @@ if (NOT ANDROID)
         endforeach ()
     endif ()
 endif()
-
-
-
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    add_definitions(-DSE_64BIT) 
-    message(STATUS "64 bit")
-endif()

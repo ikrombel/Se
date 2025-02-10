@@ -368,6 +368,9 @@ protected:
 
         replace(pos, length, replaceWith.data(), replaceWith.length());
     }
+#ifndef NDEBUG
+    const char* ptr_{this->c_str()};
+#endif
 };
 
 inline const String String::EMPTY{""};
@@ -919,10 +922,10 @@ inline bool ToBool(const char* source)
     return false;
 }
 
-inline int ToInt(const Se::String& source, int base = 10)
-{
-    return ToInt(source.c_str(), base);
-}
+// inline int ToInt(const Se::String& source, int base = 10)
+// {
+//     return ToInt(source.c_str(), base);
+// }
 
 inline int ToInt(const char* source, int base = 10)
 {
