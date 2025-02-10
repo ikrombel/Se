@@ -1099,7 +1099,7 @@ inline std::size_t NextUTF8Char(const Se::String& string, unsigned& byteOffset)
 inline WString Utf8ToUcs2(const char* string)
 {
     WString result{};
-    unsigned neededSize = 0;
+    std::size_t neededSize = 0;
     WChar temp[3];
 
     unsigned byteOffset = 0;
@@ -1108,7 +1108,7 @@ inline WString Utf8ToUcs2(const char* string)
     {
         WChar* dest = temp;
         EncodeUTF16(dest,  NextUTF8Char(string, byteOffset));
-        neededSize += dest - temp;
+        neededSize += std::size_t(dest - temp);
     }
 
     result.resize(neededSize);

@@ -183,7 +183,7 @@ public:
     }
 
     /// Calculate hash value from binary data.
-    static constexpr unsigned Calculate(const char* data, unsigned length)
+    static constexpr unsigned Calculate(const char* data, std::size_t length)
     {
         return Calculate(std::string_view(data, length));
     }
