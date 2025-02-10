@@ -245,7 +245,7 @@ public:
     /// Return a string by joining substrings with a 'glue' string.
     static String joined(const std::vector<String>& subStrings, const String& glue) {
         if (subStrings.empty())
-        return String();
+            return String::EMPTY;
 
         String joinedString(subStrings[0]);
         for (std::size_t i = 1; i < subStrings.size(); ++i) {
@@ -526,9 +526,9 @@ inline unsigned DecodeUTF8(const char*& src)
 }
 
 
-inline unsigned LengthUTF8(const String& string)
+inline std::size_t LengthUTF8(const String& string)
 {
-    unsigned ret = 0;
+    std::size_t ret = 0;
     const char* src = string.c_str();
     if (!src)
         return ret;
@@ -711,7 +711,7 @@ inline std::size_t String::find_last(char c, std::size_t startPos, bool caseSens
         }
     }
 
-    return npos;
+    return String::npos;
 }
 
 inline std::size_t String::find_last(const String& str, std::size_t startPos, bool caseSensitive) const
@@ -725,7 +725,7 @@ inline std::size_t String::find_last(const String& str, std::size_t startPos, bo
     if (!caseSensitive)
         first = (char)tolower(first);
 
-    for (unsigned i = startPos; i < length(); --i)
+    for (std::size_t i = startPos; i < length(); --i)
     {
         char c = data()[i];
         if (!caseSensitive)
@@ -734,7 +734,7 @@ inline std::size_t String::find_last(const String& str, std::size_t startPos, bo
         if (c == first)
         {
             bool found = true;
-            for (unsigned j = 1; j < str.length(); ++j)
+            for (std::size_t j = 1; j < str.length(); ++j)
             {
                 c = data()[i + j];
                 char d = str.data()[j];
@@ -760,7 +760,7 @@ inline std::size_t String::find_last(const String& str, std::size_t startPos, bo
 
 inline void String::replace(std::size_t pos, std::size_t length, const char *srcStart, std::size_t srcLength) {
     auto& base = (*this);
-    int delta = (int) srcLength - (int) length;
+    std::size_t delta = srcLength - length;
 
     if (pos + length < base.length()) {
         if (delta < 0) {
@@ -853,7 +853,7 @@ inline typename std::vector<T>::iterator erase_first(std::vector<T>& arr, const 
     return (it != arr.end()) ? arr.erase(it) : it;
 }
 
-inline void BufferToHexString(String& dest, const void* data, unsigned size)
+inline void BufferToHexString(String& dest, const void* data, std::size_t size)
 {
     dest.resize(size * 2);
 
@@ -876,7 +876,7 @@ inline bool HexStringToBuffer(std::vector<unsigned char>& dest, const String& so
 {
     dest.resize(source.length() / 2);
 
-    for (unsigned i = 0; i < source.length(); ++i)
+    for (std::size_t i = 0; i < source.length(); ++i)
     {
         const char ch = source[i];
 
@@ -908,9 +908,9 @@ inline bool ToBool(const Se::String& source)
 
 inline bool ToBool(const char* source)
 {
-    unsigned length = Se::String::CStringLength(source);
+    std::size_t length = Se::String::CStringLength(source);
 
-    for (unsigned i = 0; i < length; ++i)
+    for (std::size_t i = 0; i < length; ++i)
     {
         auto c = (char)tolower(source[i]);
         if (c == 't' || c == 'y' || c == '1')
@@ -983,7 +983,7 @@ inline float ToFloat(const Se::String& source)
 inline float ToFloat(const char* source)
 {
     if (!source)
-        return 0;
+        return .0f;
 
     return (float)strtod(source, nullptr);
 }
@@ -996,7 +996,7 @@ inline double ToDouble(const Se::String& source)
 inline double ToDouble(const char* source)
 {
     if (!source)
-        return 0;
+        return .0;
 
     return strtod(source, nullptr);
 }
@@ -1084,13 +1084,13 @@ inline void EncodeUTF16(WChar*& dest, unsigned unicodeChar)
     }
 }
 
-inline std::size_t NextUTF8Char(const Se::String& string, unsigned& byteOffset)
+inline std::size_t NextUTF8Char(const Se::String& string, std::size_t& byteOffset)
 {
     if (string.empty())
         return String::npos;
 
     const char* src = string.c_str() + byteOffset;
-    unsigned ret = Helpers::DecodeUTF8(src);
+    std::size_t ret = Helpers::DecodeUTF8(src);
     byteOffset = (unsigned)(src - string.c_str());
 
     return ret;
@@ -1102,7 +1102,7 @@ inline WString Utf8ToUcs2(const char* string)
     std::size_t neededSize = 0;
     WChar temp[3];
 
-    unsigned byteOffset = 0;
+    std::size_t byteOffset = 0;
     auto length = std::strlen(string);
     while (byteOffset < length)
     {
@@ -1129,9 +1129,9 @@ inline WString MultiByteToWide(const char* string)
     WString result{};
     result.resize(Helpers::LengthUTF8(string));
 
-    unsigned byteOffset = 0;
+    std::size_t byteOffset = 0;
     WChar* dest = &result[0];
-    unsigned length = String::CStringLength(string);
+    std::size_t length = String::CStringLength(string);
     while (byteOffset < length)
         *dest++ = (wchar_t)NextUTF8Char(string, byteOffset);
     return result;

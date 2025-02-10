@@ -117,7 +117,7 @@ public:
     void SetNonThreadedWorkMs(int ms) { maxNonThreadedWorkMs_ = std::max(ms, 1); }
 
     /// Return number of worker threads.
-    unsigned GetNumThreads() const { return threads_.size(); }
+    std::size_t GetNumThreads() const { return threads_.size(); }
 
     /// Return number of incomplete tasks with at least the specified priority.
     unsigned GetNumIncomplete(unsigned priority) const;
