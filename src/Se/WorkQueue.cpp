@@ -73,7 +73,7 @@ WorkQueue::~WorkQueue()
     shutDown_ = true;
     Resume();
 
-    for (unsigned i = 0; i < threads_.size(); ++i)
+    for (auto i = 0; i < threads_.size(); ++i)
         threads_[i]->Stop();
 }
 
@@ -88,9 +88,9 @@ void WorkQueue::CreateThreads(unsigned numThreads)
     // Start threads in paused mode
     Pause();
 
-    for (unsigned i = 0; i < numThreads; ++i)
+    for (auto i = 0; i < numThreads; ++i)
     {
-        std::shared_ptr<WorkerThread> thread(new WorkerThread(this, i + 1));
+        auto thread = std::make_shared<WorkerThread>(this, i + 1);
 //        thread->SetName(Format("Worker {}", i + 1));
         thread->Run();
         threads_.push_back(thread);
@@ -123,7 +123,7 @@ std::shared_ptr<WorkItem> WorkQueue::GetFreeItem()
     else
     {
         // No usable items found, create a new one set it as pooled and return it.
-        std::shared_ptr<WorkItem> item(new WorkItem());
+        auto item = std::make_shared<WorkItem>();
         item->pooled_ = true;
         return item;
     }
@@ -403,11 +403,11 @@ void WorkQueue::PurgeCompleted(unsigned priority)
 
 void WorkQueue::PurgePool()
 {
-    unsigned currentSize = poolItems_.size();
-    int difference = lastSize_ - currentSize;
+    std::size_t currentSize = poolItems_.size();
+    std::size_t difference = lastSize_ - currentSize;
 
     // Difference tolerance, should be fairly significant to reduce the pool size.
-    for (unsigned i = 0; poolItems_.size() > 0 && difference > tolerance_ && i < (unsigned)difference; i++)
+    for (std::size_t i = 0; poolItems_.size() > 0 && difference > tolerance_ && i < (unsigned)difference; i++)
         poolItems_.pop_front();
 
     lastSize_ = currentSize;

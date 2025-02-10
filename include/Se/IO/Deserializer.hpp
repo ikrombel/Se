@@ -43,7 +43,7 @@ public:
     unsigned GetSize() const { return size_; }
 
     template<class T>
-    long long Read() { T ret; Read(&ret, sizeof ret);
+    T Read() { T ret; Read(&ret, sizeof ret);
         return ret; }
 
     /// Read a 64-bit integer.

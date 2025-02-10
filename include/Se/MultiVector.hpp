@@ -136,7 +136,7 @@ public:
     using ConstIterator = BaseIterator<typename OuterCollection::const_iterator, typename InnerCollection::const_iterator>;
 
     /// Clear inner vectors. Reset outer vector to fixed size.
-    void Clear(unsigned outerSize)
+    void Clear(std::size_t outerSize)
     {
         outer_.resize(outerSize);
         for (auto& inner : outer_)
@@ -145,39 +145,39 @@ public:
 
     /// Emplace element at the back of specified outer vector.
     template <class ... Args>
-    T& EmplaceBack(unsigned outerIndex, Args&& ... args)
+    T& EmplaceBack(std::size_t outerIndex, Args&& ... args)
     {
         auto& inner = outer_[outerIndex];
         return inner.emplace_back(std::forward<Args>(args)...);
     }
 
     /// Push element into back of specified outer vector. Return index of added element.
-    Index PushBack(unsigned outerIndex, const T& value)
+    Index PushBack(std::size_t outerIndex, const T& value)
     {
         auto& inner = outer_[outerIndex];
-        const unsigned innerIndex = inner.size();
+        const std::size_t innerIndex = inner.size();
         inner.push_back(value);
         return { outerIndex, innerIndex };
     }
 
     /// Pop element from back of specified outer vector.
-    void PopBack(unsigned outerIndex)
+    void PopBack(std::size_t outerIndex)
     {
         auto& inner = outer_[outerIndex];
         inner.pop_back();
     }
 
     /// Return size.
-    unsigned Size() const
+    std::size_t Size() const
     {
-        unsigned size = 0;
+        std::size_t size = 0;
         for (auto& inner : outer_)
             size += inner.size();
         return size;
     }
 
     /// Resize outer vector.
-    void Resize(int outerSize) { outer_.resize(outerSize); }
+    void Resize(std::size_t outerSize) { outer_.resize(outerSize); }
 
     /// Copy content to vector.
     void CopyTo(InnerCollection& dest) const
@@ -229,6 +229,6 @@ typename MultiVector<T>::Iterator begin(MultiVector<T>& c) { return c.Begin(); }
 template <class T>
 typename MultiVector<T>::Iterator end(MultiVector<T>& c) { return c.End(); }
 /// Return size of MultiVector.
-template <class T> unsigned size(const MultiVector<T>& c) { return c.Size(); }
+template <class T> std::size_t size(const MultiVector<T>& c) { return c.Size(); }
 
 }
