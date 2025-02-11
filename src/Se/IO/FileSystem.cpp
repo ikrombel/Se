@@ -1328,7 +1328,7 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                         auto& node = result.Children.emplace_back();
                         node.FullPath = deltaPath + fileName;
                         node.FileName = fileName;
-                        node.IsDirectory = true;
+                        node.Flags |= FSIF_DIRECTORY;
 
                         if (recursive)
                             ScanDirInternalTree(node, pathTmp + fileName, startPath, filter, flags);
@@ -1340,7 +1340,8 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                         auto& node = result.Children.emplace_back();
                         node.FullPath = deltaPath + fileName;
                         node.FileName = fileName;
-                        node.IsDirectory = false;
+                        if (node.Flags.Test(FSIF_DIRECTORY)) 
+                            node.Flags.Unset(FSIF_DIRECTORY); //IsDirectory = false;
                     }
                 }
             }
