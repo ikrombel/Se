@@ -11,6 +11,12 @@
 namespace Se
 {
 
+#if _WIN32
+float strtof32(const char* str, char** end) {
+    return static_cast<float>(strtof(str, end));
+}
+#endif
+
 JSONValue ToJSONValue(const ryml::ConstNodeRef& node)
 {
     if (node.has_key())
@@ -47,6 +53,7 @@ JSONValue ToJSONValue(const ryml::ConstNodeRef& node)
         }
         else if (yamlValue.is_number() && yamlValue.is_real()) {
             tmpValue = yamlValue.str ? (float)strtof32(yamlValue.str, nullptr) : 0;
+
             //value = yamlValue.float Set(node.first, node.second.val());
         } 
         // else if (yamlValue.is_real()) {
