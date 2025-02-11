@@ -41,7 +41,6 @@ jobs:
             c_compiler: gcc
           - os: windows-latest
             c_compiler: cl
-            cpp_compiler: cl
           - os: ubuntu-latest
             c_compiler: cl
 
