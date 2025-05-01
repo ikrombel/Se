@@ -4,6 +4,7 @@
 #include <Se/Algorithms.hpp>
 #include <Se/StringHash.hpp>
 #include <Se/Timer.h>
+#include <Se/Hash.hpp>
 // #include <SeArc/Archive.hpp>
 // #include <SeArc/ArchiveSerialization.hpp>
 #include <SeVFS/FileIdentifier.h>
@@ -293,7 +294,7 @@ struct hash<Se::Resource> {
     size_t operator()(const Se::Resource& res) const {
         std::size_t hash{0};
         Se::hash_combine(hash, res.GetName());
-        //Se::hash_combine(hash, res.Size());
+        //Se::hash_combine(hash, res.GetSize());
         return hash;
     }
 };
