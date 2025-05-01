@@ -236,7 +236,11 @@ Image::Image()
 {
 }
 
-Image::~Image() = default;
+Image::~Image()
+{
+    //data_.reset();
+    //delete[] data_.get();
+}
 
 
 bool Image::BeginLoad(Deserializer& source)
@@ -374,7 +378,7 @@ bool Image::BeginLoad(Deserializer& source)
         Image* currentImage = this;
 
         for (unsigned faceIndex = 0; faceIndex < imageChainCount; ++faceIndex)
-        {   
+        {
             std::shared_ptr<unsigned char> refData(new unsigned char[dataSize], std::default_delete<unsigned char[]>());
             currentImage->data_ = refData;
             currentImage->cubemap_ = cubemap_;
@@ -492,6 +496,8 @@ bool Image::BeginLoad(Deserializer& source)
                 }
                 break;
                 }
+
+                currentImage->data_.reset();
 
                 // Replace with converted data
                 currentImage->data_ = rgbaData;
@@ -611,6 +617,9 @@ bool Image::BeginLoad(Deserializer& source)
         source.Seek(source.GetPosition() + keyValueBytes);
         auto dataSize = (unsigned)(source.GetSize() - source.GetPosition() - mipmaps * sizeof(unsigned));
 
+        if (data_)
+            data_.reset();
+
         data_ = std::shared_ptr<unsigned char>(new unsigned char[dataSize], std::default_delete<unsigned char[]>());
         width_ = width;
         height_ = height;
@@ -727,6 +736,9 @@ bool Image::BeginLoad(Deserializer& source)
 
         source.Seek(source.GetPosition() + metaDataSize);
         unsigned dataSize = source.GetSize() - source.GetPosition();
+
+        if (data_)
+            data_.reset();
 
         data_ = std::shared_ptr<unsigned char>(new unsigned char[dataSize], std::default_delete<unsigned char[]>());
         width_ = width;
@@ -900,6 +912,9 @@ bool Image::SetSize(int width, int height, int depth, unsigned components)
         return false;
     }
 
+    if (data_)
+        data_.reset();
+
     data_ = std::shared_ptr<unsigned char>(new unsigned char[width * height * depth * components], std::default_delete<unsigned char[]>());
     width_ = width;
     height_ = height;
@@ -1048,6 +1063,9 @@ bool Image::FlipHorizontal()
             }
         }
 
+        if (data_)
+            data_.reset();
+
         data_ = newData;
     }
     else
@@ -1084,6 +1102,9 @@ bool Image::FlipHorizontal()
             dataOffset += level.dataSize_;
         }
 
+        if (data_)
+            data_.reset();
+
         data_ = newData;
     }
 
@@ -1108,6 +1129,9 @@ bool Image::FlipVertical()
 
         for (int y = 0; y < height_; ++y)
             memcpy(&(newData.get()[(height_ - y - 1) * rowSize]), &data_.get()[y * rowSize], rowSize);
+
+        if (data_)
+            data_.reset();
 
         data_ = newData;
     }
@@ -1143,6 +1167,9 @@ bool Image::FlipVertical()
 
             dataOffset += level.dataSize_;
         }
+
+        if (data_)
+            data_.reset();
 
         data_ = newData;
     }
@@ -1199,6 +1226,9 @@ bool Image::Resize(int width, int height)
             }
         }
     }
+
+    if (data_)
+        data_.reset();
 
     width_ = width;
     height_ = height;
@@ -2302,10 +2332,7 @@ unsigned char* Image::GetImageData(Deserializer& source, int& width, int& height
     else
         pixels = stbi_load_from_memory(buffer.get(), dataSize, &width, &height, (int*)&components, 0);
 
-
-
     bits  = components * sizeOfChannel;
-
     
     if (!pixels)
     {
@@ -2314,11 +2341,11 @@ unsigned char* Image::GetImageData(Deserializer& source, int& width, int& height
 
         texChannels = 4;
 
-        if(width)
+        if (width)
             width = 2;
-        if(height)
+        if (height)
             height = 2;
-        if(bits)
+        if (bits)
             bits = texChannels * sizeOfChannel;
 
         const int32_t size = (width) * (height) * texChannels;

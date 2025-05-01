@@ -5,6 +5,9 @@
 #include <SeArc/ArchiveSerializationBasic.hpp>
 //#include <SeArc/ArchiveSerializationVariant.hpp>
 
+#include <algorithm>
+#include <vector>
+
 namespace Se
 {
 
@@ -15,9 +18,9 @@ namespace Detail
 template <class T, class U, std::size_t... Is>
 inline void SerializeVectorTieSTD(Archive& archive, const char* name, T& vectorTie, const char* element, const U& serializeValue, std::index_sequence<Is...>)
 {
-    const unsigned sizes[] = { std::get<Is>(vectorTie).size()... };
+    const std::size_t sizes[] = { std::get<Is>(vectorTie).size()... };
 
-    unsigned numElements = sizes[0];
+    std::size_t numElements = sizes[0];
     auto block = archive.OpenArrayBlock(name, numElements);
 
     if (archive.IsInput())
@@ -28,11 +31,11 @@ inline void SerializeVectorTieSTD(Archive& archive, const char* name, T& vectorT
     }
     else
     {
-        if (std::find(std::begin(sizes), std::end(sizes), numElements, std::not_equal_to<unsigned>{}) != std::end(sizes))
+        if (std::find_if(std::begin(sizes), std::end(sizes), [numElements](std::size_t size) { return size != numElements; }) != std::end(sizes))
             throw ArchiveException("Vectors of '{}/{}' have mismatching sizes", archive.GetCurrentBlockPath().c_str(), name);
     }
 
-    for (unsigned i = 0; i < numElements; ++i)
+    for (std::size_t i = 0; i < numElements; ++i)
     {
         const auto elementTuple = std::tie(std::get<Is>(vectorTie)[i]...);
         serializeValue(archive, element, elementTuple);

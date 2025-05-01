@@ -19,8 +19,6 @@
 #include <strings.h>
 #endif
  
-typedef wchar_t WChar;
-typedef std::wstring WString; 
 
 #if __cplusplus >= 201103L
 #  define STRING_CXX11 1
@@ -43,6 +41,9 @@ typedef std::wstring WString;
 #endif
 
 namespace Se {
+
+typedef wchar_t WChar;
+typedef std::wstring WString; 
 
 class String : public std::string {
 public:
@@ -163,12 +164,21 @@ public:
             (*this).data()[i] = std::toupper((*this).at(i));
     }
 
+    bool comparei(const char* rsh) const
+    {
+        if (this->size() != std::strlen(rsh))
+            return false;
+
+        return strncasecmp(c_str(), rsh, size()) == 0;
+    }
+
+    /// compare with ignore case sensitivity
     bool comparei(const String& rsh) const
     {
         if (this->size() != rsh.length())
             return false;
 
-        return strncasecmp(c_str(), rsh.c_str(), size());
+        return strncasecmp(c_str(), rsh.c_str(), size()) == 0;
     }
 
     bool compares(const String& rsh, bool caseSensitive = true)
@@ -178,6 +188,17 @@ public:
 
         return (caseSensitive ? strncmp(c_str(), rsh.c_str(), size()) :
             strncasecmp(c_str(), rsh.c_str(), size())) == 0;
+    }
+
+    inline static bool Compare(const char*& lsh, const char*& rsh, bool caseSensitive = true)
+    {
+
+        std::size_t sizel = strlen(lsh);
+        std::size_t sizer = strlen(rsh);
+        std::size_t size = sizel < sizer ? sizel : sizer;
+
+        return (caseSensitive ? strncmp(lsh, rsh, size) :
+            strncasecmp(lsh, rsh, size)) == 0;
     }
 
     void pop_front() 
@@ -1084,14 +1105,14 @@ inline void EncodeUTF16(WChar*& dest, unsigned unicodeChar)
     }
 }
 
-inline std::size_t NextUTF8Char(const Se::String& string, std::size_t& byteOffset)
+inline unsigned NextUTF8Char(const Se::String& string, std::size_t& byteOffset)
 {
     if (string.empty())
-        return String::npos;
+        return (unsigned)String::npos;
 
     const char* src = string.c_str() + byteOffset;
-    std::size_t ret = Helpers::DecodeUTF8(src);
-    byteOffset = (unsigned)(src - string.c_str());
+    unsigned ret = Helpers::DecodeUTF8(src);
+    byteOffset = (src - string.c_str());
 
     return ret;
 }
@@ -1245,6 +1266,154 @@ inline std::string ToStringTypeId() {
 }
 
 using StringVector = std::vector<String>;
+
+inline unsigned CountElements(const char* buffer, char separator)
+{
+    if (!buffer)
+        return 0;
+
+    const char* endPos = buffer + String::CStringLength(buffer);
+    const char* pos = buffer;
+    unsigned ret = 0;
+
+    while (pos < endPos)
+    {
+        if (*pos != separator)
+            break;
+        ++pos;
+    }
+
+    while (pos < endPos)
+    {
+        const char* start = pos;
+
+        while (start < endPos)
+        {
+            if (*start == separator)
+                break;
+
+            ++start;
+        }
+
+        if (start == endPos)
+        {
+            ++ret;
+            break;
+        }
+
+        const char* end = start;
+
+        while (end < endPos)
+        {
+            if (*end != separator)
+                break;
+
+            ++end;
+        }
+
+        ++ret;
+        pos = end;
+    }
+
+    return ret;
+}
+
+inline void BufferToString(String& dest, const void* data, unsigned size)
+{
+    // Precalculate needed string size
+    const auto* bytes = (const unsigned char*)data;
+    unsigned length = 0;
+    for (unsigned i = 0; i < size; ++i)
+    {
+        // Room for separator
+        if (i)
+            ++length;
+
+        // Room for the value
+        if (bytes[i] < 10)
+            ++length;
+        else if (bytes[i] < 100)
+            length += 2;
+        else
+            length += 3;
+    }
+
+    dest.resize(length);
+    unsigned index = 0;
+
+    // Convert values
+    for (unsigned i = 0; i < size; ++i)
+    {
+        if (i)
+            dest[index++] = ' ';
+
+        if (bytes[i] < 10)
+        {
+            dest[index++] = '0' + bytes[i];
+        }
+        else if (bytes[i] < 100)
+        {
+            dest[index++] = (char)('0' + bytes[i] / 10);
+            dest[index++] = (char)('0' + bytes[i] % 10);
+        }
+        else
+        {
+            dest[index++] = (char)('0' + bytes[i] / 100);
+            dest[index++] = (char)('0' + bytes[i] % 100 / 10);
+            dest[index++] = (char)('0' + bytes[i] % 10);
+        }
+    }
+}
+
+
+
+inline void StringToBuffer(std::vector<unsigned char>& dest, const char* source)
+{
+    if (!source)
+    {
+        dest.clear();
+        return;
+    }
+
+    unsigned size = CountElements(source, ' ');
+    dest.resize(size);
+
+    bool inSpace = true;
+    unsigned index = 0;
+    unsigned value = 0;
+
+    // Parse values
+    const char* ptr = source;
+    while (*ptr)
+    {
+        if (inSpace && *ptr != ' ')
+        {
+            inSpace = false;
+            value = (unsigned)(*ptr - '0');
+        }
+        else if (!inSpace && *ptr != ' ')
+        {
+            value *= 10;
+            value += *ptr - '0';
+        }
+        else if (!inSpace && *ptr == ' ')
+        {
+            dest[index++] = (unsigned char)value;
+            inSpace = true;
+        }
+
+        ++ptr;
+    }
+
+    // Write the final value
+    if (!inSpace && index < size)
+        dest[index] = (unsigned char)value;
+}
+
+inline void StringToBuffer(std::vector<unsigned char>& dest, const String& source)
+{
+    StringToBuffer(dest, source.c_str());
+}
 
 } //namespace Se
 

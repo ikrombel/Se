@@ -41,7 +41,7 @@ public:
     /// Copy-construct from another element.
     XMLElement(const XMLElement& rhs);
     /// Destruct.
-    ~XMLElement();
+    virtual ~XMLElement();
     /// Assignment operator.
     XMLElement& operator =(const XMLElement& rhs);
 

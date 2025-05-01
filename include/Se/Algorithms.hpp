@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <functional>
 
+// #include <Se/String.hpp>
+
 namespace Se {
 
     namespace Private {
@@ -27,54 +29,6 @@ template <typename C>
 inline Private::reversion_wrapper<C> Reverse(C&& c) {
     return {c};
 }
-
-/// Combine hash into result value.
-template <class T>
-inline void hash_combine(T& result, unsigned hash, std::enable_if_t<sizeof(T) == 4, int>* = 0)
-{
-    result ^= hash + 0x9e3779b9 + (result << 6) + (result >> 2);
-}
-
-template <class T>
-inline void hash_combine(T& result, unsigned long long hash, std::enable_if_t<sizeof(T) == 8, int>* = 0)
-{
-    result ^= hash + 0x9e3779b97f4a7c15ull + (result << 6) + (result >> 2);
-}
-
-template <class T>
-inline void hash_combine(std::size_t& seed, const T& v)
-{
-    std::hash<T> hasher;
-    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-}
-
-/// Fold 64-bit hash to 32-bit.
-inline unsigned fold_hash(unsigned long long value)
-{
-    const auto lowValue = static_cast<unsigned>(value);
-    const auto highValue = static_cast<unsigned>(value >> 32ull);
-    if (highValue == 0)
-        return lowValue;
-
-    auto result = lowValue;
-    hash_combine(result, highValue);
-    return result;
-}
-
-/// Make hash template helper.
-template <class T>
-inline unsigned MakeHash(const T& value)
-{
-    const auto hash = std::hash<T>{}(value);
-    if constexpr (sizeof(hash) > 4)
-        return fold_hash(hash);
-    else
-        return hash;
-}
-
-
-
-
 
 
 template <typename Container, typename Predicate>

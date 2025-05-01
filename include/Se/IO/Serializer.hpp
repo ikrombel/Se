@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include <Se/Console.hpp>
 #include <Se/String.hpp>
 
 namespace Se
@@ -16,7 +17,7 @@ public:
     virtual ~Serializer() = default;
 
     /// Write bytes to the stream. Return number of bytes actually written.
-    virtual unsigned Write(const void* data, unsigned size) = 0;
+    virtual std::size_t Write(const void* data, std::size_t size) = 0;
 
     /// Write a 64-bit integer.
     bool WriteInt64(long long value) {
@@ -88,12 +89,23 @@ public:
             success &= WriteByte(' ');
         return success;
     }
+
+    /// Write a null-terminated wstring.
+    bool WriteWString(const WString& text)
+    {
+        if (text.empty())
+            return false;
+
+        std::size_t length = sizeof(WChar)*text.size();
+        return Write(text.data(), length) == length;
+    }
+
     // /// Write a 32-bit StringHash.
     // bool WriteStringHash(const StringHash& value);
     /// Write a buffer, with size encoded as VLE.
     bool WriteBuffer(const std::vector<unsigned char>& value) {
         bool success = true;
-        unsigned size = value.size();
+        std::size_t size = value.size();
 
         success &= WriteVLE(size);
         if (size)
@@ -146,9 +158,17 @@ public:
     }
 
     template<class T>
-    unsigned WriteArray(T* buff, unsigned int size) {
+    std::size_t WriteArray(T* buff, std::size_t size) {
         return Write(buff, sizeof(T)*size);
     }
+
+    template<class T> bool Write(T val) {
+        return Write((const char*)&val, sizeof(T));
+    }
+
+    template<class T> T WritePacked(float maxAbsCoord = 1.0f) {
+        SE_LOG_WARNING("Serializer::WritePacked<T>(float) is not register for type {}", typeid(T).name()); 
+        return T(); }
 
 private:
     inline static const float q = 32767.0f;

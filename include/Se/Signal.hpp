@@ -75,6 +75,19 @@ private:
     std::size_t idGen{0};
 };
 
+template <typename... Args>
+class SignalQueue : public Signal<Args...> {
+public:
+    using SlotFunc = typename Signal<Args...>::SlotFunc;
+    using SlotId = typename Signal<Args...>::SlotId;
+
+    void operator()(Args... args) {
+        Signal<Args...>::operator()(args...);
+
+        this->disconnectAll();
+    }
+};
+
 class EventSystem {
 public:
 

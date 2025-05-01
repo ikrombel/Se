@@ -3,6 +3,8 @@
 #include <Se/Console.hpp>
 #include <Se/IO/PackageFile.h>
 
+#include <algorithm>
+
 #ifdef HAVE_LZ4
 #include <LZ4/lz4.h>
 #endif
@@ -25,7 +27,7 @@ File::File() :
     mode_(FILE_READ),
     handle_(nullptr),
 #ifdef __ANDROID__
-    assetHandle_(0),
+    assetHandle_{nullptr},
 #endif
     readBufferOffset_(0),
     readBufferSize_(0),
@@ -41,7 +43,7 @@ File::File(const String& fileName, FileMode mode) :
     mode_(FILE_READ),
     handle_(nullptr),
 #ifdef __ANDROID__
-    assetHandle_(0),
+    assetHandle_{nullptr},
 #endif
     readBufferOffset_(0),
     readBufferSize_(0),
@@ -108,7 +110,7 @@ inline bool File::Open(PackageFile* package, const String& fileName)
     return true;
 }
 
-unsigned File::Read(void* dest, unsigned size)
+std::size_t File::Read(void* dest, std::size_t size)
 {
     if (!IsOpen())
     {
@@ -138,19 +140,19 @@ unsigned File::Read(void* dest, unsigned size)
             readBufferSize_ = 0;
         }
 
-        unsigned sizeLeft = size;
+        std::size_t sizeLeft = size;
         unsigned char* destPtr = (unsigned char*)dest;
 
         while (sizeLeft)
         {
             if (readBufferOffset_ >= readBufferSize_)
             {
-                readBufferSize_ = std::min(size_ - position_, READ_BUFFER_SIZE);
+                readBufferSize_ = std::min(size_ - position_, (std::size_t)READ_BUFFER_SIZE);
                 readBufferOffset_ = 0;
                 ReadInternal(readBuffer_.get(), readBufferSize_);
             }
 
-            unsigned copySize = std::min((readBufferSize_ - readBufferOffset_), sizeLeft);
+            std::size_t copySize = std::min((readBufferSize_ - readBufferOffset_), sizeLeft);
             memcpy(destPtr, readBuffer_.get() + readBufferOffset_, copySize);
             destPtr += copySize;
             sizeLeft -= copySize;
@@ -165,7 +167,7 @@ unsigned File::Read(void* dest, unsigned size)
 #ifdef HAVE_LZ4
     if (compressed_)
     {
-        unsigned sizeLeft = size;
+        std::size_t sizeLeft = size;
         auto* destPtr = (unsigned char*)dest;
 
         while (sizeLeft)
@@ -176,8 +178,8 @@ unsigned File::Read(void* dest, unsigned size)
                 ReadInternal(blockHeaderBytes, sizeof blockHeaderBytes);
 
                 MemoryBuffer blockHeader(&blockHeaderBytes[0], sizeof blockHeaderBytes);
-                unsigned unpackedSize = blockHeader.ReadUShort();
-                unsigned packedSize = blockHeader.ReadUShort();
+                std::size_t unpackedSize = blockHeader.ReadUShort();
+                std::size_t packedSize = blockHeader.ReadUShort();
 
                 if (!readBuffer_)
                 {
@@ -193,7 +195,7 @@ unsigned File::Read(void* dest, unsigned size)
                 readBufferOffset_ = 0;
             }
 
-            unsigned copySize = std::min((readBufferSize_ - readBufferOffset_), sizeLeft);
+            std::size_t copySize = std::min((readBufferSize_ - readBufferOffset_), sizeLeft);
             memcpy(destPtr, readBuffer_.get() + readBufferOffset_, copySize);
             destPtr += copySize;
             sizeLeft -= copySize;
@@ -225,7 +227,7 @@ unsigned File::Read(void* dest, unsigned size)
     return size;
 }
 
-unsigned File::Seek(unsigned position)
+std::size_t File::Seek(std::size_t position)
 {
     if (!IsOpen())
     {
@@ -252,7 +254,7 @@ unsigned File::Seek(unsigned position)
         {
             unsigned char skipBuffer[SKIP_BUFFER_SIZE];
             while (position > position_)
-                Read(skipBuffer, std::min(position - position_, SKIP_BUFFER_SIZE));
+                Read(skipBuffer, std::min(position - position_, (std::size_t)SKIP_BUFFER_SIZE));
         }
          else
             SE_LOG_ERROR("Seeking backward in a compressed file is not supported");
@@ -267,7 +269,7 @@ unsigned File::Seek(unsigned position)
     return position_;
 }
 
-unsigned File::Write(const void* data, unsigned size)
+std::size_t File::Write(const void* data, std::size_t size)
 {
     if (!IsOpen())
     {
@@ -467,7 +469,7 @@ bool File::OpenInternal(const String& fileName, FileMode mode, bool fromPackage)
             size_ = 0;
             return false;
         }
-        size_ = (unsigned)size;
+        size_ = (std::size_t)size;
         offset_ = 0;
     }
 

@@ -103,9 +103,9 @@ private:
 
 /// @name For safe blocks only
 /// @{
-    unsigned blockOffset_{};
-    unsigned blockSize_{};
-    unsigned nextElementPosition_{};
+    std::size_t blockOffset_{};
+    std::size_t blockSize_{};
+    std::size_t nextElementPosition_{};
 /// @}
 };
 

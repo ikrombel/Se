@@ -59,16 +59,16 @@ public:
     ~File() override;
 
     /// Read bytes from the file. Return number of bytes actually read.
-    unsigned Read(void* dest, unsigned size) override;
+    std::size_t Read(void* dest, std::size_t size) override;
     /// Set position from the beginning of the file.
-    unsigned Seek(unsigned position) override;
+    std::size_t Seek(std::size_t position) override;
     ///
-    void SeekCur(unsigned offset);
+    void SeekCur(std::size_t offset);
     int SeekSet(int offset);
     int SeekEnd(int offset);
 
     /// Write bytes to the file. Return number of bytes actually written.
-    unsigned Write(const void* data, unsigned size) override;
+    std::size_t Write(const void* data, std::size_t size) override;
 
     int getc() const;
 
@@ -135,9 +135,9 @@ private:
     /// Open file internally using either C standard IO functions or SDL RWops for Android asset files. Return true if successful.
     bool OpenInternal(const String& fileName, FileMode mode, bool fromPackage = false);
     /// Perform the file read internally using either C standard IO functions or SDL RWops for Android asset files. Return true if successful. This does not handle compressed package file reading.
-    bool ReadInternal(void* dest, unsigned size);
+    bool ReadInternal(void* dest, std::size_t size);
     /// Seek in file internally using either C standard IO functions or SDL RWops for Android asset files.
-    void SeekInternal(unsigned newPosition);
+    void SeekInternal(std::size_t newPosition);
 
 
     /// File name.
@@ -157,11 +157,11 @@ private:
     /// Decompression input buffer for compressed file loading.
     std::shared_ptr<unsigned char> inputBuffer_;
     /// Read buffer position.
-    unsigned readBufferOffset_;
+    std::size_t readBufferOffset_;
     /// Bytes in the current read buffer.
-    unsigned readBufferSize_;
+    std::size_t readBufferSize_;
     /// Start position within a package file, 0 for regular files.
-    unsigned offset_;
+    std::size_t offset_;
     /// Content checksum.
     unsigned checksum_;
     /// Compression flag.

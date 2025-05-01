@@ -1068,10 +1068,6 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
     dir = format("{}/.local/share/", env);
 
     //__ANDROID__ Windows
-#elif _WIN32
-
-    dir = GetENV("LOCALAPPDATA");
-
 #elif HAVE_SDL
     char* prefPath = SDL_GetPrefPath(org.c_str(), app.c_str());
     if (prefPath)
@@ -1079,6 +1075,8 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
         dir = GetInternalPath(String(prefPath));
         SDL_free(prefPath);
     }
+#elif _WIN32
+    dir = GetENV("LOCALAPPDATA");
 #else
     SE_LOG_WARNING("Could not get application preferences directory. this platform don't support");
     return dir;
@@ -1373,7 +1371,6 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                         auto& node = result.Children.emplace_back();
                         node.FullPath = deltaPath + fileName;
                         node.FileName = fileName;
-                        //node.IsDirectory = true;
                         node.Flags |= FSIF_DIRECTORY;
                         ScanDirInternalTree(node, pathTmp + fileName, startPath, filter, flags);
                     }
@@ -1921,6 +1918,28 @@ String FileSystem::FindResourcePrefixPath() const
     }
 
     return String::EMPTY;
+}
+
+String FileSystem::SimplifyPath(const String& path) {
+    auto split = path.split('/');
+
+    if (split.size() < 2)
+            return path;
+
+    for (auto it = split.begin()+1; it != split.end(); ++it) {
+        auto cur = it;
+        auto prev = (it-1);
+        //printf("%s - %s\n", (*cur).CString(), (*prev).CString());
+        if((*cur == "..") && (*prev != "..")) {
+            split.erase(cur);
+            split.erase(prev);
+            it = it-2;
+        }
+    }
+
+    String ret = path.starts_with("/") ? "/" : "";
+    ret += String::joined(split, "/") + "/";
+    return ret;
 }
 
 FileSystem& FileSystem::Get()

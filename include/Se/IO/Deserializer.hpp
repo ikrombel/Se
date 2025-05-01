@@ -2,7 +2,9 @@
 
 #pragma once
 
+#include <Se/Console.hpp>
 #include <Se/String.hpp>
+#include <Se/StringHash.hpp>
 
 namespace Se
 {
@@ -14,14 +16,14 @@ public:
     /// Construct with zero size.
     Deserializer() : position_(0), size_(0) {}
     /// Construct with defined size.
-    explicit Deserializer(unsigned size) : position_(0), size_(size) {}
+    explicit Deserializer(std::size_t size) : position_(0), size_(size) {}
     /// Destruct.
     virtual ~Deserializer() = default;
 
     /// Read bytes from the stream. Return number of bytes actually read.
-    virtual unsigned Read(void* dest, unsigned size) = 0;
+    virtual std::size_t Read(void* dest, std::size_t size) = 0;
     /// Set position from the beginning of the stream. Return actual new position.
-    virtual unsigned Seek(unsigned position) = 0;
+    virtual std::size_t Seek(std::size_t position) = 0;
     /// Return name of the stream.
     virtual String GetName() const {
         return String::EMPTY;
@@ -32,15 +34,15 @@ public:
     virtual bool IsEof() const { return position_ >= size_; }
 
     /// Set position relative to current position. Return actual new position.
-    unsigned SeekRelative(int delta) {
+    std::size_t SeekRelative(int delta) {
         return Seek(GetPosition() + delta); }
     /// Return current position.
-    unsigned GetPosition() const { return position_; }
+    std::size_t GetPosition() const { return position_; }
     /// Return current position.
-    unsigned Tell() const { return position_; }
+    std::size_t Tell() const { return position_; }
 
     /// Return size.
-    unsigned GetSize() const { return size_; }
+    std::size_t GetSize() const { return size_; }
 
     template<class T>
     T Read() { T ret; Read(&ret, sizeof ret);
@@ -128,6 +130,26 @@ public:
         }
         return ret;
     }
+
+    /// Read a null-terminated wstring.
+    WString ReadWString(std::size_t size = 0)
+    {
+        WString ret;
+
+        if (size != 0)
+            ret.reserve(size);
+        
+        while (!IsEof()) {
+            WChar c;
+            Read(&c, sizeof(WChar));
+            if (c == L'\0')
+                break;
+            else
+                ret += c;
+        }
+        return ret;
+    }
+
     /// Read a four-letter file ID.
     String ReadFileID() {
         String ret;
@@ -219,17 +241,21 @@ public:
     }
 
     template<class T>
-    T* ReadArray(unsigned int size) {
+    T* ReadArray(std::size_t size) {
         T buff[size];
         Read(buff, sizeof(T)*size);
         return buff;
     }
 
+    template<class T> T ReadPacked(float maxAbsCoord = 1.0f) {
+        SE_LOG_WARNING("Deserializer::ReadPacked<T>(float) is not register for type {}", typeid(T).name()); 
+        return T(); }
+
 protected:
     /// Stream position.
-    unsigned position_;
+    std::size_t position_;
     /// Stream size.
-    unsigned size_;
+    std::size_t size_;
 };
 
 }

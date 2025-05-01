@@ -146,6 +146,9 @@ public:
     /// Try to find resource prefix path starting from executable and going up.
     String FindResourcePrefixPath() const;
 
+
+    static String SimplifyPath(const String& path);
+
     static FileSystem& Get();
 
 private:

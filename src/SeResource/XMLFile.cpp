@@ -3,6 +3,7 @@
 #include <Se/IO/Deserializer.hpp>
 #include <Se/Console.hpp>
 #include <Se/IO/MemoryBuffer.hpp>
+#include <Se/IO/VectorBuffer.h>
 #include <SeVFS/VirtualFileSystem.h>
 //#include <Se/IO/VectorBuffer.h>
 //#include <GFrost/Resource/ResourceCache.h>
@@ -12,6 +13,8 @@
 //#include <SeResource/XMLArchive.h>
 
 #include "PugiXml/pugixml.hpp"
+
+#include <vector>
 
 
 namespace Se
@@ -42,7 +45,7 @@ public:
 };
 
 XMLFile::XMLFile() :
-    Resource(),
+    Resource("XMLFile"),
     document_(new pugi::xml_document())
 {
 }
@@ -59,7 +62,7 @@ bool XMLFile::BeginLoad(Deserializer& source)
         return false;
     }
 
-    std::shared_ptr<char> buffer(new char[dataSize], std::default_delete<unsigned char[]>());
+    std::shared_ptr<char> buffer(new char[dataSize], std::default_delete<char[]>());
     if (source.Read(buffer.get(), dataSize) != dataSize)
         return false;
 
@@ -193,10 +196,10 @@ XMLElement XMLFile::GetRoot(const String& name)
 
 String XMLFile::ToString(const String& indentation) const
 {
-    std::vector<unsigned char> dest;
-    XMLWriter writer(dest.data());
+    VectorBuffer dest;
+    XMLWriter writer(dest);
     document_->save(writer, indentation.c_str());
-    return String((const char*)dest.data(), dest.size());
+    return String((const char*)dest.GetData(), dest.GetSize());
 }
 
 void XMLFile::Patch(XMLFile* patchFile)
@@ -218,7 +221,8 @@ void XMLFile::Patch(const XMLElement& patchElement)
         }
 
         // Only select a single node at a time, they can use xpath to select specific ones in multiple otherwise the node set becomes invalid due to changes
-        pugi::xpath_node original = document_->select_single_node(sel.value());
+        //pugi::xpath_node original = document_->select_single_node(sel.value());
+        pugi::xpath_node original = document_->select_node(sel.value());
         if (!original)
         {
             SE_LOG_ERROR("XML Patch failed with bad select: {}.", sel.value());

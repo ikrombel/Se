@@ -28,7 +28,7 @@ PackageFile::~PackageFile() = default;
 
 bool PackageFile::Open(const String& fileName, unsigned startOffset)
 {
-    AbstractFilePtr file(new File(fileName));
+    AbstractFilePtr file = std::make_shared<File>(fileName);
     if (!file->IsOpen())
         return false;
 

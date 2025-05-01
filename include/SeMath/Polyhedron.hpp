@@ -349,7 +349,7 @@ inline void Polyhedron::SetFace(unsigned index, const Vector3& v0, const Vector3
     face[2] = v2;
 }
 
-void Polyhedron::SetFace(unsigned index, const Vector3& v0, const Vector3& v1, const Vector3& v2, const Vector3& v3)
+inline void Polyhedron::SetFace(unsigned index, const Vector3& v0, const Vector3& v1, const Vector3& v2, const Vector3& v3)
 {
     std::vector<Vector3>& face = faces_[index];
     face.resize(4);
@@ -366,7 +366,7 @@ void Polyhedron::SetFace(unsigned index, const Vector3& v0, const Vector3& v1, c
 #pragma region Sphere
 
 template<>
-void Sphere::Merge(const Polyhedron& poly)
+inline void Sphere::Merge(const Polyhedron& poly)
 {
     for (unsigned i = 0; i < poly.faces_.size(); ++i)
     {
@@ -377,7 +377,7 @@ void Sphere::Merge(const Polyhedron& poly)
 }
 
 template<>
-void Sphere::Define(const Polyhedron& poly)
+inline void Sphere::Define(const Polyhedron& poly)
 {
     Clear();
     Merge(poly);

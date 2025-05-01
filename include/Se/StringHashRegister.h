@@ -1,14 +1,22 @@
 
 #pragma once
 
-#include <memo>
+#include <memory>
 
+#include <Se/Export.hpp>
 #include <Se/String.hpp>
 //#include "../Core/Variant.h"
 #include <Se/StringHash.hpp>
+#include <Se/Mutex.hpp>
+
+
 
 namespace Se
 {
+
+#ifndef StringMap
+typedef std::unordered_map<String, String> StringMap;
+#endif
 
 class Mutex;
 class StringHash;

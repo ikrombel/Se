@@ -32,7 +32,8 @@ struct ConsoleInfo {
     const char* name_;
     const char* fileName_;
     const char* funcName_;
-    int line_; 
+    std::size_t line_{0};
+    std::size_t column_{0};
 };
 
 typedef std::function<void(const ConsoleInfo&, const char *msg)> LogCallback;
@@ -118,8 +119,17 @@ inline LogCallback DefaultColored = [](const Console::ConsoleInfo& info, const c
     if (info.type_ != MsgType::MsgNone) {
         retFormat += format(msgTypeStyle, strMsgType[info.type_], info.name_ ? info.name_ : "");
     }
-    if (info.type_ != MsgType::MsgNone)
-    retFormat.append(format("{}:{} in function: {}\n", info.fileName_, info.line_, info.funcName_));
+    if (info.type_ != MsgType::MsgNone){
+        retFormat.append(info.fileName_);
+        if (info.line_ != 0)
+            retFormat += format(":{}", info.line_);
+        if (info.column_ != 0)
+            retFormat += format(":{}", info.column_);
+        if (info.funcName_)
+            retFormat += format(" in function: {}", info.funcName_);
+
+        retFormat += "\n";
+    }
     retFormat.append(format("{}\n", msg));
 
     printf("%s", retFormat.c_str());

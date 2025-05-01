@@ -44,12 +44,13 @@ static constexpr std::size_t CalculateEastlHash(const std::string_view& x)
 //class StringHashRegister;
 
 /// 32-bit hash value for a string.
+
+
+typedef unsigned HashValue;
 class StringHash
 {
     
 public:
-
-
 
     /// Tag to disable population of hash reversal map.
     struct NoReverse
@@ -63,7 +64,7 @@ public:
     }
 
     /// Construct with an initial value.
-    constexpr explicit StringHash(unsigned value) noexcept
+    constexpr explicit StringHash(HashValue value) noexcept
         : value_(value)
     {
     }
@@ -130,10 +131,10 @@ public:
 
     /// Return hash value.
     /// @property
-    constexpr unsigned Value() const { return value_; }
+    constexpr HashValue Value() const { return value_; }
 
     /// Return mutable hash value. For internal use only.
-    constexpr unsigned& MutableValue() { return value_; }
+    constexpr HashValue& MutableValue() { return value_; }
 
     /// Return as string.
     String ToString()
@@ -168,22 +169,22 @@ public:
     }
 
     /// Return hash value for HashSet & HashMap.
-    constexpr unsigned ToHash() const { return value_; }
+    constexpr HashValue ToHash() const { return value_; }
 
     /// Calculate hash value for string_view.
-    static constexpr unsigned Calculate(const std::string_view& view)
+    static constexpr HashValue Calculate(const std::string_view& view)
     {
         return static_cast<unsigned>(Detail::CalculateEastlHash(view));
     }
 
     /// Calculate hash value from a C string.
-    static constexpr unsigned Calculate(const char* str)
+    static constexpr HashValue Calculate(const char* str)
     { //
         return Calculate(std::string_view(str));
     }
 
     /// Calculate hash value from binary data.
-    static constexpr unsigned Calculate(const char* data, std::size_t length)
+    static constexpr HashValue Calculate(const char* data, std::size_t length)
     {
         return Calculate(std::string_view(data, length));
     }
@@ -206,7 +207,7 @@ public:
 
 private:
     /// Hash value.
-    unsigned value_;
+    HashValue value_;
 };
 
 inline const StringHash StringHash::Empty{""};
@@ -225,8 +226,8 @@ namespace std {
 template <>
 struct hash<Se::StringHash> {
     size_t operator()(const Se::StringHash& s) const {
-        return s.ToHash();
-        //return std::hash<unsigned int>()(s.ToHash());
+        //return s.ToHash();
+        return std::hash<unsigned>()(s.ToHash());
     }
 };
 } // namespace std

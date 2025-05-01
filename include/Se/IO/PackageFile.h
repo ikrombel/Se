@@ -10,6 +10,7 @@
 #include <Se/StringHash.hpp>
 #include <Se/IO/File.h>
 #include <Se/IO/FileSystem.h>
+#include <Se/IO/MemoryBuffer.hpp>
 
 namespace Se
 {

@@ -24,45 +24,45 @@ struct FileEntry
 static const unsigned COMPRESSED_BLOCK_SIZE = 32768;
 unsigned blockSize_ = COMPRESSED_BLOCK_SIZE;
 
-String SimplifyPath(String path) {
-    std::vector<String> folders;
-    int idx = 0;
-    while (idx < path.length()) {
-        while (idx < path.length() && path.at(idx) == '/')
-            idx++;
-        String f = "";
-        while (idx < path.length() && path.at(idx) != '/') {
-            f += path.at(idx);
-            idx++;
-        }
-        if (f == ".") {
-            continue;
-        } else if (f == "..") {
-            if (!folders.empty()) {
-                folders.pop_back();
-            }
-        } else if (f.length()) {
-            folders.push_back(f);
-        }
-    }
+// String SimplifyPath(String path) {
+//     std::vector<String> folders;
+//     int idx = 0;
+//     while (idx < path.length()) {
+//         while (idx < path.length() && path.at(idx) == '/')
+//             idx++;
+//         String f = "";
+//         while (idx < path.length() && path.at(idx) != '/') {
+//             f += path.at(idx);
+//             idx++;
+//         }
+//         if (f == ".") {
+//             continue;
+//         } else if (f == "..") {
+//             if (!folders.empty()) {
+//                 folders.pop_back();
+//             }
+//         } else if (f.length()) {
+//             folders.push_back(f);
+//         }
+//     }
 
-    String result = "";
-    int i = 0;
-    for (auto fo : folders) {
-#ifdef WIN32
-        if (i == 0) {
-            i = 1;
-        }
-        else
-#endif
-            result += "/";
-        result += fo;
-    }
-    if (result.empty()) {
-        result = "/";
-    }
-    return result;
-}
+//     String result = "";
+//     int i = 0;
+//     for (auto fo : folders) {
+// #ifdef WIN32
+//         if (i == 0) {
+//             i = 1;
+//         }
+//         else
+// #endif
+//             result += "/";
+//         result += fo;
+//     }
+//     if (result.empty()) {
+//         result = "/";
+//     }
+//     return result;
+// }
 
 
 String ignoreExtensions_[] = {
@@ -129,12 +129,19 @@ public:
 
     bool Pack(const String& inputDir, const String& packageName, bool compress);
 
+    bool Pack(const String& packPath, const std::unordered_map<String, AbstractFilePtr>& files, bool compress = false)
+    {
+        return WritePackageFile(packPath, files, compress);
+    }
+
     void Unpack(const String& packageName, const String& dirName);
 
 private:
     void WritePackageFile(const String &fileName, const String &rootDir);
     void ProcessFile(const String& fileName, const String& rootDir);
     void WriteHeader(File& dest);
+
+    bool WritePackageFile(const String& fileName, std::unordered_map<String, AbstractFilePtr> files, bool compress = false);
 
     String basePath_;
     String pkgName_;
@@ -148,7 +155,7 @@ private:
 bool PackageTool::Pack(const String& inputDir, const String& packageName, bool compress)
 {
 
-    basePath_ = AddTrailingSlash(SimplifyPath(inputDir));
+    basePath_ = AddTrailingSlash(FileSystem::SimplifyPath(inputDir));
     pkgName_ = packageName;
     compress_ = compress;
     checksum_ = 0;
@@ -214,7 +221,114 @@ void PackageTool::ProcessFile(const String& fileName, const String& rootDir)
     entries_.push_back(newEntry);
 }
 
+bool PackageTool::WritePackageFile(const String& fileName, std::unordered_map<String, AbstractFilePtr> files, bool compress)
+{
+    File dest;
+    if (!dest.Open(fileName, FILE_WRITE)) {
+        SE_LOG_ERROR("Could not open output file " + fileName);
+        return false;
+    }
 
+    entries_.clear();
+
+    for (auto it : files)
+    {
+        FileEntry newEntry;
+        newEntry.name_ = it.first;
+        newEntry.offset_ = 0; // Offset not yet known
+        newEntry.size_ = it.second->GetSize();
+        newEntry.checksum_ = 0; // Will be calculated later
+        entries_.push_back(newEntry);
+    }
+
+    String checksumFileData;
+
+    for (auto it : files)
+    {
+        unsigned checksum = it.second->GetChecksum();
+        checksumFileData += format("{}:{}\n", it.first, checksum);
+    }
+
+    // Write ID, number of files & placeholder for checksum
+    WriteHeader(dest);
+
+    auto writeEntry = [&](const FileEntry& entry) {
+        dest.WriteString(entry.name_);
+        dest.WriteUInt(entry.offset_);
+        dest.WriteUInt(entry.size_);
+        dest.WriteUInt(entry.checksum_);
+    };
+
+    for (unsigned i = 0; i < entries_.size(); ++i)
+    {
+        // Write entry (correct offset is still unknown, will be filled in later)
+        writeEntry(entries_[i]);
+    }
+
+    unsigned totalDataSize = 0;
+    unsigned lastOffset;
+
+    // Write file data, calculate checksums & correct offsets
+    for (unsigned i = 0; i < entries_.size(); ++i)
+    {
+        lastOffset = entries_[i].offset_ = dest.GetSize();
+        String fileFullPath = entries_[i].name_;
+
+        auto& srcFile = files[fileFullPath];
+        if (!srcFile->GetSize())
+            SE_LOG_ERROR("Could not open file " + fileFullPath);
+
+        unsigned dataSize = entries_[i].size_;
+        totalDataSize += dataSize;
+        std::shared_ptr<unsigned char> buffer(new unsigned char[dataSize], std::default_delete<unsigned char[]>());
+
+        if (srcFile->Read(buffer.get(), dataSize) != dataSize)
+            SE_LOG_ERROR("Could not read file " + fileFullPath);
+        srcFile->Close();
+
+        for (unsigned j = 0; j < dataSize; ++j)
+        {
+            checksum_ = SDBMHash(checksum_, buffer.get()[j]);
+            entries_[i].checksum_ = SDBMHash(entries_[i].checksum_, buffer.get()[j]);
+        }
+
+        if (!compress)
+        {
+            dest.Write(buffer.get(), entries_[i].size_);
+        }
+        else
+        {
+            std::shared_ptr<unsigned char> compressBuffer(new unsigned char[LZ4_compressBound(blockSize_)], std::default_delete<unsigned char[]>());
+
+            unsigned pos = 0;
+
+            while (pos < dataSize)
+            {
+                unsigned unpackedSize = blockSize_;
+                if (pos + unpackedSize > dataSize)
+                    unpackedSize = dataSize - pos;
+
+                auto packedSize = (unsigned)LZ4_compress_HC((const char*)&(buffer.get()[pos]), 
+                        (char*)compressBuffer.get(), unpackedSize, LZ4_compressBound(unpackedSize), 0);
+                if (!packedSize)
+                    SE_LOG_ERROR("LZ4 compression failed for file {} at offset {}", entries_[i].name_, pos);
+
+                dest.WriteUShort((unsigned short)unpackedSize);
+                dest.WriteUShort((unsigned short)packedSize);
+                dest.Write(compressBuffer.get(), packedSize);
+
+                pos += unpackedSize;
+            }
+        }
+        unsigned totalPackedBytes = dest.GetSize() - lastOffset;
+
+        SE_LOG_INFO("Total packed bytes for {}: {}", entries_[i].name_, totalPackedBytes);
+    }
+    
+
+    SE_LOG_INFO("Total data size for package {}: {}", fileName, totalDataSize);
+    return true;
+}
 
 void PackageTool::WritePackageFile(const String& fileName, const String& rootDir)
 {
@@ -394,6 +508,7 @@ bool Pack(const String& inputDir, const String& packageName, bool compress)
 {
     return PackageTool().Pack(inputDir, packageName, compress);
 }
+
 
 void Unpack(const String& packageName, const String& dirName)
 {

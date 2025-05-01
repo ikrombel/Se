@@ -3,7 +3,7 @@
 #include <rapidjson/prettywriter.h>
 
 #include <Se/Console.hpp>
-//#include <Se/IO/MemoryBuffer.hpp>
+#include <Se/IO/MemoryBuffer.hpp>
 
 #include <SeResource/JSONArchive.h>
 
@@ -83,7 +83,7 @@ bool JSONFile::BeginLoad(Deserializer& source)
         return false;
     }
 
-    auto buffer = std::shared_ptr<char>(new char[dataSize + 1]);
+    std::shared_ptr<char> buffer(new char[dataSize + 1], std::default_delete<char[]>());
     if (source.Read(buffer.get(), dataSize) != dataSize)
         return false;
     buffer.get()[dataSize] = '\0';
@@ -229,11 +229,8 @@ bool JSONFile::FromString(const String& source)
     if (source.empty())
         return false;
 
-    // MemoryBuffer buffer(source.c_str(), source.length());
-    // return Load(buffer);
-    //return Load(source);
-
-    assert(0 && "TODO to implement");
+    MemoryBuffer buffer(source.c_str(), source.length());
+    return Load(buffer);
 }
 
 String JSONFile::ToString(const String& indendation) const

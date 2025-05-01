@@ -208,7 +208,7 @@ inline Circle Sphere::Intersect(const Sphere& sphere, float* distanceFromCenter)
 
 /// Test if a point is inside.
 template<>
-Intersection Sphere::IsInside(const Vector3& point) const
+inline Intersection Sphere::IsInside(const Vector3& point) const
 {
     float distSquared = Vector3(point - center_).LengthSquared();
     if (distSquared < radius_ * radius_)

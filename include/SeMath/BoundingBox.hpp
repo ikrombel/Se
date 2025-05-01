@@ -554,7 +554,7 @@ inline Intersection BoundingBox::IsInside(const BoundingSphere& sphere) const {
 }
 
 template<>
-bool BoundingSphere::IsInside(const BoundingBox& box) const
+inline bool BoundingSphere::IsInside(const BoundingBox& box) const
 {
     return box.IsInside(*this);
 }
@@ -611,7 +611,8 @@ inline Intersection BoundingBox::IsInside(const Sphere& sphere) const {
         return INSIDE;
 }
 /// Test if a sphere is (partially) inside or outside.
-template<> Intersection BoundingBox::IsInsideFast(const Sphere& sphere) const {
+template<>
+inline Intersection BoundingBox::IsInsideFast(const Sphere& sphere) const {
     float distSquared = 0;
     float temp;
     const Vector3& center = sphere.center_;
@@ -723,7 +724,7 @@ inline void Polyhedron::Clip(const BoundingBox& box)
 #pragma region Sphere
 
 template<>
-void BoundingBox::Define(const Sphere& sphere)
+inline void BoundingBox::Define(const Sphere& sphere)
 {
     const Vector3& center = sphere.center_;
     float radius = sphere.radius_;
@@ -733,7 +734,7 @@ void BoundingBox::Define(const Sphere& sphere)
 }
 
 template<>
-void BoundingBox::Merge(const Sphere& sphere)
+inline void BoundingBox::Merge(const Sphere& sphere)
 {
     const Vector3& center = sphere.center_;
     float radius = sphere.radius_;
@@ -744,7 +745,7 @@ void BoundingBox::Merge(const Sphere& sphere)
 
 
 template<>
-void Sphere::Define(const BoundingBox& box)
+inline void Sphere::Define(const BoundingBox& box)
 {
     const Vector3& min = box.min_;
     const Vector3& max = box.max_;
@@ -761,7 +762,7 @@ void Sphere::Define(const BoundingBox& box)
 }
 
 template<>
-void Sphere::Merge(const BoundingBox& box)
+inline void Sphere::Merge(const BoundingBox& box)
 {
     const Vector3& min = box.min_;
     const Vector3& max = box.max_;

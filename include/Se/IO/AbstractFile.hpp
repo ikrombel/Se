@@ -15,7 +15,7 @@ public:
     /// Construct.
     AbstractFile() : Deserializer() { }
     /// Construct.
-    explicit AbstractFile(unsigned int size) : Deserializer(size) { }
+    explicit AbstractFile(std::size_t size) : Deserializer(size) { }
     /// Destruct.
     ~AbstractFile() override = default;
     /// Change the file name. Used by the resource system.
