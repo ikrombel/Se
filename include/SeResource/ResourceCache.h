@@ -2,7 +2,7 @@
 
 #include <Se/Mutex.hpp>
 #include <Se/IO/File.h>
-#include <Se/StringHash.hpp>
+#include <Se/String.hpp>
 #include <SeVFS/FileIdentifier.h>
 #include <SeVFS/FileWatcher.h>
 #include <Se/IO/ScanFlags.hpp>
@@ -36,7 +36,7 @@ struct ResourceGroup
     /// Current memory use.
     unsigned long long memoryUse_;
     /// Resources.
-    std::unordered_map<StringHash, std::shared_ptr<Resource>> resources_;
+    std::unordered_map<String, std::shared_ptr<Resource>> resources_;
 };
 
 /// Optional resource request processor. Can deny requests, re-route resource file names, or perform other processing per request.
@@ -63,7 +63,7 @@ public:
     /// E_RESOURCENOTFOUND
     Signal<String/*ResourceName*/> onResourceNotFound;
     /// E_UNKNOWNRESOURCETYPE
-    Signal<StringHash/*ResourceType*/> onUnknownResourceType;
+    Signal<String/*ResourceType*/> onUnknownResourceType;
     /// E_RESOURCEBACKGROUNDLOADED
     Signal<
         String/*ResourceName*/,
@@ -78,13 +78,13 @@ public:
     /// Add a manually created resource. Must be uniquely named within its type.
     bool AddManualResource(std::shared_ptr<Resource> resource);
     /// Release a resource by name.
-    void ReleaseResource(StringHash type, const String& name, bool force = false);
+    void ReleaseResource(String type, const String& name, bool force = false);
     /// Release a resource by name.
     void ReleaseResource(const String& resourceName, bool force = false);
     /// Release all resources of a specific type.
-    void ReleaseResources(StringHash type, bool force = false);
+    void ReleaseResources(String type, bool force = false);
     /// Release resources of a specific type and partial name.
-    void ReleaseResources(StringHash type, const String& partialName, bool force = false);
+    void ReleaseResources(String type, const String& partialName, bool force = false);
     /// Release resources of all types by partial name.
     void ReleaseResources(const String& partialName, bool force = false);
     /// Release all resources. When called with the force flag false, releases all currently unused resources.
@@ -96,7 +96,7 @@ public:
     /// Reload a resource based on filename. Causes also reload of dependent resources if necessary.
     void ReloadResourceWithDependencies(const String& fileName);
     /// Set memory budget for a specific resource type, default 0 is unlimited.
-    void SetMemoryBudget(StringHash type, unsigned long long budget);
+    void SetMemoryBudget(String type, unsigned long long budget);
     /// Enable or disable returning resources that failed to load. Default false. This may be useful in editing to not lose resource ref attributes.
     void SetReturnFailedResources(bool enable) { returnFailedResources_ = enable; }
 
@@ -114,20 +114,20 @@ public:
     /// Open and return a file from the resource load paths or from inside a package file. If not found, use a fallback search with absolute path. Return null if fails. Can be called from outside the main thread.
     AbstractFilePtr GetFile(const String& name, bool sendEventOnFailure = true);
     /// Return a resource by type and name. Load if not loaded yet. Return null if not found or if fails, unless SetReturnFailedResources(true) has been called. Can be called only from the main thread.
-    std::shared_ptr<Resource> GetResource(StringHash type, const String& name, bool sendEventOnFailure = true);
+    std::shared_ptr<Resource> GetResource(String type, const String& name, bool sendEventOnFailure = true);
     /// Load a resource without storing it in the resource cache. Return null if not found or if fails. Can be called from outside the main thread if the resource itself is safe to load completely (it does not possess for example GPU data.)
-    std::shared_ptr<Resource> GetTempResource(StringHash type, const String& name, bool sendEventOnFailure = true);
+    std::shared_ptr<Resource> GetTempResource(String type, const String& name, bool sendEventOnFailure = true);
     /// Background load a resource. An event will be sent when complete. Return true if successfully stored to the load queue, false if eg. already exists. Can be called from outside the main thread.
-    bool BackgroundLoadResource(StringHash type, const String& name, bool sendEventOnFailure = true, Resource* caller = nullptr);
+    bool BackgroundLoadResource(String type, const String& name, bool sendEventOnFailure = true, Resource* caller = nullptr);
     /// Return number of pending background-loaded resources.
     unsigned GetNumBackgroundLoadResources() const;
     /// Return all loaded resources of a specific type.
-    void GetResources(std::vector<Resource*>& result, StringHash type) const;
+    void GetResources(std::vector<Resource*>& result, String type) const;
     /// Return an already loaded resource of specific type & name, or null if not found. Will not load if does not exist.
-    Resource* GetExistingResource(StringHash type, const String& name);
+    Resource* GetExistingResource(String type, const String& name);
 
     /// Return all loaded resources.
-    const std::unordered_map<StringHash, ResourceGroup>& GetAllResources() const { return resourceGroups_; }
+    const std::unordered_map<String, ResourceGroup>& GetAllResources() const { return resourceGroups_; }
 
     /// Template version of returning a resource by name.
     template <class T> T* GetResource(const String& name, bool sendEventOnFailure = true);
@@ -144,9 +144,9 @@ public:
     /// Return whether a file exists in the resource directories or package files. Does not check manually added in-memory resources.
     bool Exists(const String& name) const;
     /// Return memory budget for a resource type.
-    unsigned long long GetMemoryBudget(StringHash type) const;
+    unsigned long long GetMemoryBudget(String type) const;
     /// Return total memory use for a resource type.
-    unsigned long long GetMemoryUse(StringHash type) const;
+    unsigned long long GetMemoryUse(String type) const;
     /// Return total memory use for all resources.
     unsigned long long GetTotalMemoryUse() const;
     /// Return full absolute file name of resource if possible, or empty if not found.
@@ -205,20 +205,21 @@ public:
             SE_LOG_WARNING("Resource {} already registered. Overriding previous state", resourceName);
         }
 
-        resourceNames_[resourceName] = resourceName;
-        resourceFactory_[resourceName] = func ? func : []() 
+        std::function<std::shared_ptr<Resource>()> defaultConstructor = []()
         {
             return std::make_shared<T>();
         };
+        //resourceNames_.insert(resourceName, resourceName);
+        resourceFactory_[resourceName] = func ? func : defaultConstructor;
     }
 
-   static std::shared_ptr<Resource> CreateResource(const StringHash& resourceName)
+   static std::shared_ptr<Resource> CreateResource(const String& resourceName)
     {   
         auto resIt = resourceFactory_.find(resourceName);
 
         if (resIt == resourceFactory_.end())
         {
-            SE_LOG_ERROR("Resource {} is not registered by RegisterResource", resourceName.Reverse());
+            SE_LOG_ERROR("Resource {} is not registered by RegisterResource", resourceName);
             return nullptr;
         }
 
@@ -233,13 +234,13 @@ public:
 
 private:
     /// Find a resource.
-    const std::shared_ptr<Resource>& FindResource(StringHash type, StringHash nameHash);
+    const std::shared_ptr<Resource>& FindResource(String type, String nameHash);
     /// Find a resource by name only. Searches all type groups.
-    const std::shared_ptr<Resource>& FindResource(StringHash nameHash);
+    const std::shared_ptr<Resource>& FindResource(String nameHash);
     /// Release resources loaded from a package file.
     void ReleasePackageResources(PackageFile* package, bool force = false);
     /// Update a resource group. Recalculate memory use and release resources if over memory budget.
-    void UpdateResourceGroup(StringHash type);
+    void UpdateResourceGroup(String type);
     /// Handle begin frame event. The finalization of background loaded resources are processed here.
     void HandleBeginFrame();
     /// Handle file changed to reload resource.
@@ -251,9 +252,9 @@ private:
     /// Mutex for thread-safe access to the resource directories, resource packages and resource dependencies.
     mutable Mutex resourceMutex_;
     /// Resources by type.
-    std::unordered_map<StringHash, ResourceGroup> resourceGroups_;
+    std::unordered_map<String, ResourceGroup> resourceGroups_;
     /// Dependent resources. Only used with automatic reload to eg. trigger reload of a cube texture when any of its faces change.
-    std::unordered_map<StringHash, std::unordered_set<StringHash>> dependentResources_;
+    std::unordered_map<String, std::unordered_set<String>> dependentResources_;
     /// Resource background loader.
     std::shared_ptr<BackgroundLoader> backgroundLoader_;
     /// Resource routers.
@@ -271,44 +272,44 @@ private:
 
 
 
-    static std::unordered_map<StringHash, std::function<std::shared_ptr<Resource>()>> resourceFactory_;
-    static std::unordered_map<StringHash, String> resourceNames_;
+    static std::unordered_map<String, std::function<std::shared_ptr<Resource>()>> resourceFactory_;
+    //static std::unordered_map<String, String> resourceNames_;
 };
 
 template <class T> T* ResourceCache::GetExistingResource(const String& name)
 {
-    StringHash type = T::GetTypeStatic();
+    String type = T::GetTypeStatic();
     return dynamic_cast<T*>(GetExistingResource(type, name));
 }
 
 template <class T> T* ResourceCache::GetResource(const String& name, bool sendEventOnFailure)
 {
-    StringHash type = T::GetTypeStatic();
+    String type = T::GetTypeStatic();
     return dynamic_cast<T*>(GetResource(type, name, sendEventOnFailure));
 }
 
 template <class T> void ResourceCache::ReleaseResource(const String& name, bool force)
 {
-    StringHash type = T::GetTypeStatic();
+    String type = T::GetTypeStatic();
     ReleaseResource(type, name, force);
 }
 
 template <class T> std::shared_ptr<T> ResourceCache::GetTempResource(const String& name, bool sendEventOnFailure)
 {
-    StringHash type = T::GetTypeStatic();
+    String type = T::GetTypeStatic();
     return std::dynamic_pointer_cast<T>(GetTempResource(type, name, sendEventOnFailure));
 }
 
 template <class T> bool ResourceCache::BackgroundLoadResource(const String& name, bool sendEventOnFailure, Resource* caller)
 {
-    StringHash type = T::GetTypeStatic();
+    String type = T::GetTypeStatic();
     return BackgroundLoadResource(type, name, sendEventOnFailure, caller);
 }
 
 template <class T> void ResourceCache::GetResources(std::vector<T*>& result) const
 {
     auto& resources = reinterpret_cast<std::vector<Resource*>&>(result);
-    StringHash type = T::GetTypeStatic();
+    String type = T::GetTypeStatic();
     GetResources(resources, type);
 
     // Perform conversion of the returned pointers

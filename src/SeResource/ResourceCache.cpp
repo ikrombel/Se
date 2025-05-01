@@ -63,6 +63,9 @@ static const char* checkDirs[] =
 
 static const std::shared_ptr<Resource> noResource;
 
+std::unordered_map<String, std::function<std::shared_ptr<Resource>()>> ResourceCache::resourceFactory_;
+//std::vecto<String, String> ResourceCache::resourceNames_;
+
 ResourceCache::ResourceCache() :
     returnFailedResources_(false),
     searchPackagesFirst_(true),
@@ -117,14 +120,14 @@ bool ResourceCache::AddManualResource(std::shared_ptr<Resource> resource)
     }
 
     resource->ResetUseTimer();
-    resourceGroups_[resource->GetTypeHash()].resources_[resource->GetNameHash()] = resource;
-    UpdateResourceGroup(resource->GetTypeHash());
+    resourceGroups_[resource->GetType()].resources_[resource->GetName()] = resource;
+    UpdateResourceGroup(resource->GetType());
     return true;
 }
 
-void ResourceCache::ReleaseResource(StringHash type, const String& name, bool force)
+void ResourceCache::ReleaseResource(String type, const String& name, bool force)
 {
-    StringHash nameHash(name);
+    String nameHash(name);
     const std::shared_ptr<Resource>& existingRes = FindResource(type, nameHash);
     if (!existingRes)
         return;
@@ -170,7 +173,7 @@ void ResourceCache::ReleaseResource(const String& resourceName, bool force)
     } while (released && !force);
 }
 
-void ResourceCache::ReleaseResources(StringHash type, bool force)
+void ResourceCache::ReleaseResources(String type, bool force)
 {
     bool released = false;
 
@@ -194,7 +197,7 @@ void ResourceCache::ReleaseResources(StringHash type, bool force)
         UpdateResourceGroup(type);
 }
 
-void ResourceCache::ReleaseResources(StringHash type, const String& partialName, bool force)
+void ResourceCache::ReleaseResources(String type, const String& partialName, bool force)
 {
     bool released = false;
 
@@ -283,7 +286,7 @@ void ResourceCache::ReleaseAllResources(bool force)
 
 bool ResourceCache::ReloadResource(const String& resourceName)
 {
-    if (Resource* resource = FindResource(StringHash::Empty, resourceName).get())
+    if (Resource* resource = FindResource(String::EMPTY, resourceName).get())
         return ReloadResource(resource);
     return false;
 }
@@ -316,7 +319,7 @@ bool ResourceCache::ReloadResource(Resource* resource)
 
 void ResourceCache::ReloadResourceWithDependencies(const String& fileName)
 {
-    StringHash fileNameHash(fileName);
+    String fileNameHash(fileName);
     // If the filename is a resource we keep track of, reload it
     const std::shared_ptr<Resource>& resource = FindResource(fileNameHash);
     if (resource)
@@ -345,14 +348,14 @@ void ResourceCache::ReloadResourceWithDependencies(const String& fileName)
 
             for (unsigned k = 0; k < dependents.size(); ++k)
             {
-                SE_LOG_DEBUG("Reloading resource " + dependents[k]->GetName() + " depending on " + fileName);
+                SE_LOG_DEBUG("Reloading resource {} depending on {}", dependents[k]->GetName(), fileName);
                 ReloadResource(dependents[k].get());
             }
         }
     }
 }
 
-void ResourceCache::SetMemoryBudget(StringHash type, unsigned long long budget)
+void ResourceCache::SetMemoryBudget(String type, unsigned long long budget)
 {
     resourceGroups_[type].memoryBudget_ = budget;
 }
@@ -408,7 +411,7 @@ AbstractFilePtr ResourceCache::GetFile(const String& name, bool sendEventOnFailu
     return file;
 }
 
-Resource* ResourceCache::GetExistingResource(StringHash type, const String& name)
+Resource* ResourceCache::GetExistingResource(String type, const String& name)
 {
     String sanitatedName = SanitateResourceName(name);
 
@@ -422,13 +425,13 @@ Resource* ResourceCache::GetExistingResource(StringHash type, const String& name
     if (sanitatedName.empty())
         return nullptr;
 
-    StringHash nameHash(sanitatedName);
+    String nameHash(sanitatedName);
 
-    const std::shared_ptr<Resource>& existing = type != StringHash::Empty ? FindResource(type, nameHash) : FindResource(nameHash);
+    const std::shared_ptr<Resource>& existing = type != String::EMPTY ? FindResource(type, nameHash) : FindResource(nameHash);
     return existing.get();
 }
 
-std::shared_ptr<Resource> ResourceCache::GetResource(StringHash type, const String& name, bool sendEventOnFailure)
+std::shared_ptr<Resource> ResourceCache::GetResource(String type, const String& name, bool sendEventOnFailure)
 {
     String sanitatedName = SanitateResourceName(name);
 
@@ -442,7 +445,7 @@ std::shared_ptr<Resource> ResourceCache::GetResource(StringHash type, const Stri
     if (sanitatedName.empty())
         return nullptr;
 
-    StringHash nameHash(sanitatedName);
+    String nameHash(sanitatedName);
 
 #ifdef SE_THREADING
     // Check if the resource is being background loaded but is now needed immediately
@@ -459,12 +462,12 @@ std::shared_ptr<Resource> ResourceCache::GetResource(StringHash type, const Stri
 //    resource = std::dynamic_pointer_cast<Resource>(context_->CreateObject(type));
     if (!resource)
     {
-        SE_LOG_ERROR("Could not load unknown resource type " + type.ToDebugString());
+        SE_LOG_ERROR("Could not load unknown resource type {}", type);
 
         if (sendEventOnFailure)
         {
             // E_UNKNOWNRESOURCETYPE
-            onUnknownResourceType(type.ToString());
+            onUnknownResourceType(type);
         }
 
         return nullptr;
@@ -499,7 +502,7 @@ std::shared_ptr<Resource> ResourceCache::GetResource(StringHash type, const Stri
     return resource;
 }
 
-bool ResourceCache::BackgroundLoadResource(StringHash type, const String& name, bool sendEventOnFailure, Resource* caller)
+bool ResourceCache::BackgroundLoadResource(String type, const String& name, bool sendEventOnFailure, Resource* caller)
 {
 #ifdef SE_THREADING
     // If empty name, fail immediately
@@ -508,7 +511,7 @@ bool ResourceCache::BackgroundLoadResource(StringHash type, const String& name, 
         return false;
 
     // First check if already exists as a loaded resource
-    StringHash nameHash(sanitatedName);
+    String nameHash(sanitatedName);
     if (FindResource(type, nameHash) != noResource)
         return false;
 
@@ -519,7 +522,7 @@ bool ResourceCache::BackgroundLoadResource(StringHash type, const String& name, 
 #endif
 }
 
-std::shared_ptr<Resource> ResourceCache::GetTempResource(StringHash type, const String& name, bool sendEventOnFailure)
+std::shared_ptr<Resource> ResourceCache::GetTempResource(String type, const String& name, bool sendEventOnFailure)
 {
     String sanitatedName = SanitateResourceName(name);
 
@@ -533,11 +536,11 @@ std::shared_ptr<Resource> ResourceCache::GetTempResource(StringHash type, const 
 //    resource = std::dynamic_pointer_cast<Resource>(context_->CreateObject(type));
     if (!resource)
     {
-        SE_LOG_ERROR("Could not load unknown resource type " + String(type.ToDebugString()));
+        SE_LOG_ERROR("Could not load unknown resource type {}", type);
 
         if (sendEventOnFailure)
         {
-            onUnknownResourceType(type.ToDebugString());
+            onUnknownResourceType(type);
         }
 
         return std::shared_ptr<Resource>();
@@ -580,7 +583,7 @@ unsigned ResourceCache::GetNumBackgroundLoadResources() const
 #endif
 }
 
-void ResourceCache::GetResources(std::vector<Resource*>& result, StringHash type) const
+void ResourceCache::GetResources(std::vector<Resource*>& result, String type) const
 {
     result.clear();
     auto i = resourceGroups_.find(type);
@@ -602,13 +605,13 @@ bool ResourceCache::Exists(const String& name) const
     return vfs->Exists(resolvedName);
 }
 
-unsigned long long ResourceCache::GetMemoryBudget(StringHash type) const
+unsigned long long ResourceCache::GetMemoryBudget(String type) const
 {
     auto i = resourceGroups_.find(type);
     return i != resourceGroups_.end() ? i->second.memoryBudget_ : 0;
 }
 
-unsigned long long ResourceCache::GetMemoryUse(StringHash type) const
+unsigned long long ResourceCache::GetMemoryUse(String type) const
 {
     auto i = resourceGroups_.find(type);
     return i != resourceGroups_.end() ? i->second.memoryUse_ : 0;
@@ -645,7 +648,7 @@ void ResourceCache::StoreResourceDependency(Resource* resource, const String& de
 
     MutexLock lock(resourceMutex_);
 
-    StringHash nameHash(resource->GetName());
+    String nameHash(resource->GetName());
     auto& dependents = dependentResources_[dependency];
     dependents.insert(nameHash);
 }
@@ -657,7 +660,7 @@ void ResourceCache::ResetDependencies(Resource* resource)
 
     MutexLock lock(resourceMutex_);
 
-    StringHash nameHash(resource->GetName());
+    String nameHash(resource->GetName());
 
     for (auto i = dependentResources_.begin(); i != dependentResources_.end();)
     {
@@ -703,7 +706,7 @@ String ResourceCache::PrintMemoryUsage() const
         const String memMaxString = StringMemory(largest);
         const String memBudgetString = StringMemory(cit->second.memoryBudget_);
         const String memTotalString = StringMemory(cit->second.memoryUse_);
-        const String resTypeName = resourceNames_[cit->first];
+        const String resTypeName = cit->first;
 
 
         output += cformat("%-28s %4s %9s %9s %9s %9s\n", 
@@ -725,7 +728,7 @@ String ResourceCache::PrintMemoryUsage() const
     return output;
 }
 
-const std::shared_ptr<Resource>& ResourceCache::FindResource(StringHash type, StringHash nameHash)
+const std::shared_ptr<Resource>& ResourceCache::FindResource(String type, String nameHash)
 {
     MutexLock lock(resourceMutex_);
 
@@ -739,7 +742,7 @@ const std::shared_ptr<Resource>& ResourceCache::FindResource(StringHash type, St
     return j->second;
 }
 
-const std::shared_ptr<Resource>& ResourceCache::FindResource(StringHash nameHash)
+const std::shared_ptr<Resource>& ResourceCache::FindResource(String nameHash)
 {
     MutexLock lock(resourceMutex_);
 
@@ -755,12 +758,12 @@ const std::shared_ptr<Resource>& ResourceCache::FindResource(StringHash nameHash
 
 void ResourceCache::ReleasePackageResources(PackageFile* package, bool force)
 {
-    std::unordered_set<StringHash> affectedGroups;
+    std::unordered_set<String> affectedGroups;
 
     const auto& entries = package->GetEntries();
     for (auto i = entries.begin(); i != entries.end(); ++i)
     {
-        StringHash nameHash(i->first);
+        String nameHash(i->first);
 
         // We do not know the actual resource type, so search all type containers
         for (auto j = resourceGroups_.begin(); j != resourceGroups_.end(); ++j)
@@ -783,7 +786,7 @@ void ResourceCache::ReleasePackageResources(PackageFile* package, bool force)
         UpdateResourceGroup(*i);
 }
 
-void ResourceCache::UpdateResourceGroup(StringHash type)
+void ResourceCache::UpdateResourceGroup(String type)
 {
     auto i = resourceGroups_.find(type);
     if (i == resourceGroups_.end())
@@ -892,7 +895,7 @@ void ResourceCache::Scan(std::vector<String>& result, const String& pathName, co
 String ResourceCache::PrintResources(const String& typeName) const
 {
 
-    StringHash typeNameHash(typeName);
+    String typeNameHash(typeName);
 
     String output = "Resource Type         Refs   WeakRefs  Name\n\n";
 

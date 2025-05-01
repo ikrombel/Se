@@ -11,8 +11,8 @@
 namespace Se
 {
 // template<class T>
-// T::iterator FindPairStringHash(T map, const std::pair<StringHash, StringHash>& p) {
-//     auto j = std::find(map.begin(), map.end(), [p](const std::pair<StringHash, StringHash>& param){
+// T::iterator FindPairString(T map, const std::pair<String, String>& p) {
+//     auto j = std::find(map.begin(), map.end(), [p](const std::pair<String, String>& param){
 //             return p.first == param.first && p.second == param.second;
 //         });
 //     return j;
@@ -72,22 +72,22 @@ void BackgroundLoader::ThreadFunction()
 
             // Process dependencies now
             // Need to lock the queue again when manipulating other entries
-            auto key = std::make_pair(resource->GetTypeHash(), resource->GetNameHash());
+            auto key = std::make_pair(resource->GetType(), resource->GetName());
             backgroundLoadMutex_.Acquire();
             if (item.dependents_.size())
             {
                 for (auto depend = item.dependents_.begin(); depend != item.dependents_.end(); ++depend)
                 {
                     auto j = backgroundLoadQueue_.find(*depend);
-                    // auto j = std::find(backgroundLoadQueue_.begin(), backgroundLoadQueue_.end(), [depend](const std::pair<StringHash, StringHash>& param){
+                    // auto j = std::find(backgroundLoadQueue_.begin(), backgroundLoadQueue_.end(), [depend](const std::pair<String, String>& param){
                     //     return depend->first == param.first && depend->second == param.second;
                     // });
-                    //auto j = FindPairStringHash(backgroundLoadQueue_, *depend);
+                    //auto j = FindPairString(backgroundLoadQueue_, *depend);
                     if (j != backgroundLoadQueue_.end()) {
-                        // auto jk = std::find(j->second.dependencies_.begin(), j->second.dependencies_.end(), [key](const std::pair<StringHash, StringHash>& param){
+                        // auto jk = std::find(j->second.dependencies_.begin(), j->second.dependencies_.end(), [key](const std::pair<String, String>& param){
                         //     return key.first == param.first && key.second == param.second;
                         // });
-                        //auto jk = FindPairStringHash(j->second.dependencies_, key);
+                        //auto jk = FindPairString(j->second.dependencies_, key);
                         auto jk = j->second.dependencies_.find(key);
                         j->second.dependencies_.erase(jk); //erase
                     }
@@ -102,20 +102,20 @@ void BackgroundLoader::ThreadFunction()
     }
 }
 
-bool BackgroundLoader::QueueResource(StringHash type, const String& name, bool sendEventOnFailure, Resource* caller)
+bool BackgroundLoader::QueueResource(String type, const String& name, bool sendEventOnFailure, Resource* caller)
 {
-    StringHash nameHash(name);
+    String nameHash(name);
     auto key = std::make_pair(type, nameHash);
 
     MutexLock lock(backgroundLoadMutex_);
 
     // Check if already exists in the queue
-//    auto it = FindPairStringHash(backgroundLoadQueue_, key);
+//    auto it = FindPairString(backgroundLoadQueue_, key);
     auto it = backgroundLoadQueue_.find(key);
     if (it != backgroundLoadQueue_.end())
         return false;
 
-    // auto item = std::find(backgroundLoadQueue_.begin(), backgroundLoadQueue_.end(), [key](const std::pair<StringHash, StringHash>& param) {
+    // auto item = std::find(backgroundLoadQueue_.begin(), backgroundLoadQueue_.end(), [key](const std::pair<String, String>& param) {
     //         return key.first == param.first && key.second == param.second;
     // });
     BackgroundLoadItem& item = backgroundLoadQueue_[key];
@@ -126,7 +126,7 @@ bool BackgroundLoader::QueueResource(StringHash type, const String& name, bool s
     // DynamicCast<Resource>(owner_->GetContext()->CreateObject(type));
     if (!item.resource_)
     {
-        SE_LOG_ERROR("Could not load unknown resource type {}", type.ToDebugString());
+        SE_LOG_ERROR("Could not load unknown resource type {}", type);
 
         if (sendEventOnFailure && Thread::IsMainThread())
         {
@@ -138,7 +138,7 @@ bool BackgroundLoader::QueueResource(StringHash type, const String& name, bool s
             owner_->onUnknownResourceType(type);
         }
         auto itErase = backgroundLoadQueue_.find(key);
-        //auto itErase = FindPairStringHash(backgroundLoadQueue_, key);
+        //auto itErase = FindPairString(backgroundLoadQueue_, key);
         backgroundLoadQueue_.erase(itErase);
         return false;
     }
@@ -151,8 +151,8 @@ bool BackgroundLoader::QueueResource(StringHash type, const String& name, bool s
     // If this is a resource calling for the background load of more resources, mark the dependency as necessary
     if (caller)
     {
-        auto callerKey = std::make_pair(caller->GetTypeHash(), caller->GetNameHash());
-//        auto j = FindPairStringHash(backgroundLoadQueue_, callerKey);
+        auto callerKey = std::make_pair(caller->GetType(), caller->GetName());
+//        auto j = FindPairString(backgroundLoadQueue_, callerKey);
         auto j = backgroundLoadQueue_.find(callerKey);
         if (j != backgroundLoadQueue_.end())
         {
@@ -172,7 +172,7 @@ bool BackgroundLoader::QueueResource(StringHash type, const String& name, bool s
     return true;
 }
 
-void BackgroundLoader::WaitForResource(StringHash type, StringHash nameHash)
+void BackgroundLoader::WaitForResource(String type, String nameHash)
 {
     backgroundLoadMutex_.Acquire();
 
@@ -180,7 +180,7 @@ void BackgroundLoader::WaitForResource(StringHash type, StringHash nameHash)
     auto key = std::make_pair(type, nameHash);
     
     auto i = backgroundLoadQueue_.find(key);
-//    auto i = FindPairStringHash(backgroundLoadQueue_, key);
+//    auto i = FindPairString(backgroundLoadQueue_, key);
     if (i != backgroundLoadQueue_.end())
     {
         backgroundLoadMutex_.Release();
