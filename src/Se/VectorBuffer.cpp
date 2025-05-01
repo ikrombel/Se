@@ -10,17 +10,17 @@ VectorBuffer::VectorBuffer(const ByteVector& data)
     SetData(data);
 }
 
-VectorBuffer::VectorBuffer(const void* data, unsigned size)
+VectorBuffer::VectorBuffer(const void* data, std::size_t size)
 {
     SetData(data, size);
 }
 
-VectorBuffer::VectorBuffer(Deserializer& source, unsigned size)
+VectorBuffer::VectorBuffer(Deserializer& source, std::size_t size)
 {
     SetData(source, size);
 }
 
-unsigned VectorBuffer::Read(void* dest, unsigned size)
+std::size_t VectorBuffer::Read(void* dest, std::size_t size)
 {
     if (size + position_ > size_)
         size = size_ - position_;
@@ -36,7 +36,7 @@ unsigned VectorBuffer::Read(void* dest, unsigned size)
     return size;
 }
 
-unsigned VectorBuffer::Seek(unsigned position)
+std::size_t VectorBuffer::Seek(std::size_t position)
 {
     if (position > size_)
         position = size_;
@@ -45,7 +45,7 @@ unsigned VectorBuffer::Seek(unsigned position)
     return position_;
 }
 
-unsigned VectorBuffer::Write(const void* data, unsigned size)
+std::size_t VectorBuffer::Write(const void* data, std::size_t size)
 {
     if (!size)
         return 0;
@@ -72,7 +72,7 @@ void VectorBuffer::SetData(const ByteVector& data)
     size_ = data.size();
 }
 
-void VectorBuffer::SetData(const void* data, unsigned size)
+void VectorBuffer::SetData(const void* data, std::size_t size)
 {
     if (!data)
         size = 0;
@@ -85,10 +85,10 @@ void VectorBuffer::SetData(const void* data, unsigned size)
     size_ = size;
 }
 
-void VectorBuffer::SetData(Deserializer& source, unsigned size)
+void VectorBuffer::SetData(Deserializer& source, std::size_t size)
 {
     buffer_.resize(size);
-    unsigned actualSize = source.Read(&buffer_[0], size);
+    std::size_t actualSize = source.Read(&buffer_[0], size);
     if (actualSize != size)
         buffer_.resize(actualSize);
 
@@ -103,7 +103,7 @@ void VectorBuffer::Clear()
     size_ = 0;
 }
 
-void VectorBuffer::Resize(unsigned size)
+void VectorBuffer::Resize(std::size_t size)
 {
     buffer_.resize(size);
     size_ = size;

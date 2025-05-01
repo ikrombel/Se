@@ -1,5 +1,6 @@
 #include <SeResource/ImageCube.h>
 
+#include <Se/Algorithms.hpp>
 #include <Se/Console.hpp>
 #include <Se/IO/FileSystem.h>
 
