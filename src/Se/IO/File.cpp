@@ -322,14 +322,14 @@ unsigned File::GetChecksum()
 
 //    SE_PROFILE("CalculateFileChecksum");
 
-    unsigned oldPos = position_;
+    auto oldPos = position_;
     checksum_ = 0;
 
     Seek(0);
     while (!IsEof())
     {
         unsigned char block[1024];
-        unsigned readBytes = Read(block, 1024);
+        auto readBytes = Read(block, 1024);
         for (unsigned i = 0; i < readBytes; ++i)
             checksum_ = Se::SDBMHash(checksum_, block[i]);
     }
@@ -482,7 +482,7 @@ bool File::OpenInternal(const String& fileName, FileMode mode, bool fromPackage)
     return true;
 }
 
-bool File::ReadInternal(void* dest, unsigned size)
+bool File::ReadInternal(void* dest, std::size_t size)
 {
 #ifdef __ANDROID__
     if (assetHandle_)
@@ -494,7 +494,7 @@ bool File::ReadInternal(void* dest, unsigned size)
         return fread(dest, size, 1, (FILE*)handle_) == 1;
 }
 
-void File::SeekInternal(unsigned newPosition)
+void File::SeekInternal(std::size_t newPosition)
 {
 #ifdef __ANDROID__
     if (assetHandle_)
@@ -536,10 +536,10 @@ void File::ReadText(String& text)
 
     text.resize(size_);
 
-    Read(static_cast<void*>(&text[0]), size_);
+    Read(static_cast<void*>(&text.data()[0]), size_);
 }
 
-void File::SeekCur(unsigned offset)
+void File::SeekCur(std::size_t offset)
 {
 #ifdef __ANDROID__
     if (assetHandle_)
