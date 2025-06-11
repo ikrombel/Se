@@ -423,6 +423,12 @@ inline void Polyhedron::Clip(const Frustum& frustum)
 
 #pragma region BoundingBox
 
+// BoundingBox::BoundingBox(const Frustum& frustum) :
+//         min_(M_INFINITY, M_INFINITY, M_INFINITY),
+//         max_(-M_INFINITY, -M_INFINITY, -M_INFINITY)
+// {
+//     Define(frustum);
+// }
 
 template<>
 void BoundingBox::Define(const Frustum& frustum)

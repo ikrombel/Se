@@ -1591,9 +1591,9 @@ Color Image::GetPixelTrilinear(float x, float y, float z) const
     if (depth_ < 2)
         return GetPixelBilinear(x, y);
 
-    x = Clamp(x * width_ - 0.5f, 0.0f, (float)(width_ - 1));
-    y = Clamp(y * height_ - 0.5f, 0.0f, (float)(height_ - 1));
-    z = Clamp(z * depth_ - 0.5f, 0.0f, (float)(depth_ - 1));
+    x = Clamp(float(x) * width_ - 0.5f, 0.0f, (float)(width_ - 1));
+    y = Clamp(float(y) * height_ - 0.5f, 0.0f, (float)(height_ - 1));
+    z = Clamp(float(z) * depth_ - 0.5f, 0.0f, (float)(depth_ - 1));
 
     auto xI = (int)x;
     auto yI = (int)y;
@@ -2314,7 +2314,7 @@ void Image::GetLevels(std::vector<const Image*>& levels) const
 
 unsigned char* Image::GetImageData(Deserializer& source, int& width, int& height, int& bits, unsigned& components, bool& isHDR)
 {
-    unsigned dataSize = source.GetSize();
+    int dataSize = source.GetSize();
 
     int texChannels = 4;
 
@@ -2326,7 +2326,7 @@ unsigned char* Image::GetImageData(Deserializer& source, int& width, int& height
     int sizeOfChannel = 8;
     if (stbi_is_hdr_from_memory(buffer.get(), dataSize)) {
         isHDR = true;
-        int sizeOfChannel_ = 32;
+    //    int sizeOfChannel_ = 32;
         pixels = stbi_load_from_memory(buffer.get(), dataSize, &width, &height, (int*)&components, STBI_rgb_alpha);
     }
     else
