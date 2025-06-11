@@ -24,7 +24,7 @@ static void ToJSONValue(JSONValue& jsonValue, const rapidjson::Value& rapidjsonV
     {
     case kNullType:
         // Reset to null type
-        jsonValue.SetType(JSON_NULL);
+        jsonValue.SetType(VALUE_NULL);
         break;
 
     case kFalseType:
@@ -60,7 +60,7 @@ static void ToJSONValue(JSONValue& jsonValue, const rapidjson::Value& rapidjsonV
 
     case kObjectType:
         {
-            jsonValue.SetType(JSON_OBJECT);
+            jsonValue.SetType(VALUE_OBJECT);
             for (rapidjson::Value::ConstMemberIterator i = rapidjsonValue.MemberBegin(); i != rapidjsonValue.MemberEnd(); ++i)
             {
                 JSONValue& value = jsonValue[String(i->name.GetString())];
@@ -106,23 +106,23 @@ static void ToRapidjsonValue(rapidjson::Value& rapidjsonValue, const JSONValue& 
 {
     switch (jsonValue.GetValueType())
     {
-    case JSON_NULL:
+    case VALUE_NULL:
         rapidjsonValue.SetNull();
         break;
 
-    case JSON_BOOL:
+    case VALUE_BOOL:
         rapidjsonValue.SetBool(jsonValue.GetBool());
         break;
 
-    case JSON_NUMBER:
+    case VALUE_NUMBER:
         {
             switch (jsonValue.GetNumberType())
             {
-            case JSONNT_INT:
+            case VALUENT_INT:
                 rapidjsonValue.SetInt(jsonValue.GetInt());
                 break;
 
-            case JSONNT_UINT:
+            case VALUENT_UINT:
                 rapidjsonValue.SetUint(jsonValue.GetUInt());
                 break;
 
@@ -133,11 +133,11 @@ static void ToRapidjsonValue(rapidjson::Value& rapidjsonValue, const JSONValue& 
         }
         break;
 
-    case JSON_STRING:
+    case VALUE_STRING:
         rapidjsonValue.SetString(jsonValue.GetCString(), allocator);
         break;
 
-    case JSON_ARRAY:
+    case VALUE_ARRAY:
         {
             const JSONArray& jsonArray = jsonValue.GetArray();
 
@@ -153,7 +153,7 @@ static void ToRapidjsonValue(rapidjson::Value& rapidjsonValue, const JSONValue& 
         }
         break;
 
-    case JSON_OBJECT:
+    case VALUE_OBJECT:
         {
             const JSONObject& jsonObject = jsonValue.GetObject();
 

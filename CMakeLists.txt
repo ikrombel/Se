@@ -30,6 +30,7 @@ set(SE_SOURCE
         src/Se/IO/PackageFile.Tool.cpp
         src/Se/Thread.cpp
         src/Se/Timer.cpp
+        src/Se/Value.cpp
         src/Se/ProcessTaskManager.cpp
         src/Se/VectorBuffer.cpp
         src/Se/WorkQueue.cpp
@@ -94,7 +95,7 @@ add_library(SeResource STATIC
         src/SeResource/ImageSVG.cpp
         src/SeResource/Resource.cpp
 
-        src/SeResource/JSONValue.cpp
+        
         src/SeResource/JSONArchive.cpp
         src/SeResource/JSONFile.cpp
 
@@ -148,6 +149,7 @@ target_link_libraries(SeVFS PUBLIC
 add_executable(test.SeResource 
         tests/main.cpp
         tests/test.Reflection.cpp
+        tests/test.YAMLFile.cpp
         # include/SeVFS/PackageFile.hpp        
 )
 

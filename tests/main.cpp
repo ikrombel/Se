@@ -174,6 +174,7 @@ void TestArch() {
 
 // tests/test.Reflection.cpp
 void TestReflection();
+void TestYAMLFile();
 
 int main() {
 
@@ -260,5 +261,7 @@ int main() {
         "sizeof(int) {}\n"
         "sizeof(Se::StringHash) {}",
          sizeof(size_t), sizeof(unsigned long), sizeof(int), sizeof(Se::StringHash));
+
+    TestYAMLFile();
     
 }

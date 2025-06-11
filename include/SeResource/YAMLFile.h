@@ -30,14 +30,14 @@ namespace Se
 
         String ToString() const;
 
-        JSONValue& GetRoot()
+        Value& GetRoot()
         {
             return value_;
         }
 
     private:
         //ryml::Tree m_tree;
-        JSONValue value_;
+        Value value_;
     };
 }
 

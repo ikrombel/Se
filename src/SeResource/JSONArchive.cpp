@@ -11,25 +11,25 @@ namespace Se
 
 namespace {
 
-inline bool IsArchiveBlockJSONArray(ArchiveBlockType type) {
+inline bool IsArchiveBlockValueArray(ArchiveBlockType type) {
     return type == ArchiveBlockType::Array || type == ArchiveBlockType::Sequential;
 }
 
-inline bool IsArchiveBlockJSONObject(ArchiveBlockType type) {
+inline bool IsArchiveBlockValueObject(ArchiveBlockType type) {
     return type == ArchiveBlockType::Unordered;
 }
 
-inline bool IsJSONValueCompatibleWithArray(const JSONValue& value) {
+inline bool IsValueCompatibleWithArray(const Value& value) {
     return value.IsArray() || value.IsNull() || (value.IsObject() && value.GetObject().empty());
 }
 
-inline bool IsJSONValueCompatibleWithObject(const JSONValue& value) {
+inline bool IsValueCompatibleWithObject(const Value& value) {
     return value.IsObject() || value.IsNull() || (value.IsArray() && value.GetArray().empty());
 }
 
 inline bool IsArchiveBlockTypeMatching(const JSONValue& value, ArchiveBlockType type) {
-    return (IsArchiveBlockJSONArray(type) && IsJSONValueCompatibleWithArray(value))
-           || (IsArchiveBlockJSONObject(type) && IsJSONValueCompatibleWithObject(value));
+    return (IsArchiveBlockValueArray(type) && IsValueCompatibleWithArray(value))
+           || (IsArchiveBlockValueObject(type) && IsValueCompatibleWithObject(value));
 }
 
 }
@@ -41,10 +41,10 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     if (type_ == ArchiveBlockType::Array)
         expectedElementCount_ = sizeHint;
 
-    if (IsArchiveBlockJSONArray(type_))
-        blockValue_->SetType(JSON_ARRAY);
-    else if (IsArchiveBlockJSONObject(type_))
-        blockValue_->SetType(JSON_OBJECT);
+    if (IsArchiveBlockValueArray(type_))
+        blockValue_->SetType(VALUE_ARRAY);
+    else if (IsArchiveBlockValueObject(type_))
+        blockValue_->SetType(VALUE_OBJECT);
     else
         assert(0);
 }
@@ -131,24 +131,24 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     }
 
 // Generate serialization implementation (JSON output)
-#define SE_JSON_OUT_IMPL(type, function) \
+#define SE_VALUE_OUT_IMPL(type, function) \
     void JSONOutputArchive::Serialize(const char* name, type& value) \
     { \
         CreateElement(name, JSONValue{ value }); \
     }
 
-    SE_JSON_OUT_IMPL(bool, SetBool);
-    SE_JSON_OUT_IMPL(signed char, SetInt);
-    SE_JSON_OUT_IMPL(short, SetInt);
-    SE_JSON_OUT_IMPL(int, SetInt);
-    SE_JSON_OUT_IMPL(unsigned char, SetUInt);
-    SE_JSON_OUT_IMPL(unsigned short, SetUInt);
-    SE_JSON_OUT_IMPL(unsigned int, SetUInt);
-    SE_JSON_OUT_IMPL(float, SetFloat);
-    SE_JSON_OUT_IMPL(double, SetDouble);
-    SE_JSON_OUT_IMPL(String, SetString);
+    SE_VALUE_OUT_IMPL(bool, SetBool);
+    SE_VALUE_OUT_IMPL(signed char, SetInt);
+    SE_VALUE_OUT_IMPL(short, SetInt);
+    SE_VALUE_OUT_IMPL(int, SetInt);
+    SE_VALUE_OUT_IMPL(unsigned char, SetUInt);
+    SE_VALUE_OUT_IMPL(unsigned short, SetUInt);
+    SE_VALUE_OUT_IMPL(unsigned int, SetUInt);
+    SE_VALUE_OUT_IMPL(float, SetFloat);
+    SE_VALUE_OUT_IMPL(double, SetDouble);
+    SE_VALUE_OUT_IMPL(String, SetString);
 
-#undef SE_JSON_OUT_IMPL
+#undef SE_VALUE_OUT_IMPL
 
     JSONInputArchiveBlock::JSONInputArchiveBlock(const char* name, ArchiveBlockType type, const JSONValue* value)
             : ArchiveBlockBase(name, type)
@@ -160,7 +160,7 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     {
         // Find appropriate value
         const JSONValue* elementValue = nullptr;
-        if (IsArchiveBlockJSONArray(type_))
+        if (IsArchiveBlockValueArray(type_))
         {
             if (nextElementIndex_ >= value_->Size())
                 throw archive.ElementNotFoundException(elementName, nextElementIndex_);
@@ -168,7 +168,7 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
             elementValue = &value_->Get(nextElementIndex_);
             ++nextElementIndex_;
         }
-        else if (IsArchiveBlockJSONObject(type_))
+        else if (IsArchiveBlockValueObject(type_))
         {
             if (!value_->Contains(elementName))
                 throw archive.ElementNotFoundException(elementName);
@@ -216,7 +216,7 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     void JSONInputArchive::Serialize(const char* name, long long& value)
     {
         const JSONValue& jsonValue = ReadElement(name);
-        CheckType(name, jsonValue, JSON_STRING);
+        CheckType(name, jsonValue, VALUE_STRING);
 
         const String stringValue = jsonValue.GetString();
         
@@ -227,7 +227,7 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     void JSONInputArchive::Serialize(const char* name, unsigned long long& value)
     {
         const JSONValue& jsonValue = ReadElement(name);
-        CheckType(name, jsonValue, JSON_STRING);
+        CheckType(name, jsonValue, VALUE_STRING);
 
         const String stringValue = jsonValue.GetString();
         value = ToUInt64(stringValue.c_str());
@@ -236,7 +236,7 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     void JSONInputArchive::SerializeBytes(const char* name, void* bytes, unsigned size)
     {
         const JSONValue& jsonValue = ReadElement(name);
-        CheckType(name, jsonValue, JSON_STRING);
+        CheckType(name, jsonValue, VALUE_STRING);
 
         ReadBytesFromHexString(name, jsonValue.GetString(), bytes, size);
     }
@@ -244,7 +244,7 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
     void JSONInputArchive::SerializeVLE(const char* name, unsigned& value)
     {
         const JSONValue& jsonValue = ReadElement(name);
-        CheckType(name, jsonValue, JSON_NUMBER);
+        CheckType(name, jsonValue, VALUE_NUMBER);
 
         value = jsonValue.GetUInt();
     }
@@ -256,32 +256,32 @@ JSONOutputArchiveBlock::JSONOutputArchiveBlock(const char* name, ArchiveBlockTyp
         return GetCurrentBlock().ReadElement(*this, name, nullptr);
     }
 
-    void JSONInputArchive::CheckType(const char* name, const JSONValue& value, JSONValueType type) const
+    void JSONInputArchive::CheckType(const char* name, const Value& value, ValueType type) const
     {
         if (value.GetValueType() != type)
             throw UnexpectedElementValueException(name);
     }
 
 // Generate serialization implementation (JSON input)
-#define SE_JSON_IN_IMPL(type, function, jsonType) \
+#define SE_VALUE_IN_IMPL(type, function, jsonType) \
     void JSONInputArchive::Serialize(const char* name, type& value) \
     { \
-        const JSONValue& jsonValue = ReadElement(name); \
+        const Value& jsonValue = ReadElement(name); \
         CheckType(name, jsonValue, jsonType); \
         value = jsonValue.function(); \
     }
 
-    SE_JSON_IN_IMPL(bool, GetBool, JSON_BOOL);
-    SE_JSON_IN_IMPL(signed char, GetInt, JSON_NUMBER);
-    SE_JSON_IN_IMPL(short, GetInt, JSON_NUMBER);
-    SE_JSON_IN_IMPL(int, GetInt, JSON_NUMBER);
-    SE_JSON_IN_IMPL(unsigned char, GetUInt, JSON_NUMBER);
-    SE_JSON_IN_IMPL(unsigned short, GetUInt, JSON_NUMBER);
-    SE_JSON_IN_IMPL(unsigned int, GetUInt, JSON_NUMBER);
-    SE_JSON_IN_IMPL(float, GetFloat, JSON_NUMBER);
-    SE_JSON_IN_IMPL(double, GetDouble, JSON_NUMBER);
-    SE_JSON_IN_IMPL(String, GetString, JSON_STRING);
+    SE_VALUE_IN_IMPL(bool, GetBool, VALUE_BOOL);
+    SE_VALUE_IN_IMPL(signed char, GetInt, VALUE_NUMBER);
+    SE_VALUE_IN_IMPL(short, GetInt, VALUE_NUMBER);
+    SE_VALUE_IN_IMPL(int, GetInt, VALUE_NUMBER);
+    SE_VALUE_IN_IMPL(unsigned char, GetUInt, VALUE_NUMBER);
+    SE_VALUE_IN_IMPL(unsigned short, GetUInt, VALUE_NUMBER);
+    SE_VALUE_IN_IMPL(unsigned int, GetUInt, VALUE_NUMBER);
+    SE_VALUE_IN_IMPL(float, GetFloat, VALUE_NUMBER);
+    SE_VALUE_IN_IMPL(double, GetDouble, VALUE_NUMBER);
+    SE_VALUE_IN_IMPL(String, GetString, VALUE_STRING);
 
-#undef SE_JSON_IN_IMPL
+#undef SE_VALUE_IN_IMPL
 
 }

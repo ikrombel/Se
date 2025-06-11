@@ -17,8 +17,7 @@ class JSONArchiveBase : public ArchiveBaseT<BlockType, IsInputBool, true>
 public:
     /// @name Archive implementation
     /// @{
-    String GetName() const override { return "TODO empty_name"; }
- //   String GetName() const { return jsonFile_ ? jsonFile_->GetName() : ""; }
+    String GetName() const { return jsonFile_ ? jsonFile_->GetName() : ""; }
     /// @}
 
 protected:
@@ -36,8 +35,8 @@ private:
 struct JSONOutputArchiveBlock : public ArchiveBlockBase
 {
 public:
-    JSONOutputArchiveBlock(const char* name, ArchiveBlockType type, JSONValue* blockValue, unsigned sizeHint);
-    JSONValue& CreateElement(ArchiveBase& archive, const char* elementName);
+    JSONOutputArchiveBlock(const char* name, ArchiveBlockType type, Value* blockValue, unsigned sizeHint);
+    Value& CreateElement(ArchiveBase& archive, const char* elementName);
 
     bool IsUnorderedAccessSupported() const { return type_ == ArchiveBlockType::Unordered; }
     bool HasElementOrBlock(const char* name) const { return false; }
@@ -45,7 +44,7 @@ public:
 
 private:
     /// Block value.
-    JSONValue* blockValue_;
+    Value* blockValue_;
 
     /// Expected block size (for arrays).
     unsigned expectedElementCount_{ M_MAX_UNSIGNED };
@@ -59,7 +58,7 @@ public:
     using Base = JSONArchiveBase<JSONOutputArchiveBlock, true>;
 
     /// Construct from element.
-    JSONOutputArchive(JSONValue& value, JSONFile* jsonFile = nullptr)
+    JSONOutputArchive(Value& value, JSONFile* jsonFile = nullptr)
             : JSONArchiveBase(jsonFile)
             , rootValue_(value)
     {
@@ -92,9 +91,9 @@ public:
     /// @}
 
 private:
-    void CreateElement(const char* name, const JSONValue& value);
+    void CreateElement(const char* name, const Value& value);
 
-    JSONValue& rootValue_;
+    Value& rootValue_;
     String tempString_;
 };
 
@@ -102,11 +101,11 @@ private:
 struct JSONInputArchiveBlock : public ArchiveBlockBase
 {
 public:
-    JSONInputArchiveBlock(const char* name, ArchiveBlockType type, const JSONValue* value);
+    JSONInputArchiveBlock(const char* name, ArchiveBlockType type, const Value* value);
     /// Return size hint.
     unsigned GetSizeHint() const { return value_->Size(); }
     /// Read current child and move to the next one.
-    const JSONValue& ReadElement(ArchiveBase& archive, const char* elementName, const ArchiveBlockType* elementBlockType);
+    const Value& ReadElement(ArchiveBase& archive, const char* elementName, const ArchiveBlockType* elementBlockType);
 
     bool IsUnorderedAccessSupported() const { return type_ == ArchiveBlockType::Unordered; }
     bool HasElementOrBlock(const char* name) const { 
@@ -124,7 +123,7 @@ public:
     void Close(ArchiveBase& archive) {}
 
 private:
-    const JSONValue* value_{};
+    const Value* value_{};
 
     /// Next array index (for sequential and array blocks).
     unsigned nextElementIndex_{};
@@ -137,7 +136,7 @@ public:
     using Base = JSONArchiveBase<JSONInputArchiveBlock, true>;
 
     /// Construct from element.
-    JSONInputArchive(const JSONValue& value, const JSONFile* jsonFile = nullptr)
+    JSONInputArchive(const Value& value, const JSONFile* jsonFile = nullptr)
         : Base(jsonFile)
         , rootValue_(value)
     {
@@ -168,10 +167,10 @@ public:
     void SerializeVLE(const char* name, unsigned& value) final;
 
 private:
-    const JSONValue& ReadElement(const char* name);
-    void CheckType(const char* name, const JSONValue& value, JSONValueType type) const;
+    const Value& ReadElement(const char* name);
+    void CheckType(const char* name, const Value& value, ValueType type) const;
 
-    const JSONValue& rootValue_;
+    const Value& rootValue_;
 };
 
 }
