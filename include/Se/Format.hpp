@@ -51,7 +51,7 @@ inline std::string fmt11hlp( const Map *ctx, const char *format, Args... args) {
                         if (*input >= '0' && *input <= '9' )
                         {
                             double dbl = atof(input);
-                            fix = int(dbl), dig = int(dbl * 1000 - fix * 1000);
+                            fix = (unsigned)dbl, dig = (unsigned)(dbl * 1000 - fix * 1000);
                             while( dig && !(dig % 10) ) dig /= 10;
                             //printf("%s <> %d %d\n", input, fix, dig );
                             break;

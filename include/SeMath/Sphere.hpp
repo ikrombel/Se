@@ -102,16 +102,20 @@ public:
     }
 
     template<typename T> void Define(const T& obj) {
-        SE_LOG_ERROR("Define not implemented to this object"); }
+        assert(0 && "Define not implemented to this object");
+    }
     template<typename T> void Merge(const T& obj) {
-        SE_LOG_ERROR("Merge not implemented to this object"); }
+        assert(0 && "Merge not implemented to this object");
+    }
 
     template<typename T> Intersection IsInside(const T& box) const {
-        SE_LOG_ERROR("IsInside not implemented to this object");
-        return Intersection::OUTSIDE; }
+        assert(0 && "IsInside not implemented to this object");
+        return Intersection::OUTSIDE;
+    }
     template<typename T> Intersection IsInsideFast(const T& box) const {
-        SE_LOG_ERROR("IsInsideFast not implemented to this object");
-        return Intersection::OUTSIDE; }
+        assert(0 && "IsInsideFast not implemented to this object");
+        return Intersection::OUTSIDE;
+    }
 
     /// Define from an array of vertices.
     void Define(const Vector3* vertices, unsigned count) {

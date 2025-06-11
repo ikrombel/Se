@@ -34,7 +34,7 @@ public:
     virtual bool IsEof() const { return position_ >= size_; }
 
     /// Set position relative to current position. Return actual new position.
-    std::size_t SeekRelative(int delta) {
+    std::size_t SeekRelative(std::size_t delta) {
         return Seek(GetPosition() + delta); }
     /// Return current position.
     std::size_t GetPosition() const { return position_; }

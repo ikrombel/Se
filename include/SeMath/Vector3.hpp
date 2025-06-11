@@ -42,6 +42,9 @@ public:
     /// Copy-construct from another vector.
     IVector3(const IVector3<T>& rhs) noexcept = default;
 
+    /// Copy-assign from another vector.
+    IVector3<T>& operator=(const IVector3<T>& rhs) noexcept = default;
+
     /// Return mutable value by index.
     T& operator[](unsigned index) { return (&x_)[index]; }
 
@@ -443,10 +446,16 @@ public:
     /// Return hash value for HashSet & HashMap.
     unsigned ToHash() const
     {
+        static auto toHash = [](unsigned& hash, double value) -> void {
+            auto pairUnsigned = DoubleToRawIntBits(value);
+            hash = 37 * hash + pairUnsigned.first;
+            hash = 37 * hash + pairUnsigned.second;
+        };
+
         unsigned hash = 37;
-        hash = 37 * hash + FloatToRawIntBits(x_);
-        hash = 37 * hash + FloatToRawIntBits(y_);
-        hash = 37 * hash + FloatToRawIntBits(z_);
+        toHash(hash, x_);
+        toHash(hash, y_);
+        toHash(hash, z_);
 
         return hash;
     }

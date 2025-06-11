@@ -142,7 +142,7 @@ public:
         int size = snprintf(nullptr, 0, "%08X", value_);
 
         String ret;
-        ret.resize(size);
+        ret.resize((size_t)size);
         sprintf(ret.data(), "%08X", value_);
         return ret;
     }

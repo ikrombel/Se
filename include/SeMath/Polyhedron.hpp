@@ -58,9 +58,9 @@ public:
     }
 
     template<typename T> void Define(const T& obj) {
-        SE_LOG_ERROR("Define not implemented to this object"); }
+        assert(0 && "Define not implemented to this object"); }
     template<typename T> void Clip(const T& obj) {
-        SE_LOG_ERROR("Clip not implemented to this object"); }
+        assert(0 && "Clip not implemented to this object"); }
 
 
 
@@ -232,9 +232,9 @@ inline void Polyhedron::Clip(const Plane& plane)
     
 
     // Create a new face from the clipped vertices. First remove duplicates
-    for (unsigned i = 0; i < clippedVertices_.size(); ++i)
+    for (auto i = 0; i < clippedVertices_.size(); ++i)
     {
-        for (unsigned j = clippedVertices_.size() - 1; j > i; --j)
+        for (auto j = clippedVertices_.size() - 1; j > i; --j)
         {
             if (clippedVertices_[j].Equals(clippedVertices_[i]))
                 clippedVertices_.erase(clippedVertices_.begin() + j);
@@ -368,7 +368,7 @@ inline void Polyhedron::SetFace(unsigned index, const Vector3& v0, const Vector3
 template<>
 inline void Sphere::Merge(const Polyhedron& poly)
 {
-    for (unsigned i = 0; i < poly.faces_.size(); ++i)
+    for (auto i = 0; i < poly.faces_.size(); ++i)
     {
         const std::vector<Vector3>& face = poly.faces_[i];
         if (!face.empty())

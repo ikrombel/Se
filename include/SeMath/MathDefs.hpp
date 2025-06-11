@@ -87,6 +87,15 @@ inline unsigned FloatToRawIntBits(float value)
     return u;
 }
 
+/// @brief Convert a double-precision floating-point value to its raw integer bit representation.
+/// @param value The double value to convert.
+/// @return A pair of unsigned integers representing the low and high bits of the double value.
+inline std::pair<unsigned, unsigned> DoubleToRawIntBits(double value)
+{
+    unsigned long long u = *((unsigned long long*)&value);
+    return { static_cast<unsigned>(u & 0xFFFFFFFF), static_cast<unsigned>(u >> 32) };
+}
+
 /// Check whether a floating point value is NaN.
 template <class T> inline bool IsNaN(T value) { return std::isnan(value); }
 

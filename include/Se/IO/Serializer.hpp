@@ -74,7 +74,7 @@ public:
     bool WriteStringVector(const std::vector<String>& value)
     {
         bool success = true;
-        success &= WriteVLE(value.size());
+        success &= WriteVLE((unsigned)value.size());
         for (auto i = value.begin(); i != value.end(); ++i)
             success &= WriteString(*i);
         return success;
@@ -82,10 +82,10 @@ public:
     /// Write a four-letter file ID. If the string is not long enough, spaces will be appended.
     bool WriteFileID(const String& value) {
         bool success = true;
-        unsigned length = std::min<std::size_t>(value.length(), 4U);
+        size_t length = std::min<std::size_t>(value.length(), (size_t)4U);
 
         success &= Write(value.c_str(), length) == length;
-        for (unsigned i = value.length(); i < 4; ++i)
+        for (auto i = value.length(); i < 4; ++i)
             success &= WriteByte(' ');
         return success;
     }

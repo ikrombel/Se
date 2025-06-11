@@ -337,7 +337,7 @@ public:
             x_(vector.x_),
             y_(vector.y_),
             z_(vector.z_),
-            w_(w)
+            w_(int(w))
     {
     }
 
@@ -393,16 +393,16 @@ public:
     }
 
     IntVector4 operator /(const Vector4& rhs) const {
-        return IntVector4(x_ / rhs.x_, y_ / rhs.y_, z_ / rhs.z_, w_ / rhs.w_);
+        return IntVector4(static_cast<int>(x_ / rhs.x_), static_cast<int>(y_ / rhs.y_), static_cast<int>(z_ / rhs.z_), static_cast<int>(w_ / rhs.w_));
     }
 
     /// Add-assign a vector.
     IntVector4& operator +=(const Vector4& rhs)
     {
-        x_ += rhs.x_;
-        y_ += rhs.y_;
-        z_ += rhs.z_;
-        w_ += rhs.w_;
+        x_ += static_cast<int>(rhs.x_);
+        y_ += static_cast<int>(rhs.y_);
+        z_ += static_cast<int>(rhs.z_);
+        w_ += static_cast<int>(rhs.w_);
         return *this;
     }
 

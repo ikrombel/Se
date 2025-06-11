@@ -44,7 +44,7 @@ public:
         for (unsigned int i = 0; i < count; i++)
         {
             float dist = points[i].Distance(m_Center);
-            if(dist > maxDistSq)
+            if (dist > maxDistSq)
             {
                 maxDistSq = dist;
             }
@@ -60,7 +60,7 @@ public:
     //BoundingSphere(BoundingSphere&& other);
     BoundingSphere& operator=(const BoundingSphere& rhs)
     {
-        if(this == &rhs)
+        if (this == &rhs)
             return *this;
 
         m_Center = rhs.m_Center;
@@ -78,8 +78,9 @@ public:
     void SetRadius(float radius) { m_Radius = radius; }
 
     template<typename T> bool IsInside(const T& box) const {
-        SE_LOG_ERROR("IsInside not implemented to this object");
-        return false; }
+        assert(0 && "IsInside not implemented to this object");
+        return false;
+    }
 
     // bool IsInside(const BoundingBox& box) const;
     // bool IsInside(const Frustum& frustum) const;
@@ -99,17 +100,17 @@ public:
     {
         float distance = other.m_Center.Distance(m_Center);
 
-        if(distance > m_Radius + other.m_Radius)
+        if (distance > m_Radius + other.m_Radius)
             return;
 
-        if(distance <= m_Radius - other.m_Radius)
+        if (distance <= m_Radius - other.m_Radius)
         {
             m_Center = other.m_Center;
             m_Radius = other.m_Radius;
             return;
         }
 
-        if(distance <= other.m_Radius - m_Radius)
+        if (distance <= other.m_Radius - m_Radius)
             return;
 
         float half  = (distance + m_Radius + other.m_Radius) * 0.5f;
@@ -122,10 +123,10 @@ public:
     {
         float distance = point.Distance(m_Center);
 
-        if(distance > m_Radius)
+        if (distance > m_Radius)
             return;
 
-        if(distance <= 0.0f)
+        if (distance <= 0.0f)
         {
             m_Center = point;
             m_Radius = 0.0f;
@@ -137,19 +138,20 @@ public:
         m_Center    = (m_Center + point) * scale;
         m_Radius    = half;
     }
+
     void Merge(const Vector3* points, unsigned int count)
     {
-        if(count == 0)
+        if (count == 0)
             return;
 
-        float radius     = 0.0f;
+        float radius   = 0.0f;
         Vector3 center = points[0];
 
-        for(unsigned int i = 1; i < count; i++)
+        for (unsigned int i = 1; i < count; i++)
         {
             float distance = points[i].Distance(center);
 
-            if(distance > radius)
+            if (distance > radius)
                 radius = distance;
 
             center += points[i];
@@ -159,10 +161,10 @@ public:
 
         float distance = center.Distance(m_Center);
 
-        if(distance > m_Radius)
+        if (distance > m_Radius)
             return;
 
-        if(distance <= 0.0f)
+        if (distance <= 0.0f)
         {
             m_Center = center;
             m_Radius = 0.0f;

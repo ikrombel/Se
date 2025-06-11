@@ -489,13 +489,13 @@ inline void EncodeUTF8(char*& dest, unsigned unicodeChar)
     }
 }
 
-#define GET_NEXT_CONTINUATION_BYTE(ptr) *(ptr); if ((unsigned char)*(ptr) < 0x80 || (unsigned char)*(ptr) >= 0xc0) return '?'; else ++(ptr);
+#define GET_NEXT_CONTINUATION_BYTE(ptr) *(ptr); if ((unsigned char)(*ptr) < 0x80 || (unsigned char)(*ptr) >= 0xc0) return '?'; else ++(ptr);
 inline unsigned DecodeUTF8(const char*& src)
 {
     if (src == nullptr)
         return 0;
 
-    unsigned char char1 = *src++;
+    unsigned char char1 = (unsigned char)(*src++);
 
     // Check if we are in the middle of a UTF8 character
     if (char1 >= 0x80 && char1 < 0xc0)
@@ -922,10 +922,10 @@ inline bool HexStringToBuffer(std::vector<unsigned char>& dest, const String& so
     return source.length() % 2 == 0;
 }
 
-inline bool ToBool(const Se::String& source)
-{
-    return ToBool(source.c_str());
-}
+// inline bool ToBool(const Se::String& source)
+// {
+//     return ToBool(source.c_str());
+// }
 
 inline bool ToBool(const char* source)
 {
@@ -1029,7 +1029,10 @@ inline double ToDouble(const char* source)
 // int operator==(const char *s0, const String &s1);
 
 // Parse type from a C string.
-template <class T> T FromString(const char* source) {};
+template <class T> T FromString(const char* source) {
+    //SE_LOG_ERROR("FromString<T> is not specialized for type T");
+    assert(0 && "FromString<T> is not specialized for type T");
+};
 
 template <> inline const char* FromString<const char*>(const char* source) { return source; }
 template <> inline String FromString<String>(const char* source) { return source; }
@@ -1057,7 +1060,7 @@ inline String cformat(const char * __restrict format, Args... args)
 {
     int SIZE = snprintf(NULL, 0, format, args...);
     String tmp;
-    tmp.resize(SIZE);
+    tmp.resize((std::size_t)SIZE);
     sprintf(tmp.data(), format, args...);
     return {tmp.c_str()};
 }
