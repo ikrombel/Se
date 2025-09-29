@@ -23,7 +23,8 @@ enum MsgType {
     MsgInfo,
     MsgWarning,
     MsgError,
-    MsgDebug
+    MsgDebug,
+    MsgTODO
 };
 
 struct ConsoleInfo {
@@ -75,6 +76,7 @@ template<class... Args> inline void print(const char *format, Args... args) { ms
 template<class... Args> inline void info(const char *format, Args... args) { msg({MsgType::MsgInfo, 0}, format, args...); }
 template<class... Args> inline void warning(const char *format, Args... args) { msg({MsgType::MsgWarning, 0}, format, args...); }
 template<class... Args> inline void debug(const char *format, Args... args) { msg({MsgType::MsgDebug, 0}, format, args...); }
+template<class... Args> inline void todo(const char *format, Args... args) { msg({MsgType::MsgTODO, 0}, format, args...); }
 
 
 inline LogCallback DefaultColored = [](const Console::ConsoleInfo& info, const char* msg) {
@@ -86,7 +88,8 @@ inline LogCallback DefaultColored = [](const Console::ConsoleInfo& info, const c
         "INFO",
         "WARNING",
         "ERROR",
-        "DEBUG"
+        "DEBUG",
+        "TODO"
     };
     
 
@@ -99,6 +102,7 @@ inline LogCallback DefaultColored = [](const Console::ConsoleInfo& info, const c
         case MsgType::MsgWarning: SetConsoleTextAttribute(var_name, 6); break;
         case MsgType::MsgError: SetConsoleTextAttribute(var_name, 12); break;
         case MsgType::MsgDebug: SetConsoleTextAttribute(var_name, 9); break;
+        case MsgType::MsgTODO: SetConsoleTextAttribute(var_name, 11); break;
     }
     const char* msgTypeStyle = "{}[{}]: ";
 #  else
@@ -107,7 +111,8 @@ inline LogCallback DefaultColored = [](const Console::ConsoleInfo& info, const c
         "\033[32;1m{}\033[0m[\033[32;1m{}\033[0m]: ",
         "\033[33;1m{}\033[0m[\033[33;1m{}\033[0m]: ",
         "\033[31;1m{}\033[0m[\033[31;1m{}\033[0m]: ",
-        "\033[34;1m{}\033[0m[\033[34;1m{}\033[0m]: "
+        "\033[34;1m{}\033[0m[\033[34;1m{}\033[0m]: ",
+        "\033[36;1m{}\033[0m[\033[36;1m{}\033[0m]: "
     };
     const char* msgTypeStyle = strMsgStyle[info.type_];
 #  endif
@@ -155,6 +160,7 @@ namespace Console { \
         template<class... Args> static void info(const char *fStr, Args... args) {    msg({MsgType::MsgInfo, num, #name}, fStr, args...); } \
         template<class... Args> static void warning(const char *fStr, Args... args) { msg({MsgType::MsgWarning, num, #name}, fStr, args...); } \
         template<class... Args> static void debug(const char *fStr, Args... args) {   msg({MsgType::MsgDebug, num, #name}, fStr, args...); } \
+        template<class... Args> static void todo(const char *fStr, Args... args) {   msg({MsgType::MsgTODO, num, #name}, fStr, args...); } \
     } \
 }
 
@@ -163,6 +169,12 @@ namespace Console { \
 #define LOG_INFO(name, fStr, ...) Console::msg({Console::MsgType::MsgInfo, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
 #define LOG_WARNING(name, fStr, ...) Console::msg({Console::MsgType::MsgWarning, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
 #define LOG_DEBUG(name, fStr, ...) Console::msg({Console::MsgType::MsgDebug, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__)
+#define LOG_TODO(name, fStr, ...) { \
+    static bool logged_todo_##name##__LINE__ = false; \
+    if (!logged_todo_##name##__LINE__) { \
+        logged_todo_##name##__LINE__ = true; \
+        Console::msg({Console::MsgType::MsgTODO, Console::name::reg::id_, Console::name::reg::name_, __FILE__, __func__, __LINE__}, fStr, ##__VA_ARGS__); \
+    }}
 
 REGISTER_CONSOLE_GROUP(Se, 0)
 #define SE_LOG_INFO(formatStr, ...) LOG_INFO(Se, formatStr, ##__VA_ARGS__)
@@ -170,6 +182,7 @@ REGISTER_CONSOLE_GROUP(Se, 0)
 #define SE_LOG_ERROR(formatStr, ...) LOG_ERROR(Se, formatStr, ##__VA_ARGS__)
 #define SE_LOG_DEBUG(formatStr, ...) LOG_DEBUG(Se, formatStr, ##__VA_ARGS__)
 #define SE_LOG_PRINT(formatStr, ...) LOG_PRINT(Se, formatStr, ##__VA_ARGS__)
+#define SE_LOG_TODO(formatStr, ...) LOG_TODO(Se, formatStr, ##__VA_ARGS__)
 
 //REGISTER_CONSOLE_GROUP(Script, 1)
 //REGISTER_CONSOLE_GROUP(Core, 2)
