@@ -40,7 +40,7 @@ String EncodeBase64(const ByteVector& buffer)
             charArray4[3] = charArray3[2] & 0x3f;
 
             for (i = 0; (i < 4); i++)
-                ret += base64_chars[charArray4[i]];
+                ret += base64_chars.c_str()[charArray4[i]];
             i = 0;
         }
     }
@@ -55,7 +55,7 @@ String EncodeBase64(const ByteVector& buffer)
         charArray4[2] = ((charArray3[1] & 0x0f) << 2) + ((charArray3[2] & 0xc0) >> 6);
 
         for (j = 0; (j < i + 1); j++)
-            ret += base64_chars[charArray4[j]];
+            ret += base64_chars.c_str()[charArray4[j]];
 
         while ((i++ < 3))
             ret += '=';
@@ -73,9 +73,9 @@ ByteVector DecodeBase64(String encodedString)
     unsigned char charArray4[4], charArray3[3];
     ByteVector ret;
 
-    while (inLen-- && (encodedString[in_] != '=') && IsBase64(encodedString[in_]))
+    while (inLen-- && (encodedString.c_str()[in_] != '=') && IsBase64(encodedString.c_str()[in_]))
     {
-        charArray4[i++] = encodedString[in_];
+        charArray4[i++] = encodedString.c_str()[in_];
         in_++;
 
         if (i == 4)

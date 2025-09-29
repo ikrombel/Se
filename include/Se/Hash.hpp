@@ -38,12 +38,14 @@ inline void hash_combine(T& result, unsigned long long hash, std::enable_if_t<si
     result ^= hash + 0x9e3779b97f4a7c15ull + (result << 6) + (result >> 2);
 }
 
+#ifndef _WIN32
 template <class T>
 inline void hash_combine(std::size_t& seed, const T& v)
 {
     std::hash<T> hasher;
     seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
 }
+#endif
 
 /// Fold 64-bit hash to 32-bit.
 inline Hash fold_hash(unsigned long long value)

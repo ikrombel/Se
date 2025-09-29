@@ -1578,7 +1578,7 @@ bool IsAbsolutePath(const String& pathName)
         return true;
 
 #ifdef _WIN32
-    if (path.length() > 1 && IsAlpha(path[0]) && path[1] == ':')
+    if (path.length() > 1 && IsAlpha(path.c_str()[0]) && path.c_str()[1] == ':')
         return true;
 #endif
 

@@ -23,7 +23,8 @@ FileIdentifier::FileIdentifier(const String& scheme, const String& fileName)
 FileIdentifier FileIdentifier::FromUri(const String& uri)
 {
     // Special case: absolute path
-    if (uri.front() == '/' || (uri.length() >= 3 && uri[1] == ':' && (uri[2] == '/' || uri[2] == '\\')))
+    const char* uriCStr = uri.c_str();
+    if (uri.front() == '/' || (uri.length() >= 3 && uriCStr[1] == ':' && (uriCStr[2] == '/' || uriCStr[2] == '\\')))
         return {"file", SanitizeFileName(uri)};
 
     const auto schemePos = uri.find(":");

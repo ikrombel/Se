@@ -11,6 +11,10 @@
 
 #include <cstring>
 
+#ifndef strtof64
+#define strtof64 strtof
+#endif
+
 namespace Se
 {
 

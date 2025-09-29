@@ -2,6 +2,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <processthreadsapi.h>
 #else
 #include <pthread.h>
 #endif
@@ -32,12 +33,12 @@ typedef struct tagTHREADNAME_INFO
 
 typedef HRESULT (WINAPI *pfnSetThreadDescription)(HANDLE, PCWSTR);
 
-DWORD WINAPI Thread::ThreadFunctionStatic(void* data)
+static DWORD WINAPI ThreadFunctionStatic(LPVOID data)
 {
     Thread* thread = static_cast<Thread*>(data);
 #if !defined(UWP)
     if (pSetThreadDescription)
-        pSetThreadDescription(GetCurrentThread(), MultiByteToWide(thread->name_.c_str()).c_str());
+        pSetThreadDescription(GetCurrentThread(), MultiByteToWide(thread->GetName().c_str()).c_str());
     else
 #endif
 
@@ -94,7 +95,7 @@ bool Thread::Run()
 
     shouldRun_ = true;
 #  ifdef _WIN32
-    handle_ = CreateThread(nullptr, 0, &Thread::ThreadFunctionStatic, this, 0, nullptr);
+    handle_ = CreateThread(nullptr, 0, Se::ThreadFunctionStatic, (void*)this, 0, nullptr);
 #  else
     handle_ = new pthread_t;
     pthread_attr_t type;

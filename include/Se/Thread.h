@@ -50,10 +50,12 @@ public:
     static bool IsMainThread();
 
 #if _WIN32
-    static DWORD ThreadFunctionStatic(void* data);
+    static DWORD ThreadFunctionStatic(LPVOID* data);
 #else
     static void* ThreadFunctionStatic(void* data);
 #endif
+
+    std::string GetName() const { return name_; }
 
 protected:
     /// Name of the thread. It will be propagated to underlying OS thread if possible.

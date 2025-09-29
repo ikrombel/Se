@@ -13,6 +13,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <stringapiset.h>
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
 #else // assuming POSIX or BSD compliant system
@@ -597,9 +598,9 @@ inline String StringMemory(std::size_t size)
 inline std::wstring ToWString(const String& str)
 {
 #ifdef _WIN32
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), nullptr, 0);
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), nullptr, 0);
     std::wstring wstrTo( size_needed, 0 );
-    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), wstrTo.data(), size_needed);
 #else
     std::wstring wstrTo(str.begin(), str.end());
 #endif

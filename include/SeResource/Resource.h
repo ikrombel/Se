@@ -293,7 +293,7 @@ template <>
 struct hash<Se::Resource> {
     size_t operator()(const Se::Resource& res) const {
         std::size_t hash{0};
-        Se::hash_combine(hash, res.GetName());
+        Se::hash_combine(hash, Se::make_hash(res.GetName()));
         //Se::hash_combine(hash, res.GetSize());
         return hash;
     }
