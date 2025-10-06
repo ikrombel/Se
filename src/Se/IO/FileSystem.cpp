@@ -15,7 +15,13 @@
 #include <codecvt>
 
 #ifdef __ANDROID__
-#include <SDL_rwops.h>
+//#include <SDL_rwops.h>
+#include <android_native_app_glue.h>
+#include <android/native_window_jni.h>
+#include <android/asset_manager.h>
+//#include <android/native_activity.h>
+
+extern struct android_app* g_App;
 #endif
 
 #ifdef HAVE_SDL
@@ -26,6 +32,7 @@
 #include <sys/stat.h>
 #include <cstdio>
 #include <algorithm>
+#include <memory>
 //
 
 #ifdef _WIN32
@@ -56,9 +63,11 @@
 extern "C"
 {
 #ifdef __ANDROID__
-const char* SDL_Android_GetFilesDir();
-char** SDL_Android_GetFileList(const char* path, int* count);
-void SDL_Android_FreeFileList(char*** array, int* count);
+// const char* SDL_Android_GetFilesDir();
+// char** SDL_Android_GetFileList(const char* path, int* count);
+// void SDL_Android_FreeFileList(char*** array, int* count);
+static struct android_app* g_App{nullptr};
+
 #elif defined(IOS) || defined(TVOS)
 const char* SDL_IOS_GetResourceDir();
 const char* SDL_IOS_GetDocumentsDir();
@@ -208,7 +217,7 @@ std::future<String> ReadFileAsync(FileDescriptor fileHandle, StopToken& stopToke
 
 int DoSystemCommand(const String& commandLine, bool redirectToLog)
 {
-#if defined(TVOS) || defined(IOS) || defined(UWP) //|| !defined(HAVE_SDL)
+#if defined(TVOS) || defined(IOS) || defined(UWP) || defined(ANDROID) //|| !defined(HAVE_SDL)
     return -1;
 #else
 #  if !defined(__EMSCRIPTEN__)
@@ -870,10 +879,12 @@ bool FileSystem::FileExists(const String& fileName) const
 #ifdef __ANDROID__
     if (SE_IS_ASSET(fileName))
     {
-        SDL_RWops* rwOps = SDL_RWFromFile(SE_ASSET(fileName), "rb");
+        //SDL_RWops* rwOps = SDL_RWFromFile(SE_ASSET(fileName), "rb");
+        AAsset* rwOps = AAssetManager_open(g_App->activity->assetManager, fileName, AASSET_MODE_UNKNOWN);
         if (rwOps)
         {
-            SDL_RWclose(rwOps);
+//            SDL_RWclose(rwOps);
+            AAsset_close(rwOps);
             return true;
         }
         else
@@ -925,14 +936,27 @@ bool FileSystem::DirExists(const String& pathName) const
 
         bool exist = false;
         int count;
-        char** list = SDL_Android_GetFileList(parentPath.c_str(), &count);
-        for (int i = 0; i < count; ++i)
-        {
-            exist = assetPath == list[i];
+        AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, parentPath.c_str());
+        const char* entryName;
+        while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            // Process entryName (e.g., print it, or open it if it's a file)
+            // You can check if it's a file by trying to open it with AAssetManager_open
+            // or recursively call this function if it's a directory.
+
+            exist = assetPath == entryName;
             if (exist)
                 break;
         }
-        SDL_Android_FreeFileList(&list, &count);
+        AAssetDir_close(assetDir);
+
+        // char** list = SDL_Android_GetFileList(parentPath.c_str(), &count);
+        // for (int i = 0; i < count; ++i)
+        // {
+        //     exist = assetPath == list[i];
+        //     if (exist)
+        //         break;
+        // }
+        //SDL_Android_FreeFileList(&list, &count);
         return exist;
     }
 #endif
@@ -1021,8 +1045,9 @@ String FileSystem::GetUserDocumentsDir() const
 {
 #if defined(UWP)
     return AddTrailingSlash(WideToMultiByte(Windows::Storage::ApplicationData::Current->LocalFolder->Path->Data()));
-#elif defined(__ANDROID__)
-    return AddTrailingSlash(SDL_Android_GetFilesDir());
+// #elif defined(__ANDROID__)
+//     return AddTrailingSlash(SDL_Android_GetFilesDir());
+
 #elif defined(IOS) || defined(TVOS)
     return AddTrailingSlash(SDL_IOS_GetDocumentsDir());
 #elif defined(_WIN32)
@@ -1064,8 +1089,10 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
 #ifdef __linux__
     auto env  = GetENV("XDG_DATA_HOME");
     if (env.empty())
+    {
         env  = GetENV("HOME"); 
-    dir = format("{}/.local/share/", env);
+        dir = format("{}/.local/share/", env.c_str());
+    }
 
     //__ANDROID__ Windows
 #elif HAVE_SDL
@@ -1084,7 +1111,7 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
     if (dir.empty())
         SE_LOG_WARNING("Could not get application preferences directory");
 
-    dir += format("{}/{}/", org, app);
+    dir.append(format("{}/{}/", org, app));
 
     return dir;
 }
@@ -1154,34 +1181,46 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, const String& path
         String assetPath(SE_ASSET(pathTmp));
         assetPath = RemoveTrailingSlash(assetPath);       // AssetManager.list() does not like trailing slash
         int count;
-        char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
-        for (int i = 0; i < count; ++i)
-        {
-            String fileName(list[i]);
-            if (!(flags & SCAN_HIDDEN) && fileName.starts_with("."))
-                continue;
 
-#ifdef ASSET_DIR_INDICATOR
-            // Patch the directory name back after retrieving the directory flag
-            bool isDirectory = fileName.ends_with(ASSET_DIR_INDICATOR);
-            if (isDirectory)
-            {
-                fileName.resize(fileName.length() - sizeof(ASSET_DIR_INDICATOR) / sizeof(char) + 1);
-                if (flags & SCAN_DIRS)
-                    result.push_back(deltaPath + fileName);
-                if (recursive)
-                    ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
-            }
-            else if (flags & SCAN_FILES)
-#endif
-            {
-                if (filterExtension.empty() || fileName.ends_with(filterExtension))
-                    result.push_back(deltaPath + fileName);
-            }
+        AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, assetPath.c_str());
+        const char* entryName;
+        while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            // Process entryName (e.g., print it, or open it if it's a file)
+            // You can check if it's a file by trying to open it with AAssetManager_open
+            // or recursively call this function if it's a directory.
+            result.push_back(deltaPath + String(std::move(entryName)));
         }
-        SDL_Android_FreeFileList(&list, &count);
-        return;
-    }
+        AAssetDir_close(assetDir);
+
+
+//         char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
+//         for (int i = 0; i < count; ++i)
+//         {
+//             String fileName(list[i]);
+//             if (!(flags & SCAN_HIDDEN) && fileName.starts_with("."))
+//                 continue;
+
+// #ifdef ASSET_DIR_INDICATOR
+//             // Patch the directory name back after retrieving the directory flag
+//             bool isDirectory = fileName.ends_with(ASSET_DIR_INDICATOR);
+//             if (isDirectory)
+//             {
+//                 fileName.resize(fileName.length() - sizeof(ASSET_DIR_INDICATOR) / sizeof(char) + 1);
+//                 if (flags & SCAN_DIRS)
+//                     result.push_back(deltaPath + fileName);
+//                 if (recursive)
+//                     ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
+//             }
+//             else if (flags & SCAN_FILES)
+// #endif
+//             {
+//                 if (filterExtension.empty() || fileName.ends_with(filterExtension))
+//                     result.push_back(deltaPath + fileName);
+//             }
+//         }
+//         SDL_Android_FreeFileList(&list, &count);
+         return;
+     }
 #endif
 #ifdef _WIN32
     WIN32_FIND_DATAW info;
@@ -1262,16 +1301,24 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
 
     const Se::String filterExtension = GetExtensionFromFilter(filter);
 
+    
+
 #ifdef __ANDROID__
     if (SE_IS_ASSET(pathTmp))
     {
         String assetPath(SE_ASSET(pathTmp));
         assetPath = RemoveTrailingSlash(assetPath);       // AssetManager.list() does not like trailing slash
-        int count;
-        char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
-        for (int i = 0; i < count; ++i)
-        {
-            String fileName(list[i]);
+        // int count;
+        // char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
+
+        AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, assetPath.c_str());
+        const char* entryName;
+        while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            String fileName(std::move(entryName));
+
+        // for (int i = 0; i < count; ++i)
+        // {
+        //     String fileName(list[i]);
             if (!(flags & SCAN_HIDDEN) && fileName.starts_with("."))
                 continue;
 
@@ -1285,7 +1332,7 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                     auto& node = result.Children.emplace_back();
                     node.FullPath = deltaPath + fileName;
                     node.FileName = fileName;
-                    node.IsDirectory = true;
+                    node.Flags |= FSIF_DIRECTORY;
                     //result.push_back(deltaPath + fileName);
                 }
                 if (recursive)
@@ -1298,12 +1345,14 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                     auto& node = result.Children.emplace_back();
                     node.FullPath = deltaPath + fileName;
                     node.FileName = fileName;
-                    node.IsDirectory = false;
+                    if (node.Flags.Test(FSIF_DIRECTORY)) 
+                            node.Flags.Unset(FSIF_DIRECTORY); //IsDirectory = false;
                     //result.push_back(deltaPath + fileName);
                 }
             }
         }
-        SDL_Android_FreeFileList(&list, &count);
+        //SDL_Android_FreeFileList(&list, &count);
+        AAssetDir_close(assetDir);
         return;
     }
 #endif

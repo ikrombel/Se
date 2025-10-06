@@ -21,6 +21,18 @@
 #define fseeko64 _fseeki64
 #endif
 
+#ifdef __ANDROID__
+#include <android_native_app_glue.h>
+//#include <android/native_activity.h>
+#include <android/native_window_jni.h>
+#include <android/asset_manager.h>
+
+extern struct android_app* g_App;
+#endif
+
+
+
+
 namespace Se {
 
 File::File() :
@@ -343,7 +355,8 @@ void File::Close()
 #ifdef __ANDROID__
     if (assetHandle_)
     {
-        SDL_RWclose(assetHandle_);
+//        SDL_RWclose(assetHandle_);
+        AAsset_close(assetHandle_);
         assetHandle_ = 0;
     }
 #endif
@@ -411,8 +424,8 @@ bool File::OpenInternal(const String& fileName, FileMode mode, bool fromPackage)
             SE_LOG_ERROR("Only read mode is supported for Android asset files");
             return false;
         }
-
-        assetHandle_ = SDL_RWFromFile(SE_ASSET(fileName), "rb");
+        assetHandle_ = AAssetManager_open(g_App->activity->assetManager, fileName.c_str(), AASSET_MODE_BUFFER);
+//        assetHandle_ = SDL_RWFromFile(SE_ASSET(fileName), "rb");
         if (!assetHandle_)
         {
             SE_LOG_ERROR("Could not open Android asset file {}", fileName.c_str());
@@ -426,7 +439,8 @@ bool File::OpenInternal(const String& fileName, FileMode mode, bool fromPackage)
             position_ = 0;
             if (!fromPackage)
             {
-                size_ = SDL_RWsize(assetHandle_);
+//                size_ = SDL_RWsize(assetHandle_);
+                size_ = AAsset_getLength(assetHandle_);
                 offset_ = 0;
             }
             checksum_ = 0;
@@ -487,7 +501,8 @@ bool File::ReadInternal(void* dest, std::size_t size)
 #ifdef __ANDROID__
     if (assetHandle_)
     {
-        return SDL_RWread(assetHandle_, dest, size, 1) == 1;
+//        return SDL_RWread(assetHandle_, dest, size, 1) == 1;
+        return AAsset_read(assetHandle_, dest, 1) == 1;
     }
     else
 #endif
@@ -499,7 +514,8 @@ void File::SeekInternal(std::size_t newPosition)
 #ifdef __ANDROID__
     if (assetHandle_)
     {
-        SDL_RWseek(assetHandle_, newPosition, SEEK_SET);
+//        SDL_RWseek(assetHandle_, newPosition, SEEK_SET);
+        AAsset_seek(assetHandle_, newPosition, SEEK_SET);
         // Reset buffering after seek
         readBufferOffset_ = 0;
         readBufferSize_ = 0;
@@ -544,7 +560,8 @@ void File::SeekCur(std::size_t offset)
 #ifdef __ANDROID__
     if (assetHandle_)
     {
-        SDL_RWseek(assetHandle_, offset, SEEK_CUR);
+//        SDL_RWseek(assetHandle_, offset, SEEK_CUR);
+        AAsset_seek(assetHandle_, offset, SEEK_CUR);
         // Reset buffering after seek
         readBufferOffset_ = 0;
         readBufferSize_ = 0;
@@ -565,7 +582,8 @@ int File::SeekSet(int offset) {
 
 #ifdef __ANDROID__
     if (assetHandle_) {
-        return SDL_RWseek(assetHandle_, offset, SEEK_SET) == 0;
+//        return SDL_RWseek(assetHandle_, offset, SEEK_SET) == 0;
+        return AAsset_seek(assetHandle_, offset, SEEK_SET) == 0;
     }
     
     return fseek((FILE*)handle_, offset, SEEK_SET);
@@ -579,7 +597,8 @@ int File::SeekEnd(int offset) {
     
 #ifdef __ANDROID__
     if (assetHandle_) {
-        return SDL_RWseek(assetHandle_, offset, SEEK_END);
+//        return SDL_RWseek(assetHandle_, offset, SEEK_END);
+        return AAsset_seek(assetHandle_, offset, SEEK_END);
     }
     else 
         return fseek((FILE*)handle_, offset, SEEK_END);

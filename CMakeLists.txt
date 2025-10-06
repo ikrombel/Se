@@ -34,7 +34,16 @@ set(SE_SOURCE
         src/Se/ProcessTaskManager.cpp
         src/Se/VectorBuffer.cpp
         src/Se/WorkQueue.cpp
+
+        
         )
+
+if(ANDROID)
+        set(SE_SOURCE ${SE_SOURCE}
+                ${CMAKE_ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
+        )
+endif()
+
 
 if (HAVE_LZ4) 
         set(SE_DEFINED ${SE_DEFINED}
@@ -54,12 +63,18 @@ endif()
 
 add_library(Se STATIC ${SE_SOURCE})
 
-target_include_directories(Se PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(Se
+        PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
         PRIVATE include/Se/
         PRIVATE include/Se/IO/
         ${SE_INCLUDE_DIRS}
 )
+
+if(ANDROID)
+        target_include_directories(Se
+                PUBLIC ${CMAKE_ANDROID_NDK}/sources/android/native_app_glue/
+        )
+endif()
 
 target_compile_definitions(Se 
         ${SE_DEFINED}

@@ -12,6 +12,8 @@
 
 #ifdef __ANDROID__
 #include <Se/Platform/AndroidFile.hpp>
+
+struct AAsset;
 #endif
 
 
@@ -150,7 +152,8 @@ private:
     void* handle_;
 #ifdef __ANDROID__
     /// SDL RWops context for Android asset loading.
-    SDL_RWops* assetHandle_;
+    //SDL_RWops* assetHandle_;
+    AAsset* assetHandle_; 
 #endif
     /// Read buffer for Android asset or compressed file loading.
     std::shared_ptr<unsigned char> readBuffer_;
