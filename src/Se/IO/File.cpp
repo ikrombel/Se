@@ -357,7 +357,7 @@ void File::Close()
     {
 //        SDL_RWclose(assetHandle_);
         AAsset_close(assetHandle_);
-        assetHandle_ = 0;
+        assetHandle_ = nullptr;
     }
 #endif
 

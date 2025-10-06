@@ -1034,7 +1034,7 @@ String FileSystem::GetProgramFileName() const
     char exeName[MAX_PATH];
     memset(exeName, 0, MAX_PATH);
     pid_t pid = getpid();
-    String link(String::CtorSprintf{}, "/proc/%d/exe", pid);
+    String link = format("/proc/{}/exe", pid);
     readlink(link.c_str(), exeName, MAX_PATH);
     return String(exeName);
 #endif
@@ -1419,9 +1419,10 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                     if (recursive && normalEntry) {
                         auto& node = result.Children.emplace_back();
                         node.FullPath = deltaPath + fileName;
+                        //node.parent = &result;
                         node.FileName = fileName;
                         node.Flags |= FSIF_DIRECTORY;
-                        ScanDirInternalTree(node, pathTmp + fileName, startPath, filter, flags);
+                        ScanDirInternalTree(node, {pathTmp + fileName}, startPath, filter, flags);
                     }
                 }
                 else if (flags & SCAN_FILES)
@@ -1430,8 +1431,9 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
                         auto& node = result.Children.emplace_back();
                         node.FullPath = deltaPath + fileName;
                         node.FileName = fileName;
-                        if (node.Flags.Test(FSIF_DIRECTORY)) 
-                            node.Flags.Unset(FSIF_DIRECTORY); //IsDirectory = false;
+                        //node.parent = &result;
+                        // if (node.Flags.Test(FSIF_DIRECTORY)) 
+                        //     node.Flags.Unset(FSIF_DIRECTORY); //IsDirectory = false;
                     }
                         
                 }
