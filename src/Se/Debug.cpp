@@ -218,30 +218,26 @@ table td
 				continue;
 
 			String channelName;
+			String alternateName = alternate ? "-alt-row" : "-row";
 
 			Console::MsgType verbosity = entry.info_.type_;
 			switch(verbosity)
 			{
 			//case Console::MsgType::Fatal:
 			case Console::MsgType::MsgError:
-				if (!alternate)
-					stream << R"(		<tr class="error-row">)" << std::endl;
-				else
-					stream << R"(		<tr class="error-alt-row">)" << std::endl;
+				stream << format(R"(		<tr class="error{}">)", alternateName) << std::endl;
 				break;
 			case Console::MsgType::MsgWarning: {
-				std::string alt =  (!alternate) ? "warn-row" : "warn-alt-row";
-				stream << format(R"(		<tr class=\"{}\">)", alt);
+				// std::string alt =  (!alternate) ? "warn-row" : "warn-alt-row";
+				// stream << format(R"(		<tr class=\"{}\">)", alt);
+				stream << format(R"(		<tr class="warn{}">)", alternateName) << std::endl;
 			}
 			default:
 			case Console::MsgType::MsgInfo:
 			// case Console::MsgType::Log:
 			// case Console::MsgType::Verbose:
 			// case Console::MsgType::VeryVerbose:
-				if (!alternate)
-					stream << R"(		<tr class="debug-row">)" << std::endl;
-				else
-					stream << R"(		<tr class="debug-alt-row">)" << std::endl;
+					stream << format(R"(		<tr class="debug{}">)", alternateName) << std::endl;
 				break;
 			}
 			// stream << R"(			<td>)" << toString(verbosity)<< R"(</td>)" << std::endl;
@@ -275,8 +271,8 @@ table td
 
 #if 0
 		#if BS_IS_BANSHEE3D
-		static const char* engineHeader = "This is Banshee Engine ";
-		static const char* bsfBasedHeader = "Based on bs::framework ";
+		static const char* engineHeader = "This is Se Engine ";
+		static const char* bsfBasedHeader = "Based on Se::framework ";
 		#else
 		static const char* bsfOnlyHeader = "This is Se ";
 		#endif

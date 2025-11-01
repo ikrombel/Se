@@ -271,6 +271,10 @@ String VirtualFileSystem::GetAbsoluteNameFromIdentifier(const FileIdentifier& fi
 
     for (MountPointPtr mountPoint : Reverse(mountPoints_))
     {
+        // auto mount = mountPoint.get()->GetName();
+        // if (!fileName.scheme_.empty() && !mountPoint->AcceptsScheme(fileName.scheme_))
+        //         continue;
+
         const String result = mountPoint->GetAbsoluteNameFromIdentifier(fileName);
         if (!result.empty())
             return result;

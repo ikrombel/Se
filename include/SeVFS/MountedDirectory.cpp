@@ -20,6 +20,7 @@ MountedDirectory::MountedDirectory(const String& directory, String scheme)
 
 MountedDirectory::~MountedDirectory()
 {
+    fileWatcher_->Stop();
 }
 
 String MountedDirectory::SanitizeDirName(const String& name) const
@@ -74,7 +75,7 @@ void MountedDirectory::ProcessUpdates()
 
 bool MountedDirectory::AcceptsScheme(const String& scheme) const
 {
-    return scheme.comparei(scheme_) == 0;
+    return scheme.comparei(scheme_);
 }
 
 bool MountedDirectory::Exists(const FileIdentifier& fileName) const

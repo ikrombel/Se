@@ -2,6 +2,7 @@
 
 #include <Se/Console.hpp>
 #include <Se/IO/PackageFile.h>
+#include <SePlatform/Platform.hpp>
 
 #include <algorithm>
 
@@ -424,7 +425,9 @@ bool File::OpenInternal(const String& fileName, FileMode mode, bool fromPackage)
             SE_LOG_ERROR("Only read mode is supported for Android asset files");
             return false;
         }
-        assetHandle_ = AAssetManager_open(g_App->activity->assetManager, fileName.c_str(), AASSET_MODE_BUFFER);
+        auto platform = Window::Get();
+        assetHandle_ = platform->OpenAsset(fileName);
+        //assetHandle_ = AAssetManager_open(g_App->activity->assetManager, fileName.c_str(), AASSET_MODE_BUFFER);
 //        assetHandle_ = SDL_RWFromFile(SE_ASSET(fileName), "rb");
         if (!assetHandle_)
         {

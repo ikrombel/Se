@@ -114,11 +114,11 @@ void ToYml(ryml::NodeRef* node, const Value& input)
     {
         node->set_val(std::move(input.GetString().c_str()));
     }
-    else if (input.IsNumber() && input.GetNumberType() == ValueNumberType::VALUENT_INT)
+    else if (input.IsNumber() && input.GetNumberType() == ValueNumberType::VALUE_NT_INT)
     {
         node->set_val(cformat("%i", input.GetInt()).c_str());
     }
-    else if (input.IsNumber() && input.GetNumberType() == ValueNumberType::VALUENT_FLOAT_DOUBLE)
+    else if (input.IsNumber() && input.GetNumberType() == ValueNumberType::VALUE_NT_FLOAT_DOUBLE)
     {
         //auto strDouble = std::to_string((double)input.GetDouble());
         auto strDouble = cformat("%.9f", input.GetDouble());

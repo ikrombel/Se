@@ -118,11 +118,11 @@ static void ToRapidjsonValue(rapidjson::Value& rapidjsonValue, const JSONValue& 
         {
             switch (jsonValue.GetNumberType())
             {
-            case VALUENT_INT:
+            case VALUE_NT_INT:
                 rapidjsonValue.SetInt(jsonValue.GetInt());
                 break;
 
-            case VALUENT_UINT:
+            case VALUE_NT_UINT:
                 rapidjsonValue.SetUint(jsonValue.GetUInt());
                 break;
 

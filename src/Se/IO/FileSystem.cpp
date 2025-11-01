@@ -7,6 +7,7 @@
 #include <Se/Finally.hpp>
 #include <Se/StopToken.hpp>
 #include <Se/String.hpp>
+#include <SePlatform/Platform.hpp>
 
 #include <SeMath/MathDefs.hpp>
 
@@ -21,7 +22,7 @@
 #include <android/asset_manager.h>
 //#include <android/native_activity.h>
 
-extern struct android_app* g_App;
+//extern struct android_app* g_App;
 #endif
 
 #ifdef HAVE_SDL
@@ -66,7 +67,7 @@ extern "C"
 // const char* SDL_Android_GetFilesDir();
 // char** SDL_Android_GetFileList(const char* path, int* count);
 // void SDL_Android_FreeFileList(char*** array, int* count);
-static struct android_app* g_App{nullptr};
+//static struct android_app* g_App{nullptr};
 
 #elif defined(IOS) || defined(TVOS)
 const char* SDL_IOS_GetResourceDir();
@@ -877,19 +878,23 @@ bool FileSystem::FileExists(const String& fileName) const
         return false;
 
 #ifdef __ANDROID__
-    if (SE_IS_ASSET(fileName))
-    {
-        //SDL_RWops* rwOps = SDL_RWFromFile(SE_ASSET(fileName), "rb");
-        AAsset* rwOps = AAssetManager_open(g_App->activity->assetManager, fileName, AASSET_MODE_UNKNOWN);
-        if (rwOps)
-        {
-//            SDL_RWclose(rwOps);
-            AAsset_close(rwOps);
-            return true;
-        }
-        else
-            return false;
-    }
+    auto platform = Window::Get();
+    if (platform->FileExists(fileName))
+        return true;
+
+//     if (SE_IS_ASSET(fileName))
+//     {
+//         //SDL_RWops* rwOps = SDL_RWFromFile(SE_ASSET(fileName), "rb");
+//         AAsset* rwOps = AAssetManager_open(g_App->activity->assetManager, fileName, AASSET_MODE_UNKNOWN);
+//         if (rwOps)
+//         {
+// //            SDL_RWclose(rwOps);
+//             AAsset_close(rwOps);
+//             return true;
+//         }
+//         else
+//             return false;
+//     }
 #endif
 
     String fixedName = GetNativePath(RemoveTrailingSlash(fileName));
@@ -921,44 +926,48 @@ bool FileSystem::DirExists(const String& pathName) const
     String fixedName = GetNativePath(RemoveTrailingSlash(pathName));
 
 #ifdef __ANDROID__
-    if (SE_IS_ASSET(fixedName))
-    {
-        // Split the pathname into two components: the longest parent directory path and the last name component
-        String assetPath(SE_ASSET((fixedName + "/")));
-        String parentPath;
-        unsigned pos = assetPath.find_last_of('/', assetPath.length() - 2);
-        if (pos != String::npos)
-        {
-            parentPath = assetPath.substr(0, pos);
-            assetPath = assetPath.substr(pos + 1);
-        }
-        assetPath.resize(assetPath.length() - 1);
+    auto platform = Window::Get();
+    if (platform->DirExists(fixedName))
+        return true;
 
-        bool exist = false;
-        int count;
-        AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, parentPath.c_str());
-        const char* entryName;
-        while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
-            // Process entryName (e.g., print it, or open it if it's a file)
-            // You can check if it's a file by trying to open it with AAssetManager_open
-            // or recursively call this function if it's a directory.
+    // if (SE_IS_ASSET(fixedName))
+    // {
+    //     // Split the pathname into two components: the longest parent directory path and the last name component
+    //     String assetPath(SE_ASSET((fixedName + "/")));
+    //     String parentPath;
+    //     unsigned pos = assetPath.find_last_of('/', assetPath.length() - 2);
+    //     if (pos != String::npos)
+    //     {
+    //         parentPath = assetPath.substr(0, pos);
+    //         assetPath = assetPath.substr(pos + 1);
+    //     }
+    //     assetPath.resize(assetPath.length() - 1);
 
-            exist = assetPath == entryName;
-            if (exist)
-                break;
-        }
-        AAssetDir_close(assetDir);
+    //     bool exist = false;
+    //     int count;
+    //     AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, parentPath.c_str());
+    //     const char* entryName;
+    //     while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
+    //         // Process entryName (e.g., print it, or open it if it's a file)
+    //         // You can check if it's a file by trying to open it with AAssetManager_open
+    //         // or recursively call this function if it's a directory.
 
-        // char** list = SDL_Android_GetFileList(parentPath.c_str(), &count);
-        // for (int i = 0; i < count; ++i)
-        // {
-        //     exist = assetPath == list[i];
-        //     if (exist)
-        //         break;
-        // }
-        //SDL_Android_FreeFileList(&list, &count);
-        return exist;
-    }
+    //         exist = assetPath == entryName;
+    //         if (exist)
+    //             break;
+    //     }
+    //     AAssetDir_close(assetDir);
+
+    //     // char** list = SDL_Android_GetFileList(parentPath.c_str(), &count);
+    //     // for (int i = 0; i < count; ++i)
+    //     // {
+    //     //     exist = assetPath == list[i];
+    //     //     if (exist)
+    //     //         break;
+    //     // }
+    //     //SDL_Android_FreeFileList(&list, &count);
+    //     return exist;
+    // }
 #endif
 
 #if defined(_WIN32) && !defined(UWP)
@@ -1088,11 +1097,12 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
     String dir;
 #ifdef __linux__
     auto env  = GetENV("XDG_DATA_HOME");
+
     if (env.empty())
-    {
         env  = GetENV("HOME"); 
-        dir = format("{}/.local/share/", env.c_str());
-    }
+    // if (env.empty())
+    //     env  = GetProgramDir();
+    dir = format("{}/.local/share/", env.c_str());
 
     //__ANDROID__ Windows
 #elif HAVE_SDL
@@ -1176,51 +1186,55 @@ void FileSystem::ScanDirInternal(std::vector<String>& result, const String& path
     const String filterExtension = GetExtensionFromFilter(filter);
 
 #ifdef __ANDROID__
-    if (SE_IS_ASSET(pathTmp))
-    {
-        String assetPath(SE_ASSET(pathTmp));
-        assetPath = RemoveTrailingSlash(assetPath);       // AssetManager.list() does not like trailing slash
-        int count;
+    auto platform = Window::Get();
+    if (platform->ScanDirInternal(result, pathTmp, startPath, filter, flags))
+        return;
 
-        AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, assetPath.c_str());
-        const char* entryName;
-        while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
-            // Process entryName (e.g., print it, or open it if it's a file)
-            // You can check if it's a file by trying to open it with AAssetManager_open
-            // or recursively call this function if it's a directory.
-            result.push_back(deltaPath + String(std::move(entryName)));
-        }
-        AAssetDir_close(assetDir);
+//     if (SE_IS_ASSET(pathTmp))
+//     {
+//         String assetPath(SE_ASSET(pathTmp));
+//         assetPath = RemoveTrailingSlash(assetPath);       // AssetManager.list() does not like trailing slash
+//         int count;
 
-
-//         char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
-//         for (int i = 0; i < count; ++i)
-//         {
-//             String fileName(list[i]);
-//             if (!(flags & SCAN_HIDDEN) && fileName.starts_with("."))
-//                 continue;
-
-// #ifdef ASSET_DIR_INDICATOR
-//             // Patch the directory name back after retrieving the directory flag
-//             bool isDirectory = fileName.ends_with(ASSET_DIR_INDICATOR);
-//             if (isDirectory)
-//             {
-//                 fileName.resize(fileName.length() - sizeof(ASSET_DIR_INDICATOR) / sizeof(char) + 1);
-//                 if (flags & SCAN_DIRS)
-//                     result.push_back(deltaPath + fileName);
-//                 if (recursive)
-//                     ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
-//             }
-//             else if (flags & SCAN_FILES)
-// #endif
-//             {
-//                 if (filterExtension.empty() || fileName.ends_with(filterExtension))
-//                     result.push_back(deltaPath + fileName);
-//             }
+//         AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, assetPath.c_str());
+//         const char* entryName;
+//         while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
+//             // Process entryName (e.g., print it, or open it if it's a file)
+//             // You can check if it's a file by trying to open it with AAssetManager_open
+//             // or recursively call this function if it's a directory.
+//             result.push_back(deltaPath + String(std::move(entryName)));
 //         }
-//         SDL_Android_FreeFileList(&list, &count);
-         return;
-     }
+//         AAssetDir_close(assetDir);
+
+
+// //         char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
+// //         for (int i = 0; i < count; ++i)
+// //         {
+// //             String fileName(list[i]);
+// //             if (!(flags & SCAN_HIDDEN) && fileName.starts_with("."))
+// //                 continue;
+
+// // #ifdef ASSET_DIR_INDICATOR
+// //             // Patch the directory name back after retrieving the directory flag
+// //             bool isDirectory = fileName.ends_with(ASSET_DIR_INDICATOR);
+// //             if (isDirectory)
+// //             {
+// //                 fileName.resize(fileName.length() - sizeof(ASSET_DIR_INDICATOR) / sizeof(char) + 1);
+// //                 if (flags & SCAN_DIRS)
+// //                     result.push_back(deltaPath + fileName);
+// //                 if (recursive)
+// //                     ScanDirInternal(result, pathTmp + fileName, startPath, filter, flags);
+// //             }
+// //             else if (flags & SCAN_FILES)
+// // #endif
+// //             {
+// //                 if (filterExtension.empty() || fileName.ends_with(filterExtension))
+// //                     result.push_back(deltaPath + fileName);
+// //             }
+// //         }
+// //         SDL_Android_FreeFileList(&list, &count);
+//          return;
+//      }
 #endif
 #ifdef _WIN32
     WIN32_FIND_DATAW info;
@@ -1304,57 +1318,62 @@ void FileSystem::ScanDirInternalTree(DirectoryNode& result, const Se::String& pa
     
 
 #ifdef __ANDROID__
-    if (SE_IS_ASSET(pathTmp))
-    {
-        String assetPath(SE_ASSET(pathTmp));
-        assetPath = RemoveTrailingSlash(assetPath);       // AssetManager.list() does not like trailing slash
-        // int count;
-        // char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
-
-        AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, assetPath.c_str());
-        const char* entryName;
-        while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
-            String fileName(std::move(entryName));
-
-        // for (int i = 0; i < count; ++i)
-        // {
-        //     String fileName(list[i]);
-            if (!(flags & SCAN_HIDDEN) && fileName.starts_with("."))
-                continue;
-
-#ifdef ASSET_DIR_INDICATOR
-            // Patch the directory name back after retrieving the directory flag
-            bool isDirectory = fileName.ends_with(ASSET_DIR_INDICATOR);
-            if (isDirectory)
-            {
-                fileName.resize(fileName.length() - sizeof(ASSET_DIR_INDICATOR) / sizeof(char) + 1);
-                if (flags & SCAN_DIRS) {
-                    auto& node = result.Children.emplace_back();
-                    node.FullPath = deltaPath + fileName;
-                    node.FileName = fileName;
-                    node.Flags |= FSIF_DIRECTORY;
-                    //result.push_back(deltaPath + fileName);
-                }
-                if (recursive)
-                    ScanDirInternalTree(result, pathTmp + fileName, startPath, filter, flags);
-            }
-            else if (flags & SCAN_FILES)
-#endif
-            {
-                if (filterExtension.empty() || fileName.ends_with(filterExtension)) {
-                    auto& node = result.Children.emplace_back();
-                    node.FullPath = deltaPath + fileName;
-                    node.FileName = fileName;
-                    if (node.Flags.Test(FSIF_DIRECTORY)) 
-                            node.Flags.Unset(FSIF_DIRECTORY); //IsDirectory = false;
-                    //result.push_back(deltaPath + fileName);
-                }
-            }
-        }
-        //SDL_Android_FreeFileList(&list, &count);
-        AAssetDir_close(assetDir);
+    auto platform = Window::Get();
+    if (platform->ScanDirInternalTree(result, pathTmp, startPath, filter, flags))
         return;
-    }
+
+
+//     if (SE_IS_ASSET(pathTmp))
+//     {
+//         String assetPath(SE_ASSET(pathTmp));
+//         assetPath = RemoveTrailingSlash(assetPath);       // AssetManager.list() does not like trailing slash
+//         // int count;
+//         // char** list = SDL_Android_GetFileList(assetPath.c_str(), &count);
+
+//         AAssetDir* assetDir = AAssetManager_openDir(g_App->activity->assetManager, assetPath.c_str());
+//         const char* entryName;
+//         while ((entryName = AAssetDir_getNextFileName(assetDir)) != NULL) {
+//             String fileName(std::move(entryName));
+
+//         // for (int i = 0; i < count; ++i)
+//         // {
+//         //     String fileName(list[i]);
+//             if (!(flags & SCAN_HIDDEN) && fileName.starts_with("."))
+//                 continue;
+
+// #ifdef ASSET_DIR_INDICATOR
+//             // Patch the directory name back after retrieving the directory flag
+//             bool isDirectory = fileName.ends_with(ASSET_DIR_INDICATOR);
+//             if (isDirectory)
+//             {
+//                 fileName.resize(fileName.length() - sizeof(ASSET_DIR_INDICATOR) / sizeof(char) + 1);
+//                 if (flags & SCAN_DIRS) {
+//                     auto& node = result.Children.emplace_back();
+//                     node.FullPath = deltaPath + fileName;
+//                     node.FileName = fileName;
+//                     node.Flags |= FSIF_DIRECTORY;
+//                     //result.push_back(deltaPath + fileName);
+//                 }
+//                 if (recursive)
+//                     ScanDirInternalTree(result, pathTmp + fileName, startPath, filter, flags);
+//             }
+//             else if (flags & SCAN_FILES)
+// #endif
+//             {
+//                 if (filterExtension.empty() || fileName.ends_with(filterExtension)) {
+//                     auto& node = result.Children.emplace_back();
+//                     node.FullPath = deltaPath + fileName;
+//                     node.FileName = fileName;
+//                     if (node.Flags.Test(FSIF_DIRECTORY)) 
+//                             node.Flags.Unset(FSIF_DIRECTORY); //IsDirectory = false;
+//                     //result.push_back(deltaPath + fileName);
+//                 }
+//             }
+//         }
+//         //SDL_Android_FreeFileList(&list, &count);
+//         AAssetDir_close(assetDir);
+//         return;
+//     }
 #endif
 #ifdef _WIN32
     WIN32_FIND_DATAW info;

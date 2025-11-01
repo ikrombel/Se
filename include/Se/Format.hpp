@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <stdio.h>
 
 template<unsigned trail_args, typename Map, typename... Args>
 inline std::string fmt11hlp( const Map *ctx, const char *format, Args... args) {
@@ -157,6 +158,7 @@ std::string cformat(const char *formatStr, Args... args)
     int SIZE = snprintf(NULL, 0, formatStr, args...);
     std::string tmp;
     tmp.resize(SIZE);
+    //sprintf(tmp.data(), formatStr, args...);
     sprintf(tmp.data(), formatStr, args...);
     return tmp;
 }

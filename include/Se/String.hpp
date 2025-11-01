@@ -7,6 +7,8 @@
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
+#include <cstring>
+#include <ctype.h>
 //#include <cxxabi.h>
 
 #include <Se/Format.hpp>
@@ -17,7 +19,7 @@
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
 #else // assuming POSIX or BSD compliant system
-#include <strings.h>
+//#include <strings.h>
 #endif
  
 
@@ -588,10 +590,10 @@ inline String StringMemory(std::size_t size)
     if (size < 1024)
         ret += cformat("%db", size);
     else if (size < 1024*1024)
-        ret += cformat("%.1fKb", size/1024.0);
+        ret += cformat("%.1fKb", size/1024.0f);
     else if (size < 1024*1024*1024)
-        ret += cformat("%.1fMb", size/(1024.0*1024.0));
-    else ret += cformat("%.1fGb", size/(1024.0*1024.0*1024.0));
+        ret += cformat("%.1fMb", size/(1024.0f*1024.0f));
+    else ret += cformat("%.1fGb", size/(1024.0f*1024.0f*1024.0f));
     return ret;
 }
 
@@ -796,7 +798,8 @@ inline void String::replace(std::size_t pos, std::size_t length, const char *src
     } else
         base.resize(base.length() + delta);
 
-    copy_chars(base.data() + pos, srcStart, srcLength);
+    char* dest = &base.front() + pos;
+    copy_chars(dest, srcStart, srcLength);
 }
 
 inline void String::replace(char replaceThis, char replaceWith, bool caseSensitive) {
@@ -862,9 +865,13 @@ inline void String::remove() {
 
 //-------------------------------------
 
+
+#if __cplusplus >= 201703L
 class StringView : public std::string_view {
 
 };
+
+#endif
 
 template <typename T, typename U>
 inline typename std::vector<T>::iterator erase_first(std::vector<T>& arr, const U& value)
@@ -1051,24 +1058,24 @@ template <class T> T FromString(const String& source) { return FromString<T>(sou
 // }
 
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-security"
-#endif
+// #ifdef __clang__
+// #pragma clang diagnostic push
+// #pragma clang diagnostic ignored "-Wformat-security"
+// #endif
 
-template<class... Args>
-inline String cformat(const char * __restrict format, Args... args)
-{
-    int SIZE = snprintf(NULL, 0, format, args...);
-    String tmp;
-    tmp.resize((std::size_t)SIZE);
-    sprintf(tmp.data(), format, args...);
-    return {tmp.c_str()};
-}
+// template<class... Args>
+// inline String cformat(const char* format, Args&&... args)
+// {
+//     int SIZE = snprintf(nullptr, 0, format, std::forward<Args>(args)...);
+//     String tmp;
+//     tmp.resize((std::size_t)SIZE);
+//     ::sprintf((char*)tmp.data(), format, std::forward<Args>(args)...);
+//     return {tmp.c_str()};
+// }
 
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+// #ifdef __clang__
+// #pragma clang diagnostic pop
+// #endif
 
 inline Se::String operator+(const Se::String &s0, const Se::String &s1) {
     Se::String ret = s0;

@@ -5,6 +5,7 @@
 #include <SeResource/JSONFile.h>
 #include <SeResource/XMLFile.h>
 #include <SeResource/YAMLFile.h>
+#include <SeResource/LangFile.h>
 
 
 namespace Se {
@@ -15,6 +16,7 @@ REGISTER_RESOURCE(ImageSVG);
 REGISTER_RESOURCE(JSONFile);
 REGISTER_RESOURCE(XMLFile);
 REGISTER_RESOURCE(YAMLFile);
+REGISTER_RESOURCE(LangFile);
 
 
 //REGISTER_RESOURCE();

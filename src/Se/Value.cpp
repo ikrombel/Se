@@ -41,7 +41,7 @@ Value& Value::operator =(bool rhs)
 
 Value& Value::operator =(int rhs)
 {
-    SetType(VALUE_NUMBER, VALUENT_INT);
+    SetType(VALUE_NUMBER, VALUE_NT_INT);
     numberValue_ = rhs;
 
     return *this;
@@ -49,7 +49,7 @@ Value& Value::operator =(int rhs)
 
 Value& Value::operator =(unsigned rhs)
 {
-    SetType(VALUE_NUMBER, VALUENT_UINT);
+    SetType(VALUE_NUMBER, VALUE_NT_UINT);
     numberValue_ = rhs;
 
     return *this;
@@ -57,7 +57,7 @@ Value& Value::operator =(unsigned rhs)
 
 Value& Value::operator =(float rhs)
 {
-    SetType(VALUE_NUMBER, VALUENT_FLOAT_DOUBLE);
+    SetType(VALUE_NUMBER, VALUE_NT_FLOAT_DOUBLE);
     numberValue_ = rhs;
 
     return *this;
@@ -65,7 +65,7 @@ Value& Value::operator =(float rhs)
 
 Value& Value::operator =(double rhs)
 {
-    SetType(VALUE_NUMBER, VALUENT_FLOAT_DOUBLE);
+    SetType(VALUE_NUMBER, VALUE_NT_FLOAT_DOUBLE);
     numberValue_ = rhs;
 
     return *this;
@@ -471,7 +471,7 @@ String Value::GetNumberTypeName(ValueNumberType type)
 
 // ValueNumberType Value::GetNumberTypeFromName(const char* typeName)
 // {
-//     return (ValueNumberType)GetStringListIndex(typeName, numberTypeNames, VALUENT_NAN);
+//     return (ValueNumberType)GetStringListIndex(typeName, numberTypeNames, VALUE_NT_NAN);
 // }
 
 bool Value::Compare(const Value& lhs, const Value& rhs) {
@@ -482,19 +482,19 @@ bool Value::Compare(const Value& lhs, const Value& rhs) {
             if (!rhs.IsNumber())
                 return false;
             switch (lhs.GetNumberType()) {
-                case ValueNumberType::VALUENT_INT:
-                    return ((rhs.GetNumberType() == ValueNumberType::VALUENT_INT)
-                            || (rhs.GetNumberType() == ValueNumberType::VALUENT_UINT))
+                case ValueNumberType::VALUE_NT_INT:
+                    return ((rhs.GetNumberType() == ValueNumberType::VALUE_NT_INT)
+                            || (rhs.GetNumberType() == ValueNumberType::VALUE_NT_UINT))
                            && (lhs.GetInt() == rhs.GetInt());
-                case ValueNumberType::VALUENT_UINT:
-                    return ((rhs.GetNumberType() == ValueNumberType::VALUENT_INT)
-                            || (rhs.GetNumberType() == ValueNumberType::VALUENT_UINT))
+                case ValueNumberType::VALUE_NT_UINT:
+                    return ((rhs.GetNumberType() == ValueNumberType::VALUE_NT_INT)
+                            || (rhs.GetNumberType() == ValueNumberType::VALUE_NT_UINT))
                            && (lhs.GetUInt() == rhs.GetUInt());
-                case ValueNumberType::VALUENT_FLOAT_DOUBLE:
-                    return (rhs.GetNumberType() == ValueNumberType::VALUENT_FLOAT_DOUBLE)
+                case ValueNumberType::VALUE_NT_FLOAT_DOUBLE:
+                    return (rhs.GetNumberType() == ValueNumberType::VALUE_NT_FLOAT_DOUBLE)
                            && (std::lround(lhs.GetDouble()*1000) == std::lround(rhs.GetDouble()*1000));
-                case ValueNumberType::VALUENT_NAN:
-                    return (rhs.GetNumberType() == ValueNumberType::VALUENT_NAN);
+                case ValueNumberType::VALUE_NT_NAN:
+                    return (rhs.GetNumberType() == ValueNumberType::VALUE_NT_NAN);
             }
             break;
         }

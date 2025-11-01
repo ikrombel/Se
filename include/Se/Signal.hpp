@@ -20,6 +20,8 @@ public:
     struct Slot {
         SlotId id;
         SlotFunc func;
+        void* target{nullptr};
+        bool hasTarget{false};
     };
 
     /// Connect signal.
@@ -29,6 +31,20 @@ public:
         hash_combine(id, typeid(SlotFunc).hash_code());
         hash_combine(id, ++idGen);
         slots_.push_back({id, slot});
+//        printf("0x%X\n", id);
+        return id;
+    }
+
+    SlotId connectTarget(void* target, SlotFunc slot) {
+
+        if (!target)
+            return 0;
+
+        SlotId id{0};
+//        printf("%s: 0x%X\n", typeid(SlotFunc).name(), typeid(SlotFunc).hash_code());
+        hash_combine(id, typeid(SlotFunc).hash_code());
+        hash_combine(id, ++idGen);
+        slots_.push_back({id, slot, target, true});
 //        printf("0x%X\n", id);
         return id;
     }
@@ -46,10 +62,24 @@ public:
 
     /// Invoke signal.
     void operator()(Args... args) {
+
+        for (auto it = slots_.begin(); it != slots_.end(); ++it)
+        {
+            if (it->hasTarget && !it->target)
+            {
+                auto toDelete = it;
+                it++;
+
+                slots_.erase(toDelete);
+            }
+        }
+
+
         for (const auto& slot : slots_) {
             slot.func(args...);
         }
     }
+    
 
     void disconnectAll() {
         slots_.clear();

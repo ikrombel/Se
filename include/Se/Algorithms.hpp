@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <functional>
+#include <memory>
 
 // #include <Se/String.hpp>
 
@@ -45,6 +46,13 @@ void EraseIf(Container& c, Predicate pred) {
 
     //c.erase(RemoveIf(c.begin(), c.end(), pred), c.end());
 }
+
+template<typename T>
+std::shared_ptr<T> MakeSharedArrayPtr(std::size_t size)
+{
+    return std::shared_ptr<T>(new T[size], std::default_delete<T[]>());
+}
+
 
 // inline void StringToBuffer(std::vector<unsigned char>& dest, const char* source)
 // {
@@ -124,3 +132,13 @@ template<typename T> struct is_hashable<T, decltype(void(&T::ToHash))> : std::tr
 //     }
 // };
 // } // namespace std
+
+#define STATIC_INIT(unigueName, func) \
+auto unigueName ## Func = func; \
+auto unigueName = unigueName ## Func ();
+
+#if 0 //Example
+STATIC_INIT(Test, []() -> bool {
+	return true;
+});
+#endif

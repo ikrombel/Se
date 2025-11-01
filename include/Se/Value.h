@@ -32,13 +32,13 @@ enum ValueType
 enum ValueNumberType
 {
     /// Not a number.
-    VALUENT_NAN,
+    VALUE_NT_NAN,
     /// Integer.
-    VALUENT_INT,
+    VALUE_NT_INT,
     /// Unsigned integer.
-    VALUENT_UINT,
+    VALUE_NT_UINT,
     /// Float or double.
-    VALUENT_FLOAT_DOUBLE
+    VALUE_NT_FLOAT_DOUBLE
 };
 
 
@@ -61,7 +61,7 @@ public:
     }
 
     /// Construct a default value with defined type.
-    explicit Value(ValueType valueType, ValueNumberType numberType = VALUENT_NAN)
+    explicit Value(ValueType valueType, ValueNumberType numberType = VALUE_NT_NAN)
     {
         SetType(valueType, numberType);
     }
@@ -241,7 +241,7 @@ public:
     void Clear();
 
     /// Set value type and number type, internal function.
-    void SetType(ValueType valueType, ValueNumberType numberType = VALUENT_NAN);
+    void SetType(ValueType valueType, ValueNumberType numberType = VALUE_NT_NAN);
 
     // /// Set variant, context must provide for resource ref.
     // void SetVariant(const Variant& variant, Context* context = nullptr);

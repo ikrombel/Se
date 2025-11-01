@@ -38,7 +38,7 @@ inline void hash_combine(T& result, unsigned long long hash, std::enable_if_t<si
     result ^= hash + 0x9e3779b97f4a7c15ull + (result << 6) + (result >> 2);
 }
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(ANDROID)
 template <class T>
 inline void hash_combine(std::size_t& seed, const T& v)
 {
