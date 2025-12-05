@@ -14,6 +14,10 @@
 #define stricmp strcasecmp
 #endif
 
+#ifdef _WIN32
+#include <cinttypes>
+#endif
+
 namespace Se {
 
 #define CSF_ID ( ('C'<<24) | ('S'<<16) | ('F'<<8) | (' ') )
