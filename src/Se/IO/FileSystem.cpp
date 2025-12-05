@@ -1099,10 +1099,13 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
     auto env  = GetENV("XDG_DATA_HOME");
 
     if (env.empty())
-        env  = GetENV("HOME"); 
+    {
+        env  = GetENV("HOME");
+        env = format("{}/.local/share", env.c_str());
+    }
     // if (env.empty())
     //     env  = GetProgramDir();
-    dir = format("{}/.local/share/", env.c_str());
+    dir = env;
 
     //__ANDROID__ Windows
 #elif HAVE_SDL
@@ -1121,7 +1124,7 @@ String FileSystem::GetAppPreferencesDir(const String& org, const String& app) co
     if (dir.empty())
         SE_LOG_WARNING("Could not get application preferences directory");
 
-    dir.append(format("{}/{}/", org, app));
+    dir.append(format("/{}/{}/", org, app));
 
     return dir;
 }

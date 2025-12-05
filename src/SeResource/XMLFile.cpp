@@ -45,12 +45,12 @@ public:
 };
 
 XMLFile::XMLFile() :
-    Resource("XMLFile"),
-    document_(new pugi::xml_document())
+    Resource("XMLFile")
 {
+    document_ = std::make_unique<pugi::xml_document>();
 }
 
-XMLFile::~XMLFile() = default;
+XMLFile::~XMLFile() {}
 
 
 bool XMLFile::BeginLoad(Deserializer& source)

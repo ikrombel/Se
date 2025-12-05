@@ -33,7 +33,8 @@ XMLElement XMLOutputArchiveBlock::CreateElement(ArchiveBase& archive, const char
     ++numElements_;
 
     if (type_ == ArchiveBlockType::Unordered)
-        usedNames_.emplace_back(elementName);
+        usedNames_.emplace(usedNames_.begin(), elementName);
+//        usedNames_.emplace_back(elementName);
 
     SE_ASSERT(element, "");
     return element;

@@ -980,15 +980,21 @@ inline long long ToInt64(const char* source, int base = 10)
     return strtoll(source, nullptr, base);
 }
 
-inline long long ToInt64(const Se::String& source, int base = 10)
-{
-    return ToInt64(source.c_str(), base);
-}
+// inline long long ToInt64(const Se::String& source, int base = 10)
+// {
+//     return ToInt64(source.c_str(), base);
+// }
 
 
-inline unsigned ToUInt(const Se::String& source, int base = 10)
+inline unsigned ToUInt(const char* source, int base = 10)
 {
-    return ToUInt(source.c_str(), base);
+    if (!source)
+        return 0;   
+
+    // Shield against runtime library assert by converting illegal base values to 0 (autodetect)
+    if (base < 2 || base > 36)
+        base = 0;
+    return (unsigned)strtoul(source, nullptr, base);
 }
 
 
@@ -1004,10 +1010,10 @@ inline unsigned long long ToUInt64(const char* source, int base = 10)
     return strtoull(source, nullptr, base);
 }
 
-inline float ToFloat(const Se::String& source)
-{
-    return ToFloat(source.c_str());
-}
+// inline float ToFloat(const Se::String& source)
+// {
+//     return ToFloat(source.c_str());
+// }
 
 inline float ToFloat(const char* source)
 {
@@ -1017,10 +1023,10 @@ inline float ToFloat(const char* source)
     return (float)strtod(source, nullptr);
 }
 
-inline double ToDouble(const Se::String& source)
-{
-    return ToDouble(source.c_str());
-}
+// inline double ToDouble(const Se::String& source)
+// {
+//     return ToDouble(source.c_str());
+// }
 
 inline double ToDouble(const char* source)
 {

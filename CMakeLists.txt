@@ -26,6 +26,7 @@ set(SE_SOURCE
         src/Se/Debug.cpp
         src/Se/IO/File.cpp
         src/Se/IO/FileSystem.cpp
+        src/Se/IO/Package.cpp
         src/Se/IO/PackageFile.cpp
         src/Se/IO/PackageFile.Tool.cpp
         src/Se/Thread.cpp
@@ -34,13 +35,11 @@ set(SE_SOURCE
         src/Se/ProcessTaskManager.cpp
         src/Se/VectorBuffer.cpp
         src/Se/WorkQueue.cpp
-
-        
         )
 
 if(ANDROID)
         set(SE_SOURCE ${SE_SOURCE}
-                ${CMAKE_ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
+                ../SePlatformAndroid/Private/android_native_app_glue.c
         )
 endif()
 
@@ -119,14 +118,17 @@ add_library(SeResource STATIC
 
         src/SeResource/YAMLFile.cpp
 
+        include/SeResource/LangFile.cpp
+
 
         src/SeResource/BackgroundLoader.cpp
         src/SeResource/ResourceCache.cpp
         src/SeResource/ResourceCache.reg.cpp
 
-        # src/SeResource/PugiXml/pugixml.cpp
-        # src/SeResource/XMLElement.cpp
-        # src/SeResource/XMLFile.cpp
+        src/SeResource/PugiXml/pugixml.cpp
+        src/SeResource/XMLElement.cpp
+        src/SeResource/XMLFile.cpp
+        include/SeResource/XMLArchive.cpp
 )
 
 target_include_directories(SeResource 
@@ -139,11 +141,13 @@ target_include_directories(SeResource
 )
 
 # target_compile_definitions(SeResource 
-#         PUBLIC SE_STATIC_LIB
+#         # PUBLIC SE_STATIC_LIB
+#         PUBLIC PUGIXML_COMPACT
 # )
 
 target_link_libraries(SeResource PUBLIC
         Se
+        SeVFS
 )
 
 

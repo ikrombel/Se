@@ -3,12 +3,18 @@
 #pragma once
 
 
-// #include <GFrost/Core/Variant.h>
+#include <Se/Export.hpp>
 #include <SeMath/BoundingBox.hpp>
 #include <SeMath/Rect.hpp>
 #include <SeMath/Color.hpp>
 
+#if __has_include(<SeEngine/Core/Variant.h>)
+#include <SeEngine/Core/Variant.h>
+#endif
+
 #include <memory>
+
+
 
 namespace pugi
 {
@@ -29,7 +35,7 @@ class XPathQuery;
 class XPathResultSet;
 
 /// Element in an XML file.
-class XMLElement //GFROST_API
+class SE_API XMLElement
 {
 public:
     /// Construct null element.
@@ -51,7 +57,7 @@ public:
     void SetName(const char* name);
 
     /// Create a child element.
-    XMLElement CreateChild(const String& name);
+    //XMLElement CreateChild(const String& name);
     /// Create a child element.
     XMLElement CreateChild(const char* name);
     /// Return the first child element with name or create if does not exist.
@@ -291,8 +297,14 @@ public:
     static const XMLElement EMPTY;
 
 private:
+
+    bool IsNullWithFile() const
+    {
+        return !file_ || (!node_ && !xpathNode_);
+    }
+
     /// XML file.
-    std::shared_ptr<XMLFile> file_;
+    XMLFile* file_;
     /// Pugixml node.
     pugi::xml_node_struct* node_;
     /// XPath query result set.
@@ -333,13 +345,13 @@ public:
 
 private:
     /// XML file.
-    std::shared_ptr<XMLFile> file_;
+    XMLFile* file_;
     /// Pugixml xpath_node_set.
     pugi::xpath_node_set* resultSet_;
 };
 
 /// XPath query.
-class XPathQuery // GFROST_API
+class SE_API XPathQuery
 {
 public:
     /// Construct empty.

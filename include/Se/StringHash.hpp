@@ -137,7 +137,7 @@ public:
     constexpr HashValue& MutableValue() { return value_; }
 
     /// Return as string.
-    String ToString()
+    String ToString() const
     {
         int size = snprintf(nullptr, 0, "%08X", value_);
 

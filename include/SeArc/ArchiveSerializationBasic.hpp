@@ -318,6 +318,18 @@ inline void SerializeValue(Archive& archive, const char* name, String& value) { 
 inline void SerializeValue(Archive& archive, const char* name, StringHash& value) { archive.Serialize(name, value.MutableValue()); }
 /// @}
 
+/// @name Serialize std types
+/// @{
+// TODO: correct implenent without Se::String 
+inline void SerializeValue(Archive& archive, const char* name, std::string& value) {
+    String seStr = value;
+    archive.Serialize(name, seStr);
+
+    if (archive.IsInput())
+        value = seStr;
+}
+/// @}
+
 namespace Detail {
 
 template <class T>

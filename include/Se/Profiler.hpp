@@ -4,7 +4,7 @@
 
 #include <Se/Console.hpp>
 
-#define SE_ASSERT(p, s, ...) SE_LOG_ERROR(s, ##__VA_ARGS__); assert(p)
+#define SE_ASSERT(p, s, ...) if (!(p)) { SE_LOG_ERROR(s, ##__VA_ARGS__); assert(p); }
 
 #if USE_TRACY
 #include <tracy/Tracy.hpp>

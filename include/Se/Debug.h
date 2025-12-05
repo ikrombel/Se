@@ -112,11 +112,11 @@ namespace Se
 	/// A simpler way of accessing the Debug module.
 	Debug& gDebug();
 
-#ifndef BS_LOG_VERBOSITY
-	#if BS_DEBUG_MODE
-		#define BS_LOG_VERBOSITY Console::MsgType::Log
+#ifndef SE_LOG_VERBOSITY
+	#if SE_DEBUG_MODE
+		#define SE_LOG_VERBOSITY Console::MsgType::Log
 	#else
-		#define BS_LOG_VERBOSITY Console::MsgType::Warning
+		#define SE_LOG_VERBOSITY Console::MsgType::Warning
 	#endif
 #endif
 }

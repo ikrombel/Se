@@ -285,7 +285,7 @@ template <class T> T* ResourceCache::GetExistingResource(const String& name)
 template <class T> T* ResourceCache::GetResource(const String& name, bool sendEventOnFailure)
 {
     String type = T::GetTypeStatic();
-    return dynamic_cast<T*>(GetResource(type, name, sendEventOnFailure));
+    return dynamic_cast<T*>(GetResource(type, name, sendEventOnFailure).get());
 }
 
 template <class T> void ResourceCache::ReleaseResource(const String& name, bool force)
