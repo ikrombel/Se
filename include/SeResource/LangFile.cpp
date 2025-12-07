@@ -364,7 +364,7 @@ bool LangFile::LoadCSF(Deserializer& source)
 
 			// Read byte-like compiled string
 			uint16_t wchBufferValue[len];
-			source.Read(reinterpret_cast<char*>(&wchBufferValue), len * sizeof(uint16_t));
+			source.Read((void*)wchBufferValue, std::size_t(len) * sizeof(uint16_t));
 
 			// Reverse read string
 			for (int tmp = 0; tmp < len; tmp++)
