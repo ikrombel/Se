@@ -8,15 +8,82 @@
 
 //#include <GFrost/DebugNew.h>
 
+#include <codecvt>
+
 namespace Se
 {
+
+std::string LocalizationFile::utf16_to_utf8(const uint16_t* utf16_str, size_t length) {
+    // Create a std::wstring from the uint16_t array
+    std::wstring wstr(utf16_str, utf16_str + length);
+    
+    // Create a converter
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    
+    // Convert UTF-16 to UTF-8
+    return converter.to_bytes(wstr);
+}
+
+std::vector<uint16_t> LocalizationFile::utf8_to_utf16(const std::string& utf8_str) {
+    // Create a converter
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    // Convert UTF-8 to UTF-16 (std::wstring)
+    std::wstring wstr = converter.from_bytes(utf8_str);
+    
+    // Create a vector of uint16_t from the std::wstring
+    std::vector<uint16_t> utf16_vec(wstr.begin(), wstr.end());
+    
+    // Add a null terminator (optional, depending on your use case)
+    utf16_vec.push_back(0);
+    
+    return utf16_vec;
+}
+
+String LocalizationFile::parseStringUTF16(Deserializer& d)
+{
+
+    uint16_t c = 1;
+
+    auto pos = d.GetPosition();
+
+    int size = 0;
+
+
+    uint16_t buf[204800];
+
+    while(!d.IsEof())
+    {
+        c = d.ReadUShort();
+        if (c == 0)
+            break;
+        if (size < 20480)
+        buf[size] = c;
+        size++;
+    }
+
+    if (size > 204800)
+        return "";
+
+    //d.Seek(pos);
+
+    
+    //d.Read(buf, size*2);
+
+    return utf16_to_utf8(buf, size);
+};
+
+
+Signal<> Localization::onChangeLanguage;
 
 Localization::Localization() :
     languageIndex_(-1)
 {
 }
 
-Localization::~Localization() = default;
+Localization::~Localization()
+{
+    languages_.clear();
+};
 
 int Localization::GetLanguageIndex(const String& language)
 {
@@ -114,7 +181,7 @@ String Localization::Get(const String& id)
         SE_LOG_WARNING("Localization::Get(id): no loaded languages");
         return id;
     }
-    String result = strings_[StringHash(GetLanguage())][StringHash(id)];
+    String result = strings_[{GetLanguage()}][{id}];
     if (result.empty())
     {
         SE_LOG_WARNING("Localization::Get(\"" + id + "\") not found translation, language=\"" + GetLanguage() + "\"");
@@ -132,8 +199,8 @@ void Localization::Reset()
 
 void Localization::LoadJSONFile(const String& name, const String& language)
 {
-    auto* cache = GetSubsystem<ResourceCache>();
-    auto* jsonFile = cache->GetResource<JSONFile>(name);
+    auto& cache = ResourceCache::Get();
+    auto* jsonFile = cache.GetResource<JSONFile>(name);
     if (jsonFile)
     {
         if (language.empty())
@@ -174,13 +241,13 @@ void Localization::LoadMultipleLanguageJSON(const JSONValue& source)
                             "string ID=\"{}\", language=\"{}\"", id, lang);
                     continue;
                 }
-                if (strings_[StringHash(lang)][StringHash(id)] != String::EMPTY)
+                if (strings_[{lang}][{id}] != String::EMPTY)
                 {
                     SE_LOG_WARNING(
                             "Localization::LoadMultipleLanguageJSON(source): override translation, "
                             "string ID=\"{}\", language=\"{}\"", id, lang);
                 }
-                strings_[StringHash(lang)][StringHash(id)] = string;
+                strings_[{lang}][{id}] = string;
                 if (std::find(languages_.begin(), languages_.end(), lang) == languages_.end())
                     languages_.push_back(lang);
                 if (languageIndex_ == -1)
@@ -212,13 +279,13 @@ void Localization::LoadSingleLanguageJSON(const JSONValue& source, const String&
                         "string ID=\"{}\", language=\"{}\"", id, language);
                 continue;
             }
-            if (strings_[StringHash(language)][StringHash(id)] != String::EMPTY)
+            if (strings_[{language}][{id}] != String::EMPTY)
             {
                 SE_LOG_WARNING(
                         "Localization::LoadSingleLanguageJSON(source, language): override translation, "
                         "string ID=\"{}\", language=\"{}\"", id, language);
             }
-            strings_[StringHash(language)][StringHash(id)] = value.GetString();
+            strings_[{language}][{id}] = value.GetString();
             if (std::find(languages_.begin(), languages_.end(), language) == languages_.end())
                 languages_.push_back(language);
         }

@@ -20,7 +20,8 @@ MountedDirectory::MountedDirectory(const String& directory, String scheme)
 
 MountedDirectory::~MountedDirectory()
 {
-    fileWatcher_->Stop();
+    if (fileWatcher_)
+        fileWatcher_->Stop();
 }
 
 String MountedDirectory::SanitizeDirName(const String& name) const

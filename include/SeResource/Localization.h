@@ -2,12 +2,53 @@
 
 #include <Se/Signal.hpp>
 #include <Se/StringHash.hpp>
+#include <Se/IO/AbstractFile.hpp>
 #include <SeResource/JSONValue.h>
+
+#include <type_traits>
 
 namespace Se
 {
 
+
+class Localization;
+
 /// %Localization subsystem. Stores all the strings in all languages.
+class LocalizationFile
+{
+public:
+
+    //using LocData = std::unordered_map<StringHash, std::unordered_map<StringHash, String>>;
+    
+#if SE_EDITOR
+    using LocData = std::unordered_map<String, String>;
+#else
+    using LocData = std::unordered_map<StringHash, String>;
+#endif
+    
+
+    explicit LocalizationFile(const Localization* localization) 
+    : localization_(const_cast<Localization*>(localization)) {}
+
+    /// Load resource from custom format.
+    virtual bool Load(Deserializer& source, LocData& data) { 
+        return false; }
+
+     /// Save resource to custom format.
+    virtual bool Save(Serializer& source, const LocData& data) const { 
+        return false; }
+
+protected:
+    //
+    std::string utf16_to_utf8(const uint16_t* utf16_str, size_t length);
+    // 
+    std::vector<uint16_t> utf8_to_utf16(const std::string& utf8_str);
+
+    String parseStringUTF16(Deserializer& d);
+
+
+    Localization* localization_{nullptr};
+};
 class Localization
 {
 
@@ -50,13 +91,47 @@ public:
     /// Load strings from JSONValue for specific language.
     void LoadSingleLanguageJSON(const JSONValue& source, const String& language = String::EMPTY);
 
+    template<class T = LocalizationFile>
+    bool Load(Deserializer& source, const String& lang)
+    {
+        auto seekBackup = source.GetPosition();
+
+        if (std::find(languages_.begin(), languages_.end(), lang) == languages_.end())
+            languages_.push_back(lang);
+        
+        auto file = std::shared_ptr<LocalizationFile>(new T(this));
+        //files_[lang] = file;
+        auto& strings = strings_[lang];
+        bool load = file->Load(source, strings);
+
+        if (load)
+            return true;
+
+        source.Seek(seekBackup);  
+        return false;    
+    }
+
+    template<class T = LocalizationFile>
+    bool Save(Serializer& source, const String& lang) const
+    {
+        if (std::find(languages_.begin(), languages_.end(), lang) == languages_.end())
+            return false;
+
+        //auto file = std::make_unique<T>(this);
+        auto file = std::shared_ptr<LocalizationFile>(new T(this));
+        auto& strings = strings_.at(lang);
+        return file->Save(source, strings);
+    }
+
 private:
     /// Language names.
     std::vector<String> languages_;
     /// Index of current language.
     int languageIndex_;
     /// Storage strings: <Language <StringId, Value> >.
-    std::unordered_map<StringHash, std::unordered_map<StringHash, String> > strings_;
+    std::unordered_map<StringHash, LocalizationFile::LocData> strings_;
+
+    //std::unordered_map<StringHash, std::shared_ptr<Se::LocalizationFile>> files_;
 };
 
 }

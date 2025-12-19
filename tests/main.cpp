@@ -99,25 +99,27 @@ struct TestSerialization {
 //TEST_CASE(TestArchive, "IO/Arhive", {
 void TestArch() {
     auto file = std::make_shared<Se::JSONFile>();
-    auto arc = Se::JSONOutputArchive(file.get());
 
-    TestSerialization test1;
-    
+    {
+        auto arc = Se::JSONOutputArchive(file.get());
 
-    // test1.variables_.insert("val1", 10);
-    // test1.variables_.insert("val2", 9.9);
-    // test1.variables_.insert("val3", "Test");
-    //test1.variables_.insert("val4", Vector3{0.1, 0.2, 0.3});
-    SerializeValue(arc, "Flavor", test1);
-    
+        TestSerialization test1;
+
+        // test1.variables_.insert("val1", 10);
+        // test1.variables_.insert("val2", 9.9);
+        // test1.variables_.insert("val3", "Test");
+        //test1.variables_.insert("val4", Vector3{0.1, 0.2, 0.3});
+        SerializeValue(arc, "Flavor", test1);
+    }
 
 
     auto file2 = std::make_shared<Se::JSONFile>();
-    auto arc2 = Se::JSONInputArchive(file.get());
-
     file2->GetRoot() = file->GetRoot();
 
-    TestSerialization test2;
+
+     TestSerialization test2{};
+
+    auto arc2 = Se::JSONInputArchive(file.get());
     Se::SerializeValue(arc2, "Flavor", test2);
 
     
@@ -255,13 +257,8 @@ int main() {
 
     TestReflection();
 
-    SE_LOG_INFO(
-        "sizeof(size_t) {}\n"
-        "sizeof(unsigned long) {}\n"
-        "sizeof(int) {}\n"
-        "sizeof(Se::StringHash) {}",
-         sizeof(size_t), sizeof(unsigned long), sizeof(int), sizeof(Se::StringHash));
-
+    //TestValue();
+    //TestCStuct();
     TestYAMLFile();
     
 }

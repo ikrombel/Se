@@ -108,6 +108,7 @@ add_library(SeResource STATIC
         src/SeResource/ImageCube.cpp
         src/SeResource/ImageSVG.cpp
         src/SeResource/Resource.cpp
+        src/SeResource/Localization.cpp
 
         
         src/SeResource/JSONArchive.cpp
@@ -117,8 +118,6 @@ add_library(SeResource STATIC
         src/SeResource/Base64Archive.cpp
 
         src/SeResource/YAMLFile.cpp
-
-        include/SeResource/LangFile.cpp
 
 
         src/SeResource/BackgroundLoader.cpp
