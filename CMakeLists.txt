@@ -5,8 +5,9 @@ include(cmake/SeOutputDirectoryStyle.cmake)
 set (CMAKE_CXX_STANDARD 17)
 
 option(HAVE_LZ4 "LZ4 Compression" ON)
-option(SE_THREADING "" ON)
-option(SE_FILEWATCHER "" ON)
+option(SE_THREADING "Enable multi theading" ON)
+option(SE_FILEWATCHER "	If ON that automatically detects when a file changes. Using in SeVFS" ON)
+option(SE_SSE "Enabled SSE. Using in SeMath" OFF)
 
 if (SE_FILEWATCHER)
         set(SE_DEFINED ${SE_DEFINED}
@@ -17,6 +18,12 @@ endif()
 if (SE_THREADING)
         set(SE_DEFINED ${SE_DEFINED}
                 PUBLIC SE_THREADING
+        )
+endif()
+
+if (SE_SSE)
+        set(SE_DEFINED ${SE_DEFINED}
+                PUBLIC USE_SSE
         )
 endif()
 

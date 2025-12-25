@@ -10,6 +10,7 @@
 namespace Se
 {
     
+    /// YAML document resource.
     class YAMLFile : public Resource
     {
     public:

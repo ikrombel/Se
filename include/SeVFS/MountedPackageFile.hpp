@@ -6,6 +6,7 @@
 
 namespace Se {
 
+/// Include PackageFile to virtual file system
 class MountedPackageFile : public PackageFile, public MountPoint
 {
 public:

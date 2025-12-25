@@ -8,6 +8,7 @@ namespace Se
 class Deserializer;
 
 
+/// SVG Image resource.
 class ImageSVG : public Image
 {
 public:

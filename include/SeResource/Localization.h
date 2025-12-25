@@ -13,7 +13,7 @@ namespace Se
 
 class Localization;
 
-/// %Localization subsystem. Stores all the strings in all languages.
+/// This is an optional feature for Serialize/Deserialize user's file format.
 class LocalizationFile
 {
 public:
@@ -49,6 +49,8 @@ protected:
 
     Localization* localization_{nullptr};
 };
+
+/// %Localization subsystem. Stores all the strings in all languages.
 class Localization
 {
 
