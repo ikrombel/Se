@@ -152,7 +152,6 @@ public:
 	inline iterator erase_first(const T& value)
 	{
 		//static_assert(std::has_equality_v<T>, "T must be comparable");
-
 		iterator it = std::find(begin(), end(), value);
 		return (it != end()) ? erase(it) : it;
 	}
@@ -167,12 +166,25 @@ public:
             (*this).data()[i] = std::toupper((*this).at(i));
     }
 
+    /// Compare
+    int compare(const String& str, bool caseSensitive) const
+    {
+        return Compare(c_str(), str.c_str(), caseSensitive);
+    }
+
+    /// compare C string
+    int compare(const char* str, bool caseSensitive) const
+    {
+        return Compare(c_str(), str, caseSensitive);
+    }
+
+    /// compare C string with ignore case sensitivity
     bool comparei(const char* rsh) const
     {
         if (this->size() != std::strlen(rsh))
             return false;
 
-        return strncasecmp(c_str(), rsh, size()) == 0;
+        return String::Compare(this->c_str(), rsh, false) == 0;
     }
 
     /// compare with ignore case sensitivity
@@ -181,27 +193,26 @@ public:
         if (this->size() != rsh.length())
             return false;
 
-        return strncasecmp(c_str(), rsh.c_str(), size()) == 0;
+        return String::Compare(this->c_str(), rsh.c_str(), false) == 0;
     }
 
-    bool compares(const String& rsh, bool caseSensitive = true)
+    bool compares(const String& rsh, bool caseSensitive = true) const
     {
         if (this->size() != rsh.length())
             return false;
 
-        return (caseSensitive ? strncmp(c_str(), rsh.c_str(), size()) :
-            strncasecmp(c_str(), rsh.c_str(), size())) == 0;
+        return String::Compare(this->c_str(), rsh.c_str(), caseSensitive) == 0;
     }
 
-    inline static bool Compare(const char*& lsh, const char*& rsh, bool caseSensitive = true)
+    inline static int Compare(const char* lsh, const char* rsh, bool caseSensitive = true)
     {
 
         std::size_t sizel = strlen(lsh);
         std::size_t sizer = strlen(rsh);
         std::size_t size = sizel < sizer ? sizel : sizer;
 
-        return (caseSensitive ? strncmp(lsh, rsh, size) :
-            strncasecmp(lsh, rsh, size)) == 0;
+        return caseSensitive ? strncmp(lsh, rsh, size) :
+            strncasecmp(lsh, rsh, size);
     }
 
     void pop_front() 
