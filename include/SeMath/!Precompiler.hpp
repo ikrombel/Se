@@ -1,6 +1,6 @@
 #pragma once
 
-#ifndef SE_MATH_STANALONE
+#ifndef SE_MATH_STANDALONE
 #  include <Se/String.hpp>
 #else
 

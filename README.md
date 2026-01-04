@@ -52,10 +52,10 @@ Dependences: `Se`
 
 Definition
 
-| Define            | Default | Description                         |
-|-------------------|---------|-------------------------------------|
-| SE_MATH_STANALONE | undef   | Using for stay alone without Se lib |
-| USE_SSE           | undef   | Enable SSE                          |
+| Define             | Default | Description                         |
+|--------------------|---------|-------------------------------------|
+| SE_MATH_STANDALONE | undef   | Using for stay alone without Se lib |
+| USE_SSE            | undef   | Enable SSE                          |
 
 <br>
 
