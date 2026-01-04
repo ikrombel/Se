@@ -8,7 +8,7 @@ void ProcessTaskManager::ThreadFunction()
 {
     using ProcessStatus = Process::ProcessStatus;
 
-    while(!processes_.empty())
+    while(!processes_.empty() && shouldRun_)
     {
         std::shared_ptr<Process> activeProcess;
 

@@ -137,12 +137,16 @@ protected:
 class MemoryBufferGuard : public MemoryBuffer
 {
 public:
+    /// Construct with a defined size. Allocates memory internally.
+    MemoryBufferGuard(std::size_t size)
+        : MemoryBuffer(new unsigned char[size], size) {}
+    /// Construct with a pointer and size.
     MemoryBufferGuard(void* data, std::size_t size) : MemoryBuffer(data, size) {}
-
+    /// Construct as read-only with a pointer and size.
     MemoryBufferGuard(const void* data, std::size_t size) : MemoryBuffer(data, size) {}
-
+    /// Construct as read-only from buffer.
     explicit MemoryBufferGuard(std::vector<unsigned char>& data) : MemoryBuffer(data) {}
-
+    /// Destruct. Deletes internally allocated memory.
     ~MemoryBufferGuard() override {
         if (buffer_)
             delete[] buffer_;

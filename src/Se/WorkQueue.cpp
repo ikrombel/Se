@@ -91,7 +91,7 @@ void WorkQueue::CreateThreads(unsigned numThreads)
     for (auto i = 0; i < numThreads; ++i)
     {
         auto thread = std::make_shared<WorkerThread>(this, i + 1);
-//        thread->SetName(Format("Worker {}", i + 1));
+        thread->SetName(format("Worker {}", i + 1));
         thread->Run();
         threads_.push_back(thread);
     }
@@ -369,7 +369,11 @@ void WorkQueue::ProcessItems(unsigned threadIndex)
             else
             {
                 wasActive = false;
-
+                if (!onWorkCompleted.empty() && this->IsCompleted(0)) {
+                    onWorkCompleted();
+                    onWorkCompleted.disconnectAll();
+                }
+                
                 queueMutex_.Release();
                 Time::Sleep(0);
             }
@@ -452,6 +456,8 @@ void WorkQueue::HandleBeginFrame()
             item->workFunction_(item, 0);
             item->completed_ = true;
         }
+
+        //onWorkCompleted();
     }
 
     // Complete and signal items down to the lowest priority
@@ -469,14 +475,14 @@ unsigned WorkQueue::GetMaxThreadIndex()
     return maxThreadIndex;
 }
 
-WorkQueue& WorkQueue::Get()
+WorkQueue* WorkQueue::Get()
 {
     static WorkQueue* ret;
 
     if (!ret)
         ret = new WorkQueue();
 
-    return *ret;
+    return ret;
 }
 
 }

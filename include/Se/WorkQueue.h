@@ -80,6 +80,8 @@ public:
     /// Work item completed event. E_WORKITEMCOMPLETED
     Signal<WorkItem*> onWorkItemCompleted;
 
+    Signal<> onWorkCompleted;
+
     /// Construct.
     explicit WorkQueue();
     /// Destruct.
@@ -137,7 +139,7 @@ public:
     /// Return number of threads used by WorkQueue, including main thread. Current thread index is always lower.
     static unsigned GetMaxThreadIndex();
 
-    static WorkQueue& Get();
+    static WorkQueue* Get();
 
 
 private:
