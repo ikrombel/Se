@@ -1,5 +1,5 @@
 #pragma once
-#include <Se/String.hpp>
+#include <SeMath/!Precompiler.hpp>
 #include <SeArc/ArchiveSerializationBasic.hpp>
 
 #include <SeMath/Color.hpp>

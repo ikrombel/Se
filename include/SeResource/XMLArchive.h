@@ -6,6 +6,8 @@
 #include <SeResource/XMLElement.h>
 #include <SeResource/XMLFile.h>
 
+#include <Se/Profiler.hpp>
+
 
 namespace Se
 {

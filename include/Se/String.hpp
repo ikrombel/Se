@@ -313,6 +313,9 @@ public:
 
     String& operator=(const String& str) 
     {
+        if (this == &str)
+            return *this;
+
         auto len = str.length();
         resize(len);
         copy_chars(data(), str.c_str(), len);

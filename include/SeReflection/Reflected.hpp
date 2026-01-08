@@ -7,10 +7,10 @@ namespace Se {
 
 enum class AttributeType {
     AT_None, 
-    AT_Parameter,
+    AT_Parameter, // Maybe remove, because AttributeValue has functional like AttributeAccessor
     AT_Accessor,
 //    AT_EnumAccessor,
-//    AT_Action,
+    AT_Action,
 //    AT_Switcher
 
 };
@@ -32,11 +32,34 @@ enum class AttributeParameterType {
 class AttributeInfo 
 {
 public:
+    AttributeInfo(AttributeType type) 
+        : type_(type) {}
+
+    virtual ~AttributeInfo() = default;
+
     virtual String GetTypeName() const {
         return ""; }
 
-    virtual bool IsAction() { return false; }
-};
+    virtual bool IsAction() const { return type_ == AttributeType::AT_Action; }
+
+    /// Call function if attribute AttributeType::AT_Action
+    virtual bool Call() const { return false; }
+    /// AttributeType: AT_None, AT_Parameter, AT_Accessor, AT_EnumAccessor, AT_Action
+    AttributeType GetType() const {
+        return type_; }
+
+    virtual std::size_t GetValueType() { 
+            return 0; }
+
+    virtual void SerializeInBlock(Se::Archive& archive, const String& name) {}
+
+
+    virtual void ToDefault() {}
+
+protected:
+    AttributeType type_{AttributeType::AT_None};
+
+};//
 
 /// Abstract base class for invoking attribute accessors.
 template<class ParameterType>
@@ -44,21 +67,22 @@ class AttributeAccessor : public AttributeInfo {
 public:
     /// Construct.
     AttributeAccessor(ParameterType defaultValue) 
-        : AttributeInfo()
+        : AttributeInfo(AttributeType::AT_Accessor)
         , defaultValue_(defaultValue)
     {
 
     }
 
+    std::size_t GetValueType() override { 
+        return typeid(ParameterType).hash_code(); }
+
     /// Get the attribute.
     virtual void Get(ParameterType* dest) const = 0;
     /// Set the attribute.
     virtual void Set(const ParameterType& src) = 0;
-
-    virtual void SerializeInBlock(Se::Archive& archive, const String& name) = 0;
     
     String GetTypeName() const override {
-        return type_;
+        return typeName_;
     }
 
     virtual bool IsDefault() const {
@@ -69,7 +93,7 @@ public:
         return defaultValue_;
     }
 
-    void ToDefault() {
+    void ToDefault() override {
         this->Set(defaultValue_);
     }
 
@@ -78,19 +102,22 @@ protected:
     /// @brief TODO
     ParameterType defaultValue_;
 
-    std::string type_{ToStringTypeId<ParameterType>()};
+    std::string typeName_{ToStringTypeId<ParameterType>()};
 };
 
-inline struct AttributeEmptyValue {}emptyValue;
-class AttributeEmpty : public AttributeAccessor<AttributeEmptyValue>
+class AttributeEmpty : public AttributeAccessor<char>
 {
+    using EmptyType = char;
+    //AttributeEmptyValue emptyValue;
     /// Construct.
-    AttributeEmpty() : AttributeAccessor<AttributeEmptyValue>(emptyValue) {}
+    AttributeEmpty() : AttributeAccessor<EmptyType>(0) {}
     /// Get the attribute.
-    void Get(AttributeEmptyValue* dest) const override {};
+    void Get(EmptyType* dest) const override {};
     /// Set the attribute.
-    void Set(const AttributeEmptyValue& src) override {};
+    void Set(const EmptyType& src) override {};
 };
+
+typedef std::shared_ptr<Se::AttributeEmpty> AttributePtr;
 
 template<class ParameterType>
 class AttributeValue : public AttributeAccessor<ParameterType> {
@@ -100,6 +127,7 @@ public:
         : AttributeAccessor<ParameterType>(defaultValue)
         , value_(value)
     {        
+        
     }
     /// Get the attribute.
     void Get(ParameterType* dest) const override {
@@ -119,11 +147,11 @@ public:
     }
 private:
     ParameterType* value_;
-
 };
 
 template<class ParameterType>
-class AttributeEnum : public AttributeAccessor<ParameterType> {
+class AttributeEnum : public AttributeAccessor<ParameterType> 
+{
 public:
     /// Construct.
     AttributeEnum(ParameterType* value, const std::vector<String>& names, ParameterType defaultValue) 
@@ -198,6 +226,28 @@ private:
     TSetFunction setFunction_;
 };
 
+template <class TFunction>
+class AttributeActionImpl : public AttributeInfo
+{
+public:
+    /// Construct.
+    AttributeActionImpl(TFunction func)
+        : AttributeInfo(AttributeType::AT_Action)
+        , function_(func)
+    {
+    }
+
+    bool Call() const override
+    {
+        function_();
+        return true;
+    }
+
+private:
+    /// functor.
+    TFunction function_;
+};
+
 template<class T>
 class Reflected;
 
@@ -208,13 +258,13 @@ public:
     Attributes() {}
 
     template<class T>
-    void Register(const String& name, T* value, T defaultValue = T())
+    void Register(const String& name, T* value, const T& defaultValue = T())
     {
         auto ptr = new AttributeValue<T>(value, defaultValue);
         values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
         // auto ptr = std::make_shared<AttributeValue<T>>(value, defaultValue);
         // values_[name] = std::dynamic_pointer_cast<AttributeEmpty>(ptr);
-        ptr->ToDefault();
+        //ptr->ToDefault();
     }
 
     template<class T, class ObjectType, class TGetFunction, class TSetFunction>
@@ -224,7 +274,29 @@ public:
         auto funcSet = std::bind(setFunction, object, std::placeholders::_1);
         auto ptr = new AttributeAccessorImpl<T, decltype(funcGet), decltype(funcSet)>(funcGet, funcSet, defaultValue);
         values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
-        ptr->ToDefault();
+        //ptr->ToDefault();
+    }
+
+    template<class ObjectType, class TFunction>
+    void RegisterAction(const String& name, ObjectType* object, TFunction func)
+    {
+        auto bindFunc = std::bind(func, object);
+        auto ptr = new AttributeActionImpl<decltype(bindFunc)>(bindFunc);
+        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+    }
+
+    std::vector<String> GetAttriburesNames() const {
+        std::vector<String> ret;
+        for (auto v : values_)
+            ret.push_back(v.first);
+        return ret;
+    }
+
+    void ToDefault()
+    {
+        for (auto& val : values_)
+            if (val.second->GetType() == AttributeType::AT_Accessor)
+                val.second->ToDefault();
     }
 
     std::shared_ptr<AttributeEmpty> FindAttribute(const String& name) {
@@ -246,7 +318,7 @@ public:
             return {};
 
         T value{0};
-        reinterpret_cast<AttributeValue<T>*>(attr.get())->Get(&value);
+        reinterpret_cast<AttributeAccessor<T>*>(attr.get())->Get(&value);
         return value;
     }
 
@@ -267,6 +339,16 @@ public:
             rcast->Set(value);
     }
 
+    bool Call(const String& name)
+    {
+        auto attr = FindAttribute(name);
+
+        if (!attr || !(attr->GetType() == AttributeType::AT_Action))
+            return false;
+
+        return attr->Call();
+    }
+
     virtual void SerializeInBlock(Archive& archive) 
     {
         for  (auto& attr : values_)
@@ -278,30 +360,90 @@ protected:
     inline static std::unordered_map<String, std::shared_ptr<AttributeEmpty>> staticValues_{};
 };
 
+// template<typename T, typename = void>
+// struct HasRegisterAttributes : std::false_type {};
+
+// template<typename T>
+// struct HasRegisterAttributes<T, 
+//     std::void_t<decltype(std::declval<T>().RegisterAttributes(std::declval<Se::Attributes&>()))>
+// > : std::true_type {};
+
+SEARC_TYPE_TRAIT(HasRegisterAttributes, std::declval<T>().RegisterAttributes(std::declval<Attributes&>()));
+
+
+template<class T>
+void ReflectionRegisterAttributes(T* refl, Se::Attributes* attr)
+{
+    if constexpr (HasRegisterAttributes<T>::value) {
+        refl->RegisterAttributes(*attr);
+        return;
+    }
+
+    SE_LOG_WARNING("Do not registered Attributes for type: {}", ToStringTypeId<T>());
+}
+
 class ReflectedObject;
 
 template<class T>
-class Reflected
+class Reflected //: public std::enable_shared_from_this<Reflected<T>>
 {
 
 public:
-
     using ReflectedType = T;
 
     Reflected()
         : type_(ToStringTypeId<T>())
     {
         Reflected* ptr = this;
-        object_ = reinterpret_cast<T*>(ptr);
-        //baseType_ =ToStringTypeId<decltype(*object_)>(); //  GetTypeOrig();
-        //attributes_; = Attributes(object_);
-        ptr->initAttributes();
+        object_ = new T();// reinterpret_cast<T*>(ptr);
+        baseType_ = ToStringTypeId<decltype(*object_)>(); // GetTypeOrig();
+
+        ReflectionRegisterAttributes(object_, &attributes_);
+
+        generated_ = true;
+
+        attributes_.ToDefault();
     }
+
+    Reflected(T* obj, bool generated = false)
+        : type_(ToStringTypeId<T>())
+    {
+
+        
+        object_ = obj;
+        baseType_ = ToStringTypeId<decltype(*obj)>(); // GetTypeOrig();
+
+        ReflectionRegisterAttributes(object_, &attributes_);
+        generated_ = generated;
+
+        if (generated)
+            attributes_.ToDefault();
+
+    }
+
+    virtual ~Reflected()
+    {
+        if (generated_)
+            delete object_;
+    }
+
+    static std::shared_ptr<ReflectedObject> CreateReflectedObject() {
+
+        auto obj = new Se::Reflected<T>(new T(), true);
+        ReflectionRegisterAttributes(obj, &obj->attributes_);
+        return std::shared_ptr<Se::ReflectedObject>(reinterpret_cast<Se::ReflectedObject*>(obj));
+    }
+
 
     virtual void SerializeInBlock(Archive& archive)
     {
         SerializeValue(archive, "Attributes", attributes_);
         //SE_LOG_ERROR("{} is not reflected object. Need to override method: void SerializeInBlock(Archive& archive)", type_);
+    }
+    
+    template<class U> 
+    U* GetObject() {
+        return reinterpret_cast<U*>(object_);
     }
 
     template<class U>
@@ -314,9 +456,14 @@ public:
         //this->RegisterAttributes(attributes);
     }
 
+    std::vector<String> GetAttriburesNames() {
+        return attributes_.GetAttriburesNames();
+    }
+
     virtual void RegisterAttributes(Attributes& attributes)
     {
-        SE_LOG_WARNING("{} attributes is empty", type_);
+        //SE_LOG_WARNING("{} attributes is empty", type_);
+        //ReflectionRegisterAttributes(object_, attributes_);
     }
 
     std::shared_ptr<AttributeEmpty> FindAttribute(const String& name) {
@@ -383,15 +530,22 @@ protected:
     String type_;
     String baseType_;
 
+    T* object_;
+    bool generated_{false};
     
 private:
-    T* object_;
+    
     Attributes attributes_;
 };
 
-class ReflectedObject : public Reflected<ReflectedObject> {
+class ReflectedObject : public Reflected<ReflectedObject> 
+{
 
 public:
+    template<class T>
+    T* Cast() {
+        return reinterpret_cast<T*>(this->object_);
+    }
 
 };
 
@@ -401,26 +555,62 @@ public:
     template<class T>
     static void Register()
     {
-        registered_[ToStringTypeId<T>()] = 
-            reinterpret_cast<std::shared_ptr<ReflectedObject>(*)()>(&T::Create);
+        std::shared_ptr<Reflected<T>>(*createFunc)()  = []() -> std::shared_ptr<Reflected<T>> 
+        {
+            return std::make_shared<Reflected<T>>(new T(), true);
+        };
+
+        //auto createFunc2 = &T::Create;
+         registered_[ToStringTypeId<T>()] = 
+             reinterpret_cast<std::shared_ptr<ReflectedObject>(*)()>(createFunc);
     }
 
     static std::shared_ptr<ReflectedObject> Create(const String& type)
     {
-        if (registered_.find(type) == registered_.end()) {
+        auto func = registered_.find(type);
+        if (func == registered_.end()) {
             // SE_LOG_WARNING("Type \"{}\" is not registered", type);
-            return registered_[ReflectedObject::GetStaticType()]();
+            return std::make_shared<ReflectedObject>();
+            //return std::move(ret);
         }
 
-        return registered_[type]();
+        return func->second();
     }
 
-    template<class T>
-    static std::shared_ptr<T> Create()
-    {   
-        //return std::dynamic_pointer_cast<T>(registered_[T::GetStaticType()]());
-        return reinterpret_cast<std::shared_ptr<T>(*)()>(registered_[T::GetStaticType()])();
-    }
+    // template<class T>
+    // static void ToAttibutesDefault(std::shared_ptr<Reflected<T>> lhs)
+    // {
+    //     auto it = registered_.find(type);
+    //     for (auto callbackCreate : it->second) {
+    //         auto ref = callbackCreate();
+    //         //lhs.att
+    //     }
+
+    //     if ( == registered_.end()) {
+    //         // SE_LOG_WARNING("Type \"{}\" is not registered", type);
+    //         return registered_[ReflectedObject::GetStaticType()]();
+    //     }
+
+    //     return registered_[type]();
+    // }
+
+    // template<class T>
+    // static std::shared_ptr<T> Create()
+    // {
+    //     auto reg = registered_[ToStringTypeId<T>()];
+
+    //     if (!reg) {
+    //         auto typeName = ToStringTypeId<T>();
+    //         SE_LOG_ERROR(
+    //             "ASSERT. {} - Doesn`t registered.\n"
+    //             "Use in global scope: REGISTER_OBJECT_REFLECTED({});", typeName, typeName);
+    //         assert(0);
+    //     }
+
+
+    //     //return std::dynamic_pointer_cast<T>(registered_[T::GetStaticType()]());
+    //     return reinterpret_cast<std::shared_ptr<T>(*)()>(registered_[ToStringTypeId<T>()])();
+    // }
 
     static std::unordered_map<String, std::shared_ptr<ReflectedObject>(*)()> registered_;
 };
@@ -429,4 +619,18 @@ inline std::unordered_map<String, std::shared_ptr<ReflectedObject>(*)()> Reflect
     {ReflectedObject::GetStaticType(), &ReflectedObject::Create}
 };
 
+template<typename T>
+struct RegistratorObjectReflected {
+  RegistratorObjectReflected() {
+    Se::ReflectedManager::Register<T>();
+
+  }
+};
+
+#define REGISTER_OBJECT_REFLECTED(typeName) \
+    namespace ReflectedRegScope { \
+        static RegistratorObjectReflected<typeName> reg_##typeName = RegistratorObjectReflected<typeName>(); \
+    }
+
 }
+
