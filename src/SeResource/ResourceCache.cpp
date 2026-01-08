@@ -88,7 +88,7 @@ ResourceCache::ResourceCache() :
     // // Subscribe FileChanged for handling directory watchers
     // SubscribeToEvent(E_FILECHANGED, SE_HANDLER(ResourceCache, HandleFileChanged));
 
-    FileWatcher::onFileChanged.connect([this](const FileChangeInfo& fileInfo){
+    FileWatcher::onFileChanged.connectTarget(this, [this](const FileChangeInfo& fileInfo){
         HandleFileChanged(fileInfo);
     });
 
@@ -840,8 +840,8 @@ void ResourceCache::HandleBeginFrame()
 
 void ResourceCache::HandleFileChanged(const FileChangeInfo& fileInfo)
 {
-    // if (fileInfo.kind == FileChangeKind::FILECHANGE_MODIFIED)
-    //     return;
+    if (fileInfo.kind == FileChangeKind::FILECHANGE_MODIFIED)
+        return;
 
     auto it = std::find(ignoreResourceAutoReload_.begin(), ignoreResourceAutoReload_.end(), fileInfo.resourceName);
     if (it != ignoreResourceAutoReload_.end())

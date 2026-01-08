@@ -1,4 +1,6 @@
 
+#include "SeTest.hpp"
+
 #include <SeResource/JSONFile.h>
 #include <SeResource/JSONArchive.h>
 
@@ -12,7 +14,7 @@ class ReflObjectInvalid : public Se::Reflected<ReflObjectInvalid>
 
 };
 
-class ReflObject0 : public Se::Reflected<ReflObject0>
+class ReflObject0 //: public Se::Reflected<ReflObject0>
 {
     Se::String name_;
     
@@ -31,8 +33,8 @@ public:
     void setEnabled(const bool& value) {
         enabled_ = value;
     }
-protected:
-    void RegisterAttributes(Se::Attributes& attr) override
+
+    void RegisterAttributes(Se::Attributes& attr) //override
     {
         attr.Register<int>("Id", &id_);
         attr.Register<Se::String>("Name", &name_, "Unnamed");
@@ -41,6 +43,9 @@ protected:
         attr.Register<float>("Param2", &param2_, 2.f);
         attr.Register<bool>("Enabled", this, &ReflObject0::isEnabled, &ReflObject0::setEnabled, true);
     }
+
+protected:
+    
 
 private:
 
@@ -53,9 +58,9 @@ class ReflObject3 : public ReflObject0
 public:
     ReflObject3() : ReflObject0() {};
 
-
+    void RegisterAttributes(Se::Attributes& attr); //final;
 protected:
-    void RegisterAttributes(Se::Attributes& attr) final;
+    
 
     Se::String param00_;
     int valInt0{};
@@ -71,7 +76,11 @@ void ReflObject3::RegisterAttributes(Se::Attributes& attr)
     int yy = 0;
 }
 
-class ReflObject1 : public Se::Reflected<ReflObject1>
+
+
+
+
+class ReflObject1 //: public Se::Reflected<ReflObject1>
 {
     ReflObject0 object1_;
     
@@ -80,30 +89,41 @@ public:
 
     int id = 1;
 
-    void SerializeInBlock(Se::Archive& archive) override {
-        Se::SerializeValue(archive, "ReflObject_1", object1_);
+    void SerializeInBlock(Se::Archive& archive) //override
+    {
+        auto refObj = std::make_shared<Se::Reflected<ReflObject0>>(&object1_);
+
+        Se::SerializeValue(archive, "ReflObject_1", refObj);
         Se::SerializeValue(archive, "Id", id);
     }
 };
 
+namespace Se
+{
+    REGISTER_OBJECT_REFLECTED(ReflObject0);
+    REGISTER_OBJECT_REFLECTED(ReflObject1);
+    REGISTER_OBJECT_REFLECTED(ReflObject3);
+} // namespace Se
+
+
 void TestReflection() {
 
+    // {
+    //     auto file = std::make_shared<Se::JSONFile>();
+    //     auto arc = Se::JSONOutputArchive(file.get());
+
+    //     ReflObjectInvalid obj;
+    //     Se::SerializeValue(arc, "ReflObject", obj);
+    // }
+
     {
         auto file = std::make_shared<Se::JSONFile>();
         auto arc = Se::JSONOutputArchive(file.get());
 
-        ReflObjectInvalid obj;
-        Se::SerializeValue(arc, "ReflObject", obj);
-    }
+        // Se::ReflectedManager::Register<ReflObject0>();
+        // Se::ReflectedManager::Register<ReflObject3>();
 
-    {
-        auto file = std::make_shared<Se::JSONFile>();
-        auto arc = Se::JSONOutputArchive(file.get());
-
-        Se::ReflectedManager::Register<ReflObject0>();
-        Se::ReflectedManager::Register<ReflObject3>();
-
-        Se::ReflectedManager::Register<ReflObject1>();
+        // Se::ReflectedManager::Register<ReflObject1>();
 
         auto obj0 = Se::ReflectedManager::Create("ReflObject0");
         SE_LOG_ERROR("+++ " + obj0->GetStaticType() );
@@ -112,9 +132,9 @@ void TestReflection() {
             );
         Se::SerializeValue(arc, "obj0", obj0);
 
-        auto obj1 = Se::ReflectedManager::Create<ReflObject0>();
+        auto obj1 = Se::ReflectedManager::Create("ReflObject0");
         assert(obj1->GetType() == "ReflObject0"
-            && obj1->GetStaticType() == "ReflObject0"
+            && obj1->GetStaticType() == "Se::ReflectedObject"
             );
         auto output = file->ToString("  ");
         // assert(output ==
@@ -145,7 +165,7 @@ void TestReflection() {
             Se::AttributeEmpty* attrEnabled =  obj0->FindAttribute("Enabled").get();
             assert(attrEnabled->GetTypeName() == "bool");
 
-            assert(obj0->FindAttribute("Enabled0") == nullptr); //object has no attribute 'Enabled0'
+            assert(obj0->FindAttribute("Enabled0").get() == nullptr); //object has no attribute 'Enabled0'
 
         }
     }    
@@ -184,7 +204,7 @@ void TestReflection() {
         Se::SerializeValue(arcT, "obj0", objTest);
         SE_LOG_PRINT("-- {}", fileT->ToString("  "));
 
-        SE_LOG_INFO("-- {}\n-- {}", objTest->GetTypeOrig(), objTest->GetType());     
+        SE_LOG_INFO("-- parrent:{} type:{}", objTest->GetTypeOrig(), objTest->GetType());     
     }
 
     {
@@ -192,7 +212,7 @@ void TestReflection() {
         auto arcT = Se::JSONOutputArchive(fileT.get());
 
         auto obj3 = Se::ReflectedManager::Create("ReflObject3");
-        SE_LOG_INFO("-- {}\n-- {}", obj3->GetTypeOrig(), obj3->GetType());
+        SE_LOG_INFO("-- parrent:{} type:{}", obj3->GetTypeOrig(), obj3->GetType());
         // SE_LOG_INFO("-- {}\n-- {}", typeid(decltype(obj00)).name(), Se::ToStringTypeId<decltype(obj00)>());
         // SE_LOG_INFO(".. {}", obj00->IsClassBase<ReflObject0>());
 
@@ -211,10 +231,11 @@ void TestReflection() {
         auto fileT = std::make_shared<Se::JSONFile>();
         auto arcT = Se::JSONOutputArchive(fileT.get());
 
-        auto obj3 = std::make_shared<ReflObject3>(); // Se::ReflectedManager::Create<ReflObject3>();
-        obj3->initAttributes();
-        SE_LOG_INFO("-- {}\n-- {}", obj3->GetTypeOrig(), obj3->GetType());
-        Se::SerializeValue(arcT, "ReflObject3", obj3);
+        auto obj3 = Se::Reflected<ReflObject3>(); 
+        //std::make_shared<Se::Reflected<ReflObject3>>(); // Se::ReflectedManager::Create<ReflObject3>();
+        //obj3->initAttributes();
+        // SE_LOG_INFO("-- parrent:{} type:{}", obj3->GetTypeOrig(), obj3->GetType());
+        // Se::SerializeValue(arcT, "ReflObject3", obj3);
         SE_LOG_PRINT("{}", fileT->ToString("  "));
 
     }
@@ -225,9 +246,9 @@ void TestReflection() {
 
         
 
-        auto obj0 = Se::ReflectedManager::Create("ReflObject1");
-        assert(obj0->GetType() == "ReflObject1"
-            && obj0->GetStaticType() == "Se::ReflectedObject"
+        auto obj0 = Se::Reflected<ReflObject1>();
+        assert(obj0.GetType() == "ReflObject1"
+            && obj0.GetStaticType() == "Se::ReflectedObject"
             );
         Se::SerializeValue(arc, "obj1", obj0);
 

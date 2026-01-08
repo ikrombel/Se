@@ -89,6 +89,8 @@ void ToYml(ryml::NodeRef* node, const Value& input)
     if (input.IsObject())
     {
         *node |= ryml::MAP;
+        if (input.Size() < 5)
+            *node |= ryml::FLOW_SL;
         //*node |= ryml::FLOW_SL; // flow, single-line
 
         for (auto& [key, value] : input.GetObject())
@@ -101,33 +103,40 @@ void ToYml(ryml::NodeRef* node, const Value& input)
     }
     else if (input.IsArray())
     {
-        if (!node->is_root())
-            *node |= ryml::SEQ;
-        for (auto& value : input.GetArray())
+        auto array = input.GetArray();
+        if (array.size() < 5)
+            *node |= ryml::FLOW_SL;
+
+        *node |= ryml::SEQ;
+
+        //ryml::NodeRef child = node->append_child();
+        for (auto value : array)
         {
             ryml::NodeRef child = node->append_child();
             ToYml(&child, value);
-            node->append_child() = (child);
         }
     }
     else if (input.IsString())
     {
-        node->set_val(std::move(input.GetString().c_str()));
+        *node |= ryml::VAL_DQUO;
+        *node << ryml::csubstr(input.GetString().c_str());
     }
     else if (input.IsNumber() && input.GetNumberType() == ValueNumberType::VALUE_NT_INT)
     {
-        node->set_val(cformat("%i", input.GetInt()).c_str());
+        *node << input.GetInt();
+    }
+    else if (input.IsNumber() && input.GetNumberType() == ValueNumberType::VALUE_NT_UINT)
+    {
+        *node << input.GetUInt();
     }
     else if (input.IsNumber() && input.GetNumberType() == ValueNumberType::VALUE_NT_FLOAT_DOUBLE)
     {
-        //auto strDouble = std::to_string((double)input.GetDouble());
-        auto strDouble = cformat("%.9f", input.GetDouble());
-        node->set_val(std::move(strDouble).c_str());
+        *node << input.GetDouble();
     }
-    // child |= ryml::FLOW_SL; // flow, single-line
     else if (input.IsBool())
     {
-        node->set_val(input.GetBool() ? "true" : "false");
+        //*node << input.GetBool();
+        *node << (input.GetBool() ? "true" : "false");
     }
     // else
     //     node->set_val(input.To.c_str());
@@ -149,11 +158,11 @@ String YAMLFile::ToString() const
     ryml::Tree tree;
 
     tree.reserve(10);         // reserve the number of nodes
-    tree.reserve_arena(100);  // reserve the arena size
+    tree.reserve_arena(1000);  // reserve the arena size
 
     //tree.clear();
     ryml::NodeRef root = tree.rootref();
-    //root |= ryml::MAP; // mark root as a map
+    root |= ryml::MAP; // mark root as a map
     ToYml(&root, value_);
 
     //tree.rootref() = root;
