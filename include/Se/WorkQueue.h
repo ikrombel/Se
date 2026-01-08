@@ -88,7 +88,7 @@ public:
     virtual ~WorkQueue(); // override;
 
     /// Create worker threads. Can only be called once.
-    void CreateThreads(unsigned numThreads);
+    void CreateThreads(unsigned numThreads, const char* namePrefix = "Worker");
 
     /// Invoke callback from main thread. May be called immediately.
     void CallFromMainThread(WorkFunction workFunction);
