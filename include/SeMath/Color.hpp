@@ -30,6 +30,8 @@ public:
     static const ChannelMask ARGB;
     /// Mask for 0xRRGGBB layout.
     static const ChannelMask RGB;
+    /// Mask for 0xRRGGBBAA layout.
+    static const ChannelMask RGBA;
 
     /// Construct with default values (opaque white.)
     Color() noexcept :
@@ -608,6 +610,7 @@ inline void Color::FromHCM(float h, float c, float m)
 inline const Color::ChannelMask Color::ABGR{ 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 inline const Color::ChannelMask Color::ARGB{ 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
 inline const Color::ChannelMask Color::RGB{ 0x00ff0000, 0x0000ff00, 0x000000ff, 0 };
+inline const Color::ChannelMask Color::RGBA{ 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff};
 inline const Color Color::WHITE;
 inline const Color Color::GRAY(0.5f, 0.5f, 0.5f);
 inline const Color Color::BLACK(0.0f, 0.0f, 0.0f);
