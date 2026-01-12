@@ -1,6 +1,8 @@
+#pragma once
 #include <Se/String.hpp>
 #include <SeArc/ArchiveSerialization.hpp>
 
+#include <memory>
 #include <functional>
 
 namespace Se {
@@ -8,6 +10,7 @@ namespace Se {
 enum class AttributeType {
     AT_None, 
     AT_Parameter, // Maybe remove, because AttributeValue has functional like AttributeAccessor
+    AT_Enum,
     AT_Accessor,
 //    AT_EnumAccessor,
     AT_Action,
@@ -53,6 +56,9 @@ public:
 
     virtual void SerializeInBlock(Se::Archive& archive, const String& name) {}
 
+    virtual const std::vector<String> GetEnumNames() const { 
+        return {}; }
+
 
     virtual void ToDefault() {}
 
@@ -66,8 +72,8 @@ template<class ParameterType>
 class AttributeAccessor : public AttributeInfo {
 public:
     /// Construct.
-    AttributeAccessor(ParameterType defaultValue) 
-        : AttributeInfo(AttributeType::AT_Accessor)
+    AttributeAccessor(ParameterType defaultValue, AttributeType type = AttributeType::AT_Accessor) 
+        : AttributeInfo(type)
         , defaultValue_(defaultValue)
     {
 
@@ -95,6 +101,11 @@ public:
 
     void ToDefault() override {
         this->Set(defaultValue_);
+    }
+
+    template<class T> 
+    AttributeAccessor<T>* AccesorCast() {
+        return reinterpret_cast<AttributeAccessor<T>*>(this);
     }
 
 
@@ -153,13 +164,23 @@ template<class ParameterType>
 class AttributeEnum : public AttributeAccessor<ParameterType> 
 {
 public:
-    /// Construct.
-    AttributeEnum(ParameterType* value, const std::vector<String>& names, ParameterType defaultValue) 
-        : AttributeAccessor<ParameterType>(defaultValue)
+    /// Construct for with dynamic change list
+    AttributeEnum(ParameterType* value, ParameterType defaultValue, std::vector<String>* names) 
+        : AttributeAccessor<ParameterType>(defaultValue, AttributeType::AT_Enum)
+        , value_(value)
+        , namesPtr_(names)
+        , dynamic_(true)
+    {        
+    }
+
+    /// Construct for static change list
+    AttributeEnum(ParameterType* value, ParameterType defaultValue, const std::vector<String>& names) 
+        : AttributeAccessor<ParameterType>(defaultValue, AttributeType::AT_Enum)
         , value_(value)
         , names_(names)
     {        
     }
+
     /// Get the attribute.
     void Get(ParameterType* dest) const override {
         *dest = *value_;
@@ -173,12 +194,17 @@ public:
         return this->defaultValue_ == *value_;
     }
 
+    const std::vector<String> GetEnumNames() const override {
+        return namesPtr_ ? *namesPtr_ : names_; }
+
     void SerializeInBlock(Se::Archive& archive, const String& name) override {
         SerializeValue(archive, name, *value_);
     }
 private:
     ParameterType* value_;
-    const std::vector<String>& names_;
+    std::vector<String> names_;
+    std::vector<String>* namesPtr_;
+    bool dynamic_{false};
 };
 
 /// Template implementation of the variant attribute accessor.
@@ -226,6 +252,53 @@ private:
     TSetFunction setFunction_;
 };
 
+// template <class ParameterType>
+// class AttributeEnumImpl : public AttributeAccessor<ParameterType>
+// {
+// public:
+
+//     /// Construct.
+//     AttributeEnumImpl(ParameterType* value, ParameterType defaultValue, const std::vector<String>& enumNames) 
+//         : AttributeAccessor<ParameterType>(defaultValue, AttributeType::AT_Enum)
+//         , enumNames_(enumNames)
+//     {        
+        
+//     }
+//     /// Get the attribute.
+//     void Get(ParameterType* dest) const override {
+//         *dest = *value_;
+//     };
+//     /// Set the attribute.
+//     void Set(const ParameterType& src) override {
+//         *value_ = src;
+//     };
+
+
+
+// private:
+//     const std::vector<String>& enumNames_;
+
+// };
+
+template <class ParameterType, class TGetFunction, class TSetFunction>
+class AttributeAccessorEnumImpl : public AttributeAccessorImpl<ParameterType, TGetFunction, TSetFunction>
+{
+public:
+    AttributeAccessorEnumImpl(TGetFunction getFunction, TSetFunction setFunction, const std::vector<String>& enumNames, ParameterType defaultValue) 
+            : AttributeAccessorImpl<TGetFunction, TSetFunction, TSetFunction>(getFunction, setFunction, defaultValue) 
+            , enumNames_(enumNames)
+    {
+
+    }
+
+    const std::vector<String> GetEnumNames() override {
+        return enumNames_; }
+
+private:
+    const std::vector<String>& enumNames_;
+
+};
+
 template <class TFunction>
 class AttributeActionImpl : public AttributeInfo
 {
@@ -264,6 +337,34 @@ public:
         values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
         // auto ptr = std::make_shared<AttributeValue<T>>(value, defaultValue);
         // values_[name] = std::dynamic_pointer_cast<AttributeEmpty>(ptr);
+        //ptr->ToDefault();
+    }
+
+    template<class T>
+    void RegisterEnum(const String& name, T* value,
+            const std::vector<String>& enumsString, T defaultValue = T{})
+    {
+        auto ptr = new AttributeEnum(value, defaultValue, enumsString);
+        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+    }
+
+    template<class T>
+    void RegisterEnum(const String& name, T* value,
+            std::vector<String>* enumsString, T defaultValue = T{})
+    {
+        auto ptr = new AttributeEnum(value, defaultValue, enumsString);
+        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+    }
+
+
+    template<class T, class ObjectType, class TGetFunction, class TSetFunction>
+    void RegisterEnum(const String& name, ObjectType* object, TGetFunction getFunction, TSetFunction setFunction, 
+            const std::vector<String>& enumsString, T defaultValue = T{})
+    {
+        auto funcGet = std::bind(getFunction, object);
+        auto funcSet = std::bind(setFunction, object, std::placeholders::_1);
+        auto ptr = new AttributeAccessorImpl<T, decltype(funcGet), decltype(funcSet)>(funcGet, funcSet, defaultValue);
+        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
         //ptr->ToDefault();
     }
 
@@ -427,9 +528,10 @@ public:
             delete object_;
     }
 
-    static std::shared_ptr<ReflectedObject> CreateReflectedObject() {
+    template<typename... Args>
+    static std::shared_ptr<ReflectedObject> CreateReflectedObject(Args&&... args) {
 
-        auto obj = new Se::Reflected<T>(new T(), true);
+        auto obj = new Se::Reflected<T>(new T(std::forward<Args>(args)...), true);
         ReflectionRegisterAttributes(obj, &obj->attributes_);
         return std::shared_ptr<Se::ReflectedObject>(reinterpret_cast<Se::ReflectedObject*>(obj));
     }
