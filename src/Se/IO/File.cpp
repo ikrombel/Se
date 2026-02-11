@@ -477,7 +477,7 @@ bool File::OpenInternal(const String& fileName, FileMode mode, bool fromPackage)
     if (!fromPackage)
     {
         fseek((FILE*)handle_, 0, SEEK_END);
-        long size = ftell((FILE*)handle_);
+        std::size_t size = ftell((FILE*)handle_);
         fseek((FILE*)handle_, 0, SEEK_SET);
         if (size > std::numeric_limits<unsigned>::max())
         {

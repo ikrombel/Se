@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <type_traits>
+#include <vector>
 #include <unordered_map>
 
 #include <Se/TypeTrait.hpp>

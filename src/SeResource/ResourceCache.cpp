@@ -88,7 +88,7 @@ ResourceCache::ResourceCache() :
     // // Subscribe FileChanged for handling directory watchers
     // SubscribeToEvent(E_FILECHANGED, SE_HANDLER(ResourceCache, HandleFileChanged));
 
-    FileWatcher::onFileChanged.connectTarget(this, [this](const FileChangeInfo& fileInfo){
+    FileWatcher::Get()->onFileChanged.connectTarget(this, [this](const FileChangeInfo& fileInfo){
         HandleFileChanged(fileInfo);
     });
 

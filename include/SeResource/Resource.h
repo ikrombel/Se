@@ -100,7 +100,7 @@ public:
     virtual ~Resource() = default;
 
     /// Load resource by reference.
-    //static Resource* LoadFromCache(StringHash type, const String& name);
+     static Resource* LoadFromCache(String type, const String& name);
 
     /// Load resource synchronously. Call both BeginLoad() & EndLoad() and return true if both succeeded.
     bool Load(Deserializer& source);

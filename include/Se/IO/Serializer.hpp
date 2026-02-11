@@ -166,9 +166,10 @@ public:
         return Write((const char*)&val, sizeof(T));
     }
 
-    template<class T> T WritePacked(float maxAbsCoord = 1.0f) {
+    template<class T> 
+    bool WritePacked(const T& value, float maxAbsCoord = 1.0f) {
         SE_LOG_WARNING("Serializer::WritePacked<T>(float) is not register for type {}", typeid(T).name()); 
-        return T(); }
+        return false; }
 
 private:
     inline static const float q = 32767.0f;

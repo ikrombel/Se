@@ -423,6 +423,11 @@ inline Vector2 operator *(float lhs, const Vector2& rhs) { return rhs * lhs; }
 inline IntVector2 operator *(int lhs, const IntVector2& rhs) { return rhs * lhs; }
 
 /// Per-component linear interpolation between two 2-vectors.
+inline Vector2 Lerp(const Vector2& lhs, const Vector2& rhs, const Vector2& t) { 
+    return lhs + (rhs - lhs) * t; }
+
+
+/// Per-component linear interpolation between two 2-vectors.
 inline Vector2 VectorLerp(const Vector2& lhs, const Vector2& rhs, const Vector2& t) { return lhs + (rhs - lhs) * t; }
 
 /// Per-component min of two 2-vectors.

@@ -1,7 +1,8 @@
 // Copyright (c) 2008-2019 the GFrost project.
 
 
-#include <SeResource/Resource.h>
+#include "Resource.h"
+#include <SeResource/ResourceCache.h>
 
 #include <Se/Profiler.hpp>
 
@@ -14,13 +15,14 @@
 
 #include <SeVFS/VirtualFileSystem.h>
 
-// #include <GFrost/Resource/XMLElement.h>
-// #include <GFrost/Resource/XMLArchive.h>
-// #include <GFrost/Resource/XMLFile.h>
-// #include <GFrost/Resource/JSONFile.h>
-// #include <GFrost/Resource/JSONArchive.h>
-// #include <GFrost/Resource/BinaryFile.h>
-// #include <GFrost/Resource/ResourceCache.h>
+//#include <Se/IO/BinaryFile.h>
+#include <SeResource/XMLElement.h>
+#include <SeResource/XMLArchive.h>
+#include <SeResource/XMLFile.h>
+#include <SeResource/JSONFile.h>
+#include <SeResource/JSONArchive.h>
+
+#include <SeResource/ResourceCache.h>
 
 
 namespace Se
@@ -89,6 +91,14 @@ Resource::Resource(const String& typeName) :
     type_(typeName)
 {
 
+}
+
+Resource* Resource::LoadFromCache(String type, const String& name)
+{
+    if (name.empty())
+        return nullptr;
+
+    return ResourceCache::Get().GetResource(type, name).get();
 }
 
 

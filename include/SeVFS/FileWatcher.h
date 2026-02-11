@@ -49,7 +49,7 @@ class FileWatcher : public Thread
 
 public:
     /// Tracked file changed in the resource directories. E_FILECHANGED
-    static Signal<const FileChangeInfo& /*FileInfo*/> onFileChanged;
+    Signal<const FileChangeInfo& /*FileInfo*/> onFileChanged;
 
     /// Construct.
     explicit FileWatcher();
@@ -75,6 +75,14 @@ public:
 
     /// Return the delay in seconds for notifying file changes.
     float GetDelay() const { return delay_; }
+
+    static FileWatcher* Get()
+    {
+        static FileWatcher* ptr = nullptr;
+        if (!ptr)
+            ptr = new FileWatcher();
+        return ptr;
+    }
 
 private:
     struct TimedFileChange

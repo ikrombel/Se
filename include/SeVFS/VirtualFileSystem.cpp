@@ -381,15 +381,15 @@ bool VirtualFileSystem::Exists(const FileIdentifier& fileName) const
     return false;
 }
 
-VirtualFileSystem* VirtualFileSystem::Get()
-{
-    static VirtualFileSystem* ptr_;
-    if (!ptr_) {
-        SE_LOG_INFO("VirtualFileSystem initialized.");
-        ptr_ = new VirtualFileSystem();
-    }
-    return ptr_;
-}
+// VirtualFileSystem* VirtualFileSystem::Get()
+// {
+//     static VirtualFileSystem* ptr_;
+//     if (!ptr_) {
+//         SE_LOG_INFO("VirtualFileSystem initialized.");
+//         ptr_ = new VirtualFileSystem();
+//     }
+//     return ptr_;
+// }
 
 
 MountPointGuard::MountPointGuard(MountPointPtr mountPoint)

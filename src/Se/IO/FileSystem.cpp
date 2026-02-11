@@ -2019,7 +2019,6 @@ FileSystem& FileSystem::Get()
 {
     static FileSystem* ptr_;
     if (!ptr_) {
-        SE_LOG_INFO("FileSystem initialized.");
         ptr_ = new FileSystem();
     }
     return *ptr_;

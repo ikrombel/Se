@@ -117,12 +117,35 @@ template<> inline Quaternion Deserializer::ReadPacked(float maxAbsCoord)
 
 template<> inline Vector3 Deserializer::ReadPacked(float maxAbsCoord)
 {
-
     float invV = maxAbsCoord / 32767.0f;
     short coords[3];
     Read(coords, sizeof coords);
     Vector3 ret(coords[0] * invV, coords[1] * invV, coords[2] * invV);
     return ret;
+}
+
+template<> inline bool Serializer::WritePacked(const Quaternion& value, float maxAbsCoord)
+{
+    short coords[4];
+    Quaternion norm = value.Normalized();
+
+    coords[0] = (short)Round(Clamp(norm.w_, -1.0f, 1.0f) * q);
+    coords[1] = (short)Round(Clamp(norm.x_, -1.0f, 1.0f) * q);
+    coords[2] = (short)Round(Clamp(norm.y_, -1.0f, 1.0f) * q);
+    coords[3] = (short)Round(Clamp(norm.z_, -1.0f, 1.0f) * q);
+    return Write(&coords[0], sizeof coords) == sizeof coords;
+}
+
+
+template<> inline bool Serializer::WritePacked(const Vector3& value, float maxAbsCoord)
+{
+    short coords[3];
+    float v = 32767.0f / maxAbsCoord;
+
+    coords[0] = (short)Round(Clamp(value.x_, -maxAbsCoord, maxAbsCoord) * v);
+    coords[1] = (short)Round(Clamp(value.y_, -maxAbsCoord, maxAbsCoord) * v);
+    coords[2] = (short)Round(Clamp(value.z_, -maxAbsCoord, maxAbsCoord) * v);
+    return Write(&coords[0], sizeof coords) == sizeof coords;
 }
 
 }

@@ -463,6 +463,7 @@ bool XMLElement::SetString(const String& name, const String& value)
 //     return SetAttribute("value", str.c_str());
 // }
 
+// implemented
 // bool XMLElement::SetVariantVector(const VariantVector& value)
 // {
 //     // Must remove all existing variant child elements (if they exist) to not cause confusion
@@ -496,6 +497,7 @@ bool XMLElement::SetStringVector(const std::vector<String>& value)
     return true;
 }
 
+// implemented
 // bool XMLElement::SetVariantMap(const VariantMap& value)
 // {
 //     if (!RemoveChildren("variant"))

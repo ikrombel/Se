@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Se/Extension.hpp>
+
 #include <Se/String.hpp>
 #include <Se/NonCopyable.hpp>
 #include <Se/IO/AbstractFile.hpp>
@@ -16,11 +18,12 @@ namespace Se
 {
 
 /// Subsystem for virtual file system.
-class VirtualFileSystem
+class VirtualFileSystem : public Module<VirtualFileSystem>
 {
+    SE_MODULE(VirtualFileSystem)
 public:
     /// Construct.
-    explicit VirtualFileSystem() = default;
+    //explicit VirtualFileSystem() = default;
     /// Destruct.
     virtual ~VirtualFileSystem() = default;
 
@@ -88,7 +91,7 @@ public:
     void Scan(std::vector<String>& result, const FileIdentifier& pathName, const String& filter,
         ScanFlags flags) const;
 
-    static VirtualFileSystem* Get();
+    //static VirtualFileSystem* Get();
 
 private:
     /// Return or create internal alias:// mount point.

@@ -91,6 +91,10 @@ public:
         return typeName_;
     }
 
+    virtual ParameterType* GetPtr() {
+        return nullptr;
+    }
+
     virtual bool IsDefault() const {
         return false;
     }
@@ -151,6 +155,10 @@ public:
 
     bool IsDefault() const override {
         return this->defaultValue_ == *value_;
+    }
+
+    ParameterType* GetPtr() override {
+        return value_;
     }
 
     void SerializeInBlock(Se::Archive& archive, const String& name) override {
@@ -334,7 +342,7 @@ public:
     void Register(const String& name, T* value, const T& defaultValue = T())
     {
         auto ptr = new AttributeValue<T>(value, defaultValue);
-        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+        values_.emplace_back(name, std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr)));
         // auto ptr = std::make_shared<AttributeValue<T>>(value, defaultValue);
         // values_[name] = std::dynamic_pointer_cast<AttributeEmpty>(ptr);
         //ptr->ToDefault();
@@ -345,7 +353,7 @@ public:
             const std::vector<String>& enumsString, T defaultValue = T{})
     {
         auto ptr = new AttributeEnum(value, defaultValue, enumsString);
-        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+        values_.emplace_back(name, std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr)));
     }
 
     template<class T>
@@ -353,7 +361,7 @@ public:
             std::vector<String>* enumsString, T defaultValue = T{})
     {
         auto ptr = new AttributeEnum(value, defaultValue, enumsString);
-        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+        values_.emplace_back(name, std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr)));
     }
 
 
@@ -364,7 +372,7 @@ public:
         auto funcGet = std::bind(getFunction, object);
         auto funcSet = std::bind(setFunction, object, std::placeholders::_1);
         auto ptr = new AttributeAccessorImpl<T, decltype(funcGet), decltype(funcSet)>(funcGet, funcSet, defaultValue);
-        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+        values_.emplace_back(name, std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr)));
         //ptr->ToDefault();
     }
 
@@ -374,7 +382,7 @@ public:
         auto funcGet = std::bind(getFunction, object);
         auto funcSet = std::bind(setFunction, object, std::placeholders::_1);
         auto ptr = new AttributeAccessorImpl<T, decltype(funcGet), decltype(funcSet)>(funcGet, funcSet, defaultValue);
-        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+        values_.emplace_back(name, std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr)));
         //ptr->ToDefault();
     }
 
@@ -383,7 +391,7 @@ public:
     {
         auto bindFunc = std::bind(func, object);
         auto ptr = new AttributeActionImpl<decltype(bindFunc)>(bindFunc);
-        values_[name] = std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr));
+        values_.emplace_back(name, std::shared_ptr<AttributeEmpty>(reinterpret_cast<AttributeEmpty*>(ptr)));
     }
 
     std::vector<String> GetAttriburesNames() const {
@@ -401,13 +409,12 @@ public:
     }
 
     std::shared_ptr<AttributeEmpty> FindAttribute(const String& name) {
-        auto attr = values_.find(name);
-        if (attr == values_.end())
-        {
-            SE_LOG_ERROR("Object has no attribute : {}", name);
-            return nullptr;
-        }
-        return attr->second;
+        for (auto attr : values_)
+            if (attr.first == name)
+                return attr.second;
+
+        SE_LOG_ERROR("Object has no attribute : {}", name);
+        return nullptr;
     }
 
     template<class T>
@@ -457,20 +464,21 @@ public:
     }
 
 protected:
-    std::unordered_map<String, std::shared_ptr<AttributeEmpty>> values_;
+    std::vector<std::pair<String, std::shared_ptr<AttributeEmpty>>> values_;
     inline static std::unordered_map<String, std::shared_ptr<AttributeEmpty>> staticValues_{};
 };
 
-// template<typename T, typename = void>
-// struct HasRegisterAttributes : std::false_type {};
+#if SE_REFLECTION_HEADERONLY
+template<typename T, typename = void>
+struct HasRegisterAttributes : std::false_type {};
 
-// template<typename T>
-// struct HasRegisterAttributes<T, 
-//     std::void_t<decltype(std::declval<T>().RegisterAttributes(std::declval<Se::Attributes&>()))>
-// > : std::true_type {};
-
+template<typename T>
+struct HasRegisterAttributes<T, 
+    std::void_t<decltype(std::declval<T>().RegisterAttributes(std::declval<Attributes&>()))>> 
+    : std::true_type {};
+#else
 SEARC_TYPE_TRAIT(HasRegisterAttributes, std::declval<T>().RegisterAttributes(std::declval<Attributes&>()));
-
+#endif
 
 template<class T>
 void ReflectionRegisterAttributes(T* refl, Se::Attributes* attr)
@@ -662,7 +670,6 @@ public:
             return std::make_shared<Reflected<T>>(new T(), true);
         };
 
-        //auto createFunc2 = &T::Create;
          registered_[ToStringTypeId<T>()] = 
              reinterpret_cast<std::shared_ptr<ReflectedObject>(*)()>(createFunc);
     }

@@ -275,6 +275,21 @@ public:
     Matrix3x4 GetMatrix3x4(const String& name) const;
     /// Return a Matrix4 attribute, or zero matrix if missing.
     Matrix4 GetMatrix4(const String& name) const;
+    ///
+    template<typename T>
+    T Get() {
+        SE_LOG_WARNING("Type {}: don't implemented. Create:"
+            "template<> YOUR_TYPE XMLElement::Set(const String& name) { \n\t//implementation\n}})"
+            , typeid(T).name());
+    }
+
+    ///
+    template<typename T>
+    bool Set(const T& value) {
+        SE_LOG_WARNING("Type {}: don't implemented. Create:"
+            "template<> bool XMLElement::Set(const YOUR_TYPE& value) { \n\t//implementation\n}})"
+            , typeid(T).name());
+    }
     /// Return XML file.
     XMLFile* GetFile() const;
 
@@ -404,4 +419,246 @@ private:
     std::unique_ptr<pugi::xpath_variable_set> variables_;
 };
 
+} // namespace Se
+
+#if __has_include(<SeEngine/Core/Variant.h>)
+#include <SeEngine/Core/Variant.h>
+#include <SeEngine/Core/Serializable.h>
+#include <SeEngine/Core/Context.h>
+namespace Se
+{
+
+template<> bool XMLElement::Set(const Variant& value);
+template<> Variant XMLElement::Get();
+
+
+template<> inline bool XMLElement::Set(const ResourceRef& value) 
+{
+    if (IsNullWithFile())
+        return false;
+
+    // Need the context to query for the type
+    String typeName = value.type_;
+    // Context* context = file_->GetContext();
+    // String typeName = String(context->GetTypeName(value.type_));
+    return SetAttribute("value", String(typeName + ";" + value.name_).c_str());
+
 }
+
+template<> inline ResourceRef XMLElement::Get()
+{
+    ResourceRef ret;
+
+    auto values = GetAttribute("value").split(';');
+    if (values.size() == 2)
+    {
+        ret.type_ = values[0];
+        ret.name_ = values[1];
+    }
+
+    return ret;
+}
+
+
+template<> inline bool XMLElement::Set(const ResourceRefList& value) 
+{
+    if (IsNullWithFile())
+        return false;
+
+    // Need the context to query for the type
+    String str(value.type_);
+    // auto context = Context::GetInstance();
+    // String str(context->GetTypeName(value.type_));
+    for (unsigned i = 0; i < value.names_.size(); ++i)
+    {
+        str += ";";
+        str += value.names_[i];
+    }
+
+    return SetAttribute("value", str.c_str());
+
+}
+
+template<> inline ResourceRefList XMLElement::Get()
+{
+    ResourceRefList ret;
+
+    auto values = GetAttribute("value").split(';', true);
+    if (values.size() >= 1)
+    {
+        ret.type_ = values[0];
+        ret.names_.resize(values.size() - 1);
+        for (auto i = 1; i < values.size(); ++i)
+            ret.names_[i - 1] = values[i];
+    }
+
+    return ret;
+}
+
+
+template<> inline bool XMLElement::Set(const VariantVector& value) 
+{
+    // Must remove all existing variant child elements (if they exist) to not cause confusion
+    if (!RemoveChildren("variant"))
+        return false;
+
+    for (auto i = value.begin(); i != value.end(); ++i)
+    {
+        XMLElement variantElem = CreateChild("variant");
+        if (!variantElem)
+            return false;
+        variantElem.Set<Variant>(*i);
+    }
+
+    return true;
+}
+
+template<> inline VariantVector XMLElement::Get()
+{
+    VariantVector ret;
+
+    XMLElement variantElem = GetChild("variant");
+    while (variantElem)
+    {
+        ret.push_back(variantElem.Get<Variant>());
+        variantElem = variantElem.GetNext("variant");
+    }
+
+    return ret;
+}
+
+
+template<> inline bool XMLElement::Set(const VariantMap& value) 
+{
+    if (!RemoveChildren("variant"))
+        return false;
+
+    for (auto i = value.begin(); i != value.end(); ++i)
+    {
+        XMLElement variantElem = CreateChild("variant");
+        if (!variantElem)
+            return false;
+        variantElem.SetUInt("hash", i->first.Value());
+        variantElem.Set<Variant>(i->second);
+    }
+
+    return true;
+}
+
+template<> inline VariantMap XMLElement::Get()
+{
+    VariantMap ret;
+
+    XMLElement variantElem = GetChild("variant");
+    while (variantElem)
+    {
+        // If this is a manually edited map, user can not be expected to calculate hashes manually. Also accept "name" attribute
+        if (variantElem.HasAttribute("name"))
+            ret[StringHash(variantElem.GetAttribute("name"))] = variantElem.Get<Variant>();
+        else if (variantElem.HasAttribute("hash"))
+            ret[StringHash(variantElem.GetUInt("hash"))] = variantElem.Get<Variant>();
+
+        variantElem = variantElem.GetNext("variant");
+    }
+
+    return ret;
+}
+
+/*
+template<> inline bool XMLElement::Set(const Variant& value) 
+{
+
+    return false;
+}
+
+template<> inline Variant XMLElement::Get(const String& value)
+{
+    //Variant ret;
+
+    return {};
+}
+*/
+
+template<> inline Variant XMLElement::Get()
+{
+    VariantType type = Variant::GetTypeFromName(GetAttribute("type"));
+    //return GetVariantValue(type);
+    Variant ret;
+
+    if (type == VAR_RESOURCEREF)
+        ret = Get<ResourceRef>();
+    else if (type == VAR_RESOURCEREFLIST)
+        ret = Get<ResourceRefList>();
+    else if (type == VAR_VARIANTVECTOR)
+        ret = Get<VariantVector>();
+    else if (type == VAR_STRINGVECTOR)
+        ret = GetStringVector();
+    else if (type == VAR_VARIANTMAP)
+        ret = Get<VariantMap>();
+    else if (type == VAR_CUSTOM)
+    {
+        auto context = Context::GetInstance();
+        if (!context)
+        {
+            SE_LOG_ERROR("Context must not be null for SharedPtr<Serializable>");
+            return ret;
+        }
+
+        const String& typeName = GetAttribute("type");
+        if (!typeName.empty())
+        {
+            SharedPtr<Serializable> object;
+            object.StaticCast(context->CreateObject(typeName));
+
+            if (object != nullptr)
+            {
+                // Restore proper refcount.
+                if (object->LoadXML(*this))
+                    ret.SetCustom(object);
+                else
+                    SE_LOG_ERROR("Deserialization of '{}' failed", typeName);
+            }
+            else
+                SE_LOG_ERROR("Creation of type '{}' failed because it has no factory registered", typeName);
+        }
+        else if (!GetChild().IsNull())
+            SE_LOG_ERROR("Malformed xml input: 'type' attribute is required when deserializing an object");
+    }
+    else
+        ret.FromString(type, GetAttributeCString("value"));
+
+    return ret;
+}
+
+template<> inline bool XMLElement::Set(const Variant& value) 
+{
+    if (!SetAttribute("type", value.GetTypeName().c_str()))
+        return false;
+
+    switch (value.GetType())
+    {
+    case VAR_RESOURCEREF:
+        return Set<ResourceRef>(value.Get<ResourceRef>());
+
+    case VAR_RESOURCEREFLIST:
+        return Set<ResourceRefList>(value.Get<ResourceRefList>());
+
+    case VAR_VARIANTVECTOR:
+        return Set<VariantVector>(value.Get<VariantVector>());
+
+    case VAR_STRINGVECTOR:
+        return SetStringVector(value.GetStringVector());
+
+    case VAR_VARIANTMAP:
+        return Set<VariantMap>(value.Get<VariantMap>());
+
+    default:
+        return SetAttribute("value", value.ToString().c_str());
+    }
+    return false;
+}
+
+} // namespace Se
+#endif
+
+

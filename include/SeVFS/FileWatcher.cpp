@@ -28,7 +28,7 @@ namespace Se
 static const unsigned BUFFERSIZE = 4096;
 #endif
 
-Signal<const FileChangeInfo& /*FileInfo*/> FileWatcher::onFileChanged;
+//Signal<const FileChangeInfo& /*FileInfo*/> FileWatcher::onFileChanged;
 
 FileWatcher::FileWatcher() :
     Thread(),

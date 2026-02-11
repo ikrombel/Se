@@ -82,7 +82,6 @@ public:
 
     ~Module() {
         extensionFactory_.clear();
-        SE_LOG_DEBUG("Module {} destroyed", extBaseName_);
     }
 
     virtual void Init() {}
@@ -128,22 +127,24 @@ private:
 class ModuleManager
 {
 public:
-    template<typename T>
-    T* GetModule() 
-    {
-        std::string name = typeid(T).name();
-        auto it = modules_.find(name);
-        if (it != modules_.end()) {
-            return reinterpret_cast<T*>(it->second);
-        }
-        SE_LOG_ERROR("Module {} not found", name);
-        return nullptr;
-    }
+    // template<typename T>
+    // T* GetModule() 
+    // {
+    //     std::string name = typeid(T).name();
+    //     for (auto module : modules_)
+    //     {
+    //         if (module.first == name)
+    //             return reinterpret_cast<T*>(it->second);
+    //     }
+
+    //     SE_LOG_ERROR("Module {} not found", name);
+    //     return nullptr;
+    // }
 
     template<typename T>
     void AddModule() 
     {
-        modules_[typeid(T).name()] = reinterpret_cast<Module<Extension>*>(T::Get());
+        modules_.push_back({typeid(T).name(), reinterpret_cast<Module<Extension>*>(T::Get())});
     }
 
     ~ModuleManager() 
@@ -153,14 +154,17 @@ public:
 
     void Destroy() 
     {
+        String dbgLStr = "Destroyed modules:";
         for (auto it = modules_.rbegin(); it != modules_.rend(); ++it) {
+            dbgLStr += " " + it->second->GetBaseName();
             delete it->second;
         }
         modules_.clear();
+        SE_LOG_DEBUG(dbgLStr);
     }
     
 protected:
-    std::map<std::string, Module<Extension>*> modules_;
+    std::vector<std::pair<std::string, Module<Extension>*>> modules_;
 };
 
 // inline void SerializeValue(Archive& archive, const char* name, StringHash& value) {

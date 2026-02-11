@@ -70,7 +70,7 @@ void MountedDirectory::ProcessUpdates()
         tmp.fileName = fileWatcher_->GetPath() + change.fileName_;
         tmp.resourceName = FileIdentifier{scheme_, change.fileName_}.ToUri();
         tmp.kind = change.kind_;
-        FileWatcher::onFileChanged(tmp);
+        FileWatcher::Get()->onFileChanged(tmp);
     }
 }
 

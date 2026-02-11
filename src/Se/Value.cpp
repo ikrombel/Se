@@ -530,6 +530,7 @@ bool Value::Compare(const Value& lhs, const Value& rhs) {
     return true;
 }
 
+std::unordered_map<String, Value::ObjectValueSerializer> Value::objectValueMap_ = {};
 
 
 }

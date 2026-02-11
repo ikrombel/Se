@@ -370,7 +370,15 @@ protected:
         std::function<void(const Value&, void*)> deserializer;
     };
 
-    inline static std::unordered_map<String, ObjectValueSerializer> objectValueMap_;
+    static std::unordered_map<String, ObjectValueSerializer> objectValueMap_;
+};
+
+template<typename T>
+class ValueSerializable
+{
+    virtual void Serialize(Value& out, const T& in) = 0;
+    virtual void Deserializer(const Value& in,  T& out) = 0;
+
 };
 
 }
