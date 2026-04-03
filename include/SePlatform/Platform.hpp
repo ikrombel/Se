@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 
+#include <Se/Signal.hpp>
 #include <Se/IO/FileSystem.h>
 #include <SeMath/ArchiveMath.hpp>
 #include <SeArc/ArchiveSerialization.hpp>

@@ -5,6 +5,7 @@
 #include <Se/StringHash.hpp>
 #include <Se/Timer.h>
 #include <Se/Hash.hpp>
+#include <SeResource/ResourceRef.hpp>
 // #include <SeArc/Archive.hpp>
 // #include <SeArc/ArchiveSerialization.hpp>
 #include <SeVFS/FileIdentifier.h>
@@ -112,7 +113,8 @@ public:
     virtual bool Save(Serializer& dest) const;
 
     /// Load resource from file.
-    bool LoadFile(const FileIdentifier& fileName);
+    [[nodiscard]]
+    bool LoadFile(const FileIdentifier& fileName) ;
     /// Save resource to file.
     virtual bool SaveFile(const FileIdentifier& fileName) const;
 
@@ -253,37 +255,41 @@ inline void SerializeResource(Archive& archive, const char* name, SharedPtr<T>& 
         value = SharedPtr<T>(dynamic_cast<T*>(Resource::LoadFromCache(archive.GetContext(), resourceRef.type_, resourceRef.name_)));
 }
 
+
+
+
+
+#endif // DISABLED
+
+inline String GetResourceType(Resource* resource, String defaultType)
+{
+    return resource ? resource->GetType() : defaultType;
+}
+
 inline const String& GetResourceName(Resource* resource)
 {
     return resource ? resource->GetName() : String::EMPTY;
 }
 
-inline StringHash GetResourceType(Resource* resource, StringHash defaultType)
-{
-    return resource ? resource->GetType() : defaultType;
-}
-
-inline ResourceRef GetResourceRef(Resource* resource, StringHash defaultType)
+inline ResourceRef GetResourceRef(Resource* resource, String defaultType)
 {
     return ResourceRef(GetResourceType(resource, defaultType), GetResourceName(resource));
 }
 
-template <class T> Vector<String> GetResourceNames(const Vector<SharedPtr<T> >& resources)
-{
-    Vector<String> ret;
-    ret.Resize(resources.Size());
-    for (unsigned i = 0; i < resources.Size(); ++i)
-        ret[i] = GetResourceName(resources[i]);
-
-    return ret;
-}
-
-template <class T> ResourceRefList GetResourceRefList(const Vector<SharedPtr<T> >& resources)
+template <class T> ResourceRefList GetResourceRefList(const std::vector<std::shared_ptr<T>>& resources)
 {
     return ResourceRefList(T::GetTypeStatic(), GetResourceNames(resources));
 }
 
-#endif // DISABLED
+template <class T> std::vector<String> GetResourceNames(const std::vector<std::shared_ptr<T> >& resources)
+{
+    std::vector<String> ret;
+    ret.resize(resources.size());
+    for (auto i = 0; i < resources.size(); ++i)
+        ret[i] = GetResourceName(resources[i]);
+
+    return ret;
+}
 
 } // namespace Se
 
