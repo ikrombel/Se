@@ -1,6 +1,20 @@
 #pragma once
+
+#ifndef SE_REFLACTION_STANDALONE
+#define SE_REFLACTION_STANDALONE
+#endif
+
+//#if __has_include("Se/String.hpp") && !SE_REFLACTION_STANDALONE
 #include <Se/String.hpp>
+#include <Se/Console.hpp>
+// #else
+// #include <string>
+// using String = std::string;
+// #endif
+#if __has_include("SeArc/ArchiveSerialization.hpp") && !defined(SE_REFLACTION_STANDALONE)
 #include <SeArc/ArchiveSerialization.hpp>
+#define USE_ARCHIVE_SERIALIZATION
+#endif
 
 #include <memory>
 #include <functional>
@@ -53,8 +67,9 @@ public:
 
     virtual std::size_t GetValueType() { 
             return 0; }
-
+#ifdef USE_ARCHIVE_SERIALIZATION
     virtual void SerializeInBlock(Se::Archive& archive, const String& name) {}
+#endif
 
     virtual const std::vector<String> GetEnumNames() const { 
         return {}; }
@@ -65,7 +80,7 @@ public:
 protected:
     AttributeType type_{AttributeType::AT_None};
 
-};//
+};
 
 /// Abstract base class for invoking attribute accessors.
 template<class ParameterType>
@@ -160,10 +175,11 @@ public:
     ParameterType* GetPtr() override {
         return value_;
     }
-
+#ifdef USE_ARCHIVE_SERIALIZATION
     void SerializeInBlock(Se::Archive& archive, const String& name) override {
         SerializeValue(archive, name, *value_);
     }
+#endif
 private:
     ParameterType* value_;
 };
@@ -204,10 +220,11 @@ public:
 
     const std::vector<String> GetEnumNames() const override {
         return namesPtr_ ? *namesPtr_ : names_; }
-
+#ifdef USE_ARCHIVE_SERIALIZATION
     void SerializeInBlock(Se::Archive& archive, const String& name) override {
         SerializeValue(archive, name, *value_);
     }
+#endif
 private:
     ParameterType* value_;
     std::vector<String> names_;
@@ -240,7 +257,7 @@ public:
     {
         setFunction_(value);
     }
-
+#ifdef USE_ARCHIVE_SERIALIZATION
     void SerializeInBlock(Se::Archive& archive, const String& name) override {
         ParameterType value = getFunction_();
         SerializeValue(archive, name, value);
@@ -248,7 +265,7 @@ public:
         if (archive.IsInput())
             setFunction_(value);
     }
-
+#endif
     bool IsDefault() const override {
         return this->defaultValue_ == getFunction_();
     }
@@ -413,7 +430,7 @@ public:
             if (attr.first == name)
                 return attr.second;
 
-        SE_LOG_ERROR("Object has no attribute : {}", name);
+        //SE_LOG_ERROR("Object has no attribute : {}", name);
         return nullptr;
     }
 
@@ -456,19 +473,18 @@ public:
 
         return attr->Call();
     }
-
+#ifdef USE_ARCHIVE_SERIALIZATION
     virtual void SerializeInBlock(Archive& archive) 
     {
         for  (auto& attr : values_)
             attr.second->SerializeInBlock(archive, attr.first);
     }
-
+#endif
 protected:
     std::vector<std::pair<String, std::shared_ptr<AttributeEmpty>>> values_;
     inline static std::unordered_map<String, std::shared_ptr<AttributeEmpty>> staticValues_{};
 };
 
-#if SE_REFLECTION_HEADERONLY
 template<typename T, typename = void>
 struct HasRegisterAttributes : std::false_type {};
 
@@ -476,9 +492,7 @@ template<typename T>
 struct HasRegisterAttributes<T, 
     std::void_t<decltype(std::declval<T>().RegisterAttributes(std::declval<Attributes&>()))>> 
     : std::true_type {};
-#else
-SEARC_TYPE_TRAIT(HasRegisterAttributes, std::declval<T>().RegisterAttributes(std::declval<Attributes&>()));
-#endif
+
 
 template<class T>
 void ReflectionRegisterAttributes(T* refl, Se::Attributes* attr)
@@ -544,13 +558,13 @@ public:
         return std::shared_ptr<Se::ReflectedObject>(reinterpret_cast<Se::ReflectedObject*>(obj));
     }
 
-
+#ifdef USE_ARCHIVE_SERIALIZATION
     virtual void SerializeInBlock(Archive& archive)
     {
         SerializeValue(archive, "Attributes", attributes_);
         //SE_LOG_ERROR("{} is not reflected object. Need to override method: void SerializeInBlock(Archive& archive)", type_);
     }
-    
+#endif
     template<class U> 
     U* GetObject() {
         return reinterpret_cast<U*>(object_);
