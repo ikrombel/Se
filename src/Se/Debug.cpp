@@ -212,31 +212,31 @@ table td
 		{
 			auto type0 = entry.info_.type_;
 
-			if (type0 == Console::MsgType::MsgInfo  ||
-				type0 == Console::MsgType::MsgDebug ||
-				type0 == Console::MsgType::MsgNone)
+			if (type0 == Console::LogLevel::LogInfo  ||
+				type0 == Console::LogLevel::LogDebug ||
+				type0 == Console::LogLevel::LogNone)
 				continue;
 
 			String channelName;
 			String alternateName = alternate ? "-alt-row" : "-row";
 
-			Console::MsgType verbosity = entry.info_.type_;
+			Console::LogLevel verbosity = entry.info_.type_;
 			switch(verbosity)
 			{
-			//case Console::MsgType::Fatal:
-			case Console::MsgType::MsgError:
+			//case Console::LogLevel::Fatal:
+			case Console::LogLevel::LogError:
 				stream << format(R"(		<tr class="error{}">)", alternateName) << std::endl;
 				break;
-			case Console::MsgType::MsgWarning: {
+			case Console::LogLevel::LogWarning: {
 				// std::string alt =  (!alternate) ? "warn-row" : "warn-alt-row";
 				// stream << format(R"(		<tr class=\"{}\">)", alt);
 				stream << format(R"(		<tr class="warn{}">)", alternateName) << std::endl;
 			}
 			default:
-			case Console::MsgType::MsgInfo:
-			// case Console::MsgType::Log:
-			// case Console::MsgType::Verbose:
-			// case Console::MsgType::VeryVerbose:
+			case Console::LogLevel::LogInfo:
+			// case Console::LogLevel::Log:
+			// case Console::LogLevel::Verbose:
+			// case Console::LogLevel::VeryVerbose:
 					stream << format(R"(		<tr class="debug{}">)", alternateName) << std::endl;
 				break;
 			}
@@ -318,47 +318,47 @@ table td
 		std::vector<Console::ConsoleInfo> entries = mLog.getAllEntries();
 		for (auto& entry : entries)
 		{
-			String builtMsg;
-			builtMsg.append(toString(entry.getLocalTime(), false, true, TimeToStringConversionType::Full));
-			builtMsg.append(" ");
+			String builtLog;
+			builtLog.append(toString(entry.getLocalTime(), false, true, TimeToStringConversionType::Full));
+			builtLog.append(" ");
 			
 			switch(entry.getVerbosity())
 			{
-			case Console::MsgType::Fatal:
-				builtMsg.append("[FATAL]");
+			case Console::LogLevel::Fatal:
+				builtLog.append("[FATAL]");
 				break;
-			case Console::MsgType::Error:
-				builtMsg.append("[ERROR]");
+			case Console::LogLevel::Error:
+				builtLog.append("[ERROR]");
 				break;
-			case Console::MsgType::Warning:
-				builtMsg.append("[WARNING]");
+			case Console::LogLevel::Warning:
+				builtLog.append("[WARNING]");
 				break;
-			case Console::MsgType::Info:
-				builtMsg.append("[INFO]");
+			case Console::LogLevel::Info:
+				builtLog.append("[INFO]");
 				break;
-			case Console::MsgType::Log:
-				builtMsg.append("[LOG]");
+			case Console::LogLevel::Log:
+				builtLog.append("[LOG]");
 				break;
-			case Console::MsgType::Verbose:
-				builtMsg.append("[VERBOSE]");
+			case Console::LogLevel::Verbose:
+				builtLog.append("[VERBOSE]");
 				break;
-			case Console::MsgType::VeryVerbose:
-				builtMsg.append("[VERY_VERBOSE]");
+			case Console::LogLevel::VeryVerbose:
+				builtLog.append("[VERY_VERBOSE]");
 				break;
 			}
 			
 			String categoryName;
 			mLog.getCategoryName(entry.getCategory(), categoryName);
-			builtMsg.append(" <" + categoryName + ">");
+			builtLog.append(" <" + categoryName + ">");
 
-			builtMsg.append(" | ");
+			builtLog.append(" | ");
 			
-			String tmpSpaces = _getSpacesIndentation(builtMsg.length());
+			String tmpSpaces = _getSpacesIndentation(builtLog.length());
 			
 			String parsedMessage = StringUtil::replaceAll(entry.getMessage(), "\n\t\t", "\n" + tmpSpaces);
-			builtMsg.append(parsedMessage);
+			builtLog.append(parsedMessage);
 			
-			stream << builtMsg << "\n";
+			stream << builtLog << "\n";
 		}
 		
 		SPtr<DataStream> fileStream = FileSystem::createAndOpenFile(path);

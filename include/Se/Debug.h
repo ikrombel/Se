@@ -49,7 +49,7 @@ namespace Se
 		/// @param[in]	message		The message describing the log entry.
 		/// @param[in]	verbosity	Verbosity of the message, determining its importance.
 		/// @param[in]	category	Category of the message, determining which system is it relevant to.
-		void log(const String& message, Console::MsgType verbosity, uint32_t category = 0);
+		void log(const String& message, Console::LogLevel verbosity, uint32_t category = 0);
 
 		/// Retrieves the Log used by the Debug instance.
 		//Log& getLog() { return mLog; }
@@ -88,7 +88,7 @@ namespace Se
 
 		/// This allows setting a log callback that can override the default action in log */
 		void setLogCallback(
-			std::function<bool(const String& message, Console::MsgType verbosity, uint32_t category)> callback)
+			std::function<bool(const String& message, Console::LogLevel verbosity, uint32_t category)> callback)
 		{
 			mCustomLogCallback = callback;
 		}
@@ -106,7 +106,7 @@ namespace Se
 	private:
 		uint64_t mLogHash = 0;
 		//Log mLog;
-		std::function<bool(const String& message, Console::MsgType verbosity, uint32_t category)> mCustomLogCallback;
+		std::function<bool(const String& message, Console::LogLevel verbosity, uint32_t category)> mCustomLogCallback;
 	};
 
 	/// A simpler way of accessing the Debug module.
@@ -114,9 +114,9 @@ namespace Se
 
 #ifndef SE_LOG_VERBOSITY
 	#if SE_DEBUG_MODE
-		#define SE_LOG_VERBOSITY Console::MsgType::Log
+		#define SE_LOG_VERBOSITY Console::LogType::Log
 	#else
-		#define SE_LOG_VERBOSITY Console::MsgType::Warning
+		#define SE_LOG_VERBOSITY Console::LogType::Warning
 	#endif
 #endif
 }
