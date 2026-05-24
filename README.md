@@ -103,26 +103,18 @@ Dependences: `Se`
 <br>
 
 # Using
-
-use command for clone to inside your project
-
-```bash
-git clone https://github.com/ikrombel/Se.git
-```
-
-or, add to cmake:
-
+add to cmake:
 ```cmake
-set(SE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/.cache_deps/Se)
-if(NOT EXISTS ${SE_SOURCE_DIR} AND NOT TARGET Se)
-    if(NOT EXISTS ${CMAKE_BINARY_DIR}/.cache_deps)
-        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/.cache_deps)
-    endif()
-    execute_process(
-        COMMAND git clone https://github.com/ikrombel/Se.git ${SE_SOURCE_DIR}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-endif()
+include(FetchContent)
+
+FetchContent_Declare(
+    Se
+    GIT_REPOSITORY "https://github.com/ikrombel/Se.git"
+    GIT_TAG "master"
+)
+# setup cmake configs, like:
+#set(SE_SSE ON)
+FetchContent_MakeAvailable(Se)
 ```
 
 Example for linking to :
