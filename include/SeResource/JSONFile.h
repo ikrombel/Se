@@ -6,7 +6,6 @@
 #include <SeResource/JSONValue.h>
 
 #include <functional>
-#include <string>
 
 namespace Se
 {

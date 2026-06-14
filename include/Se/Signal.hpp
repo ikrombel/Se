@@ -1,6 +1,6 @@
 #pragma once
 
-#include <type_traits>
+// #include <type_traits>
 #include <functional>
 #include <utility>
 #include <vector>
@@ -79,7 +79,7 @@ public:
             slot.func(args...);
         }
     }
-    
+
 
     void disconnectAll() {
         slots_.clear();

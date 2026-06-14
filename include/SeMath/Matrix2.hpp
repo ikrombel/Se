@@ -200,10 +200,17 @@ public:
         return cformat("%g %g %g %g", m00_, m01_, m10_, m11_);
     }
 
-    float m00_;
-    float m01_;
-    float m10_;
-    float m11_;
+    
+
+    union {
+        struct {
+            float m00_;
+            float m01_;
+            float m10_;
+            float m11_;
+        };
+        float data[4];
+    };
 
     /// Bulk transpose matrices.
     static void BulkTranspose(float* dest, const float* src, unsigned count)

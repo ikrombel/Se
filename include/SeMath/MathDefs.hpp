@@ -13,6 +13,7 @@
 #include <limits>
 #include <type_traits>
 #include <cstring>
+#include <unordered_map>
 
 namespace Se
 {

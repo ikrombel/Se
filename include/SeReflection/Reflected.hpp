@@ -14,6 +14,7 @@ enum class AttributeType {
     AT_Accessor,
 //    AT_EnumAccessor,
     AT_Action,
+    AT_Link, // TODO same type objects use one resource
 //    AT_Switcher
 
 };

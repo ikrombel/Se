@@ -4,6 +4,7 @@
 
 
 #include <Se/Export.hpp>
+#include <Se/Console.hpp>
 #include <SeMath/BoundingBox.hpp>
 #include <SeMath/Rect.hpp>
 #include <SeMath/Color.hpp>
@@ -432,7 +433,7 @@ template<> bool XMLElement::Set(const Variant& value);
 template<> Variant XMLElement::Get();
 
 
-template<> inline bool XMLElement::Set(const ResourceRef& value) 
+template<> inline bool XMLElement::Set(const ResourceRef& value)
 {
     if (IsNullWithFile())
         return false;
@@ -460,7 +461,7 @@ template<> inline ResourceRef XMLElement::Get()
 }
 
 
-template<> inline bool XMLElement::Set(const ResourceRefList& value) 
+template<> inline bool XMLElement::Set(const ResourceRefList& value)
 {
     if (IsNullWithFile())
         return false;
@@ -496,7 +497,7 @@ template<> inline ResourceRefList XMLElement::Get()
 }
 
 
-template<> inline bool XMLElement::Set(const VariantVector& value) 
+template<> inline bool XMLElement::Set(const VariantVector& value)
 {
     // Must remove all existing variant child elements (if they exist) to not cause confusion
     if (!RemoveChildren("variant"))
@@ -528,7 +529,7 @@ template<> inline VariantVector XMLElement::Get()
 }
 
 
-template<> inline bool XMLElement::Set(const VariantMap& value) 
+template<> inline bool XMLElement::Set(const VariantMap& value)
 {
     if (!RemoveChildren("variant"))
         return false;
@@ -565,7 +566,7 @@ template<> inline VariantMap XMLElement::Get()
 }
 
 /*
-template<> inline bool XMLElement::Set(const Variant& value) 
+template<> inline bool XMLElement::Set(const Variant& value)
 {
 
     return false;
@@ -630,7 +631,7 @@ template<> inline Variant XMLElement::Get()
     return ret;
 }
 
-template<> inline bool XMLElement::Set(const Variant& value) 
+template<> inline bool XMLElement::Set(const Variant& value)
 {
     if (!SetAttribute("type", value.GetTypeName().c_str()))
         return false;
@@ -660,5 +661,3 @@ template<> inline bool XMLElement::Set(const Variant& value)
 
 } // namespace Se
 #endif
-
-
