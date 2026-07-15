@@ -106,7 +106,9 @@ public:
         SerializeValue(archive, "RenderBackend", gapi_);
     }
 
-    virtual void ApplyConfigs() {};
+    virtual void ApplyConfigs() {
+        Init(gapi_);
+    }
 
     RenderBackend GetRenderBackend() const { return gapi_; }
 

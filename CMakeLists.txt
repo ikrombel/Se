@@ -44,11 +44,11 @@ set(SE_SOURCE
         src/Se/WorkQueue.cpp
         )
 
-if(ANDROID)
-        set(SE_SOURCE ${SE_SOURCE}
-                ../SePlatformAndroid/Private/android_native_app_glue.c
-        )
-endif()
+# if(ANDROID)
+#         set(SE_SOURCE ${SE_SOURCE}
+#                 ../SePlatformAndroid/Private/android_native_app_glue.c
+#         )
+# endif()
 
 
 if (HAVE_LZ4) 
@@ -95,7 +95,7 @@ if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 if (WIN32)
-        target_link_libraries(Se PRIVATE user32 winmm)
+        target_link_libraries(Se PRIVATE user32 winmm dbghelp)
     if (MSVC)
         target_compile_definitions(Se PRIVATE _CRT_SECURE_NO_WARNINGS)
     endif()
@@ -169,6 +169,17 @@ add_library(SeVFS STATIC
 )
 target_link_libraries(SeVFS PUBLIC
         Se
+)
+
+add_library(SePlatform STATIC 
+        include/SePlatform/Application.h
+        include/SePlatform/Application.cpp
+)
+
+target_link_libraries(SePlatform
+        PUBLIC Se
+        PUBLIC SeVFS
+        PUBLIC SeResource
 )
 
 add_executable(test.SeResource 

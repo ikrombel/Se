@@ -1,5 +1,6 @@
 #pragma once
 
+#include <exception>
 #ifndef SE_REFLACTION_STANDALONE
 #define SE_REFLACTION_STANDALONE
 #endif
@@ -11,9 +12,8 @@
 // #include <string>
 // using String = std::string;
 // #endif
-#if __has_include("SeArc/ArchiveSerialization.hpp") && !defined(SE_REFLACTION_STANDALONE)
-#include <SeArc/ArchiveSerialization.hpp>
-#define USE_ARCHIVE_SERIALIZATION
+#if __has_include("SeArc/ArchiveSerialization.hpp")
+#  include <SeArc/ArchiveSerialization.hpp>
 #endif
 
 #include <memory>
