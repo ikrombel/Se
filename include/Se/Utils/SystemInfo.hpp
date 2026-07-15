@@ -160,6 +160,11 @@ inline SystemInfo Platform::getSystemInfo()
 
     return output;
 }
+#else
+inline SystemInfo Platform::getSystemInfo()
+{
+    return{};
+}
 #endif
 
 

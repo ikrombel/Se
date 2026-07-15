@@ -1,3 +1,4 @@
+#include <Se/Console.hpp>
 #include <Se/IO/MemoryBuffer.hpp>
 #include <SeResource/YAMLFile.h>
 #include <SeResource/JSONFile.h>

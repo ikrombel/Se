@@ -88,9 +88,8 @@ void ToYml(ryml::NodeRef* node, const Value& input)
 {
     if (input.IsObject())
     {
+        
         *node |= ryml::MAP;
-        if (input.Size() < 5)
-            *node |= ryml::FLOW_SL;
         //*node |= ryml::FLOW_SL; // flow, single-line
 
         for (auto& [key, value] : input.GetObject())
@@ -100,12 +99,14 @@ void ToYml(ryml::NodeRef* node, const Value& input)
             ToYml(&child, value);
             (*node)[key.c_str()] = child;
         }
+
+        
+        *node |= (input.Size() < 4) ? ryml::FLOW_SL : ryml::FLOW_ML;
     }
     else if (input.IsArray())
     {
         auto array = input.GetArray();
-        if (array.size() < 5)
-            *node |= ryml::FLOW_SL;
+        //*node |= (input.Size() < 5) ? ryml::FLOW_SL : ryml::FLOW_ML;
 
         *node |= ryml::SEQ;
 
@@ -115,6 +116,7 @@ void ToYml(ryml::NodeRef* node, const Value& input)
             ryml::NodeRef child = node->append_child();
             ToYml(&child, value);
         }
+        *node |= (input.Size() < 4) ? ryml::FLOW_SL : ryml::FLOW_ML;
     }
     else if (input.IsString())
     {

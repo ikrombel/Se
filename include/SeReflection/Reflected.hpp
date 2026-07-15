@@ -420,6 +420,9 @@ public:
 
     void ToDefault()
     {
+        // if (values_.empty() || values_.size() < 1)
+        //     return;
+
         for (auto& val : values_)
             if (val.second->GetType() == AttributeType::AT_Accessor)
                 val.second->ToDefault();

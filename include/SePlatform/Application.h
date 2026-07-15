@@ -88,6 +88,8 @@ public:
 
 
 protected:
+    
+
 
     inline static Application* app_;
 

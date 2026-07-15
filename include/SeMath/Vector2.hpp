@@ -136,11 +136,11 @@ public:
     unsigned ToHash() const { return (unsigned)x_ * 31 + (unsigned)y_; }
 
     /// Return length.
-    float Length() const { return Sqrt<float>(x_ * x_ + y_ * y_); }
+    float Length() const { return Sqrt<float>((float)x_ * x_ + (float)y_ * y_); }
 
     /// Distance to point
     float Distance(const IntVector2& to) const {
-        return std::sqrt(std::pow<int>(this->x_ - to.x_, 2) + std::pow<int>(this->y_ - to.y_, 2));
+        return Sqrt((float)Pow<int>(this->x_ - to.x_, 2) + Pow(this->y_ - to.y_, 2));
     }
 
     /// Return Vector2 vector.

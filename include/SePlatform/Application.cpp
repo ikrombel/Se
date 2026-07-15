@@ -112,7 +112,7 @@ void Application::Init()
     auto fs = FileSystem::Get();
     auto vfs = VirtualFileSystem::Get();
 
-    // cfg_ = std::make_shared<Config>(this);
+    cfg_ = std::make_shared<Config>(this);
 
     // String xdg = fs.GetENV("HOME");
     // SE_LOG_WARNING(xdg);
@@ -123,7 +123,6 @@ void Application::Init()
             fs.CreateDirsRecursive(pathProgramPref);
 #endif
 
-
     // vfs->MountDir("cfg", pathProgramPref);
 
     //pathProgramPref = String(path.c_str(), path.length());
@@ -131,7 +130,6 @@ void Application::Init()
 
     SE_LOG_INFO("AppPreferencesDir: {}", pathProgramPref);
 
-//    InitRenderer();
 
     // Window::onWindowClose.connect([this](bool& close){
     //     cfg_->Save();
@@ -140,7 +138,7 @@ void Application::Init()
 
     window_ = Window::Get();
 
-    //cfg_->Load();
+    cfg_->Load();
 
     window_->ApplyConfigs();
 }

@@ -3,6 +3,11 @@
 #include <Se/String.hpp>
 #include <Se/Hash.hpp>
 
+#if __has_include("SeArc/ArchiveSerialization.hpp")
+#include <SeArc/ArchiveSerialization.hpp>
+#define ARC_RESOURCREF
+#endif
+
 namespace Se
 {
 
@@ -105,6 +110,93 @@ struct ResourceRefList
     bool operator !=(const ResourceRefList& rhs) const { 
         return type_ != rhs.type_ || names_ != rhs.names_; }
 };
+
+// namespace Datail {
+
+
+
+// /// ResourceRefList to/from string.
+// struct ResourceRefListStringCaster
+// {
+//     ea::string ToArchive(Archive& archive, const char* name, const ResourceRefList& value) const
+//     {
+//         return value.ToString(archive.GetContext());
+//     }
+
+//     ResourceRefList FromArchive(Archive& archive, const char* name, const ea::string& value) const
+//     {
+//         ea::vector<ea::string> chunks = value.split(';', true);
+//         if (chunks.empty())
+//             throw ArchiveException("Unexpected format of ResourceRefList '{}/{}'", archive.GetCurrentBlockPath(), name);
+
+//         const ea::string typeName = ea::move(chunks[0]);
+//         chunks.pop_front();
+
+//         // Treat ";" as empty list
+//         if (chunks.size() == 1 && chunks[0].empty())
+//             chunks.clear();
+
+//         return { StringHash{typeName}, chunks };
+//     }
+// };
+
+// } // Datail
+
+
+#ifdef ARC_RESOURCREF
+
+namespace Detail {
+
+/// ResourceRef to/from string.
+struct ResourceRefStringCaster
+{
+    String ToArchive(Archive& archive, const char* name, const ResourceRef& value) const
+    {
+        return format("{};{}", value.type_, value.name_);
+    }
+
+    ResourceRef FromArchive(Archive& archive, const char* name, const String& value) const
+    {
+        const std::vector<String> chunks = value.split(';', true);
+        if (chunks.size() != 2)
+            throw ArchiveException("Unexpected format of ResourceRef '{}/{}'", archive.GetCurrentBlockPath(), name);
+
+        return { chunks[0], chunks[1] };
+    }
+};
+
+} // namespace Detail
+
+
+
+inline void SerializeValue(Archive& archive, const char* name, ResourceRef& value)
+{
+    if (!archive.IsHumanReadable())
+    {
+        ArchiveBlock block = archive.OpenUnorderedBlock(name);
+        SerializeValue(archive, "type", value.type_);
+        SerializeValue(archive, "name", value.name_);
+        return;
+    }
+
+    SerializeValueAsType<String>(archive, name, value, Detail::ResourceRefStringCaster{});
+}
+#endif
+
+#if 0
+inline void SerializeValue(Archive& archive, const char* name, ResourceRefList& value)
+{
+    if (!archive.IsHumanReadable())
+    {
+        ArchiveBlock block = archive.OpenUnorderedBlock(name);
+        SerializeValue(archive, "type", value.type_);
+        SerializeVectorAsObjects(archive, "names", value.names_);
+        return;
+    }
+
+    SerializeValueAsType<ea::string>(archive, name, value, Detail::ResourceRefListStringCaster{});
+}
+#endif
 
     
 } // namespace Se
