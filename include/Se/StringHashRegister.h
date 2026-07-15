@@ -14,12 +14,12 @@
 namespace Se
 {
 
-#ifndef StringMap
-typedef std::unordered_map<String, String> StringMap;
-#endif
-
 class Mutex;
 class StringHash;
+
+#ifndef StringMap
+typedef std::unordered_map<StringHash, String> StringMap;
+#endif
 
 /// Helper class used for StringHash reversing.
 class SE_API StringHashRegister

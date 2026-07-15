@@ -1,42 +1,23 @@
-//
 // Copyright (c) 2008-2022 the Urho3D project.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
-//
 
-#include "../Precompiled.h"
+//#include "../Precompiled.h"
 
-#include "../Core/StringHashRegister.h"
-#include "../Core/Mutex.h"
-#include "../IO/Log.h"
+#include "StringHashRegister.h"
+#include "Mutex.hpp"
+#include "Console.hpp"
+#include "String.hpp"
 
 #include <cstdio>
 
-#include "../DebugNew.h"
+// #include "../DebugNew.h"
 
-namespace Urho3D
+namespace Se
 {
 
 StringHashRegister::StringHashRegister(bool threadSafe)
 {
     if (threadSafe)
-        mutex_ = ea::make_unique<Mutex>();
+        mutex_ = std::make_unique<Mutex>();
 }
 
 
@@ -45,7 +26,7 @@ StringHashRegister::~StringHashRegister()       // NOLINT(hicpp-use-equals-defau
     // Keep destructor here to let mutex_ destruct
 }
 
-StringHash StringHashRegister::RegisterString(const StringHash& hash, ea::string_view string)
+StringHash StringHashRegister::RegisterString(const StringHash& hash, const String& string)
 {
     if (mutex_)
         mutex_->Acquire();
@@ -53,11 +34,11 @@ StringHash StringHashRegister::RegisterString(const StringHash& hash, ea::string
     auto iter = map_.find(hash);
     if (iter == map_.end())
     {
-        map_.emplace(hash, ea::string(string));
+        map_.emplace(hash, String(string));
     }
-    else if (ea::string_view(iter->second) != string)
+    else if (String(iter->second) != string)
     {
-        URHO3D_LOGWARNINGF("StringHash collision detected! Both \"%s\" and \"%s\" have hash #%s",
+        SE_LOG_WARNING("StringHash collision detected! Both \"{}\" and \"{}\" have hash #{}",
             string, iter->second.c_str(), hash.ToString().c_str());
     }
 
@@ -67,18 +48,18 @@ StringHash StringHashRegister::RegisterString(const StringHash& hash, ea::string
     return hash;
 }
 
-StringHash StringHashRegister::RegisterString(ea::string_view string)
+StringHash StringHashRegister::RegisterString(const String& string)
 {
     StringHash hash(string);
     return RegisterString(hash, string);
 }
 
-ea::string StringHashRegister::GetStringCopy(const StringHash& hash) const
+String StringHashRegister::GetStringCopy(const StringHash& hash) const
 {
     if (mutex_)
         mutex_->Acquire();
 
-    const ea::string copy = GetString(hash);
+    const String copy = GetString(hash);
 
     if (mutex_)
         mutex_->Release();
@@ -91,7 +72,7 @@ bool StringHashRegister::Contains(const StringHash& hash) const
     if (mutex_)
         mutex_->Acquire();
 
-    const bool contains = map_.contains(hash);
+    const bool contains = map_.find(hash) != map_.end();
 
     if (mutex_)
         mutex_->Release();
@@ -99,10 +80,10 @@ bool StringHashRegister::Contains(const StringHash& hash) const
     return contains;
 }
 
-const ea::string& StringHashRegister::GetString(const StringHash& hash) const
+const String& StringHashRegister::GetString(const StringHash& hash) const
 {
     auto iter = map_.find(hash);
-    return iter == map_.end() ? EMPTY_STRING : iter->second;
+    return iter == map_.end() ? String::EMPTY : iter->second;
 }
 
 }

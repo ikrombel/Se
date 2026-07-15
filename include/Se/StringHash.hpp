@@ -1,18 +1,13 @@
 #pragma once
 
-// #include "Urho3D/Container/Hash.h"
-// #include "Urho3D/Math/MathDefs.h"
-
 #include <Se/Format.hpp>
 #include <Se/String.hpp>
 
 #include <string_view>
 #include <string>
-#include <unordered_map>
 #include <cstdint>
 #include <cstdio>
 #include <cassert>
-#include <iostream>
 
 namespace Se
 {
@@ -49,7 +44,7 @@ static constexpr std::size_t CalculateEastlHash(const std::string_view& x)
 typedef unsigned HashValue;
 class StringHash
 {
-    
+
 public:
 
     /// Tag to disable population of hash reversal map.

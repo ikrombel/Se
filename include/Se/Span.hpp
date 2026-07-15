@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <stdexcept>
+#include <cassert>
 
 namespace Se {
 

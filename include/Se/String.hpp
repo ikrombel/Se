@@ -21,7 +21,15 @@
 #else // assuming POSIX or BSD compliant system
 //#include <strings.h>
 #endif
- 
+
+#include <regex>
+#ifdef _WIN32
+#include <dbghelp.h>
+#pragma comment(lib, "dbghelp.lib")
+#else
+#include <cxxabi.h>
+#endif
+
 
 #if __cplusplus >= 201103L
 #  define STRING_CXX11 1
@@ -46,7 +54,7 @@
 namespace Se {
 
 typedef wchar_t WChar;
-typedef std::wstring WString; 
+typedef std::wstring WString;
 
 class String : public std::string {
 public:
@@ -215,12 +223,12 @@ public:
             strncasecmp(lsh, rsh, size);
     }
 
-    void pop_front() 
+    void pop_front()
     {
         if (empty()) {
             throw std::out_of_range("Cannot pop from an empty string");
         }
-            
+
         // Remove the first character from the string
         erase(begin());
     }
@@ -302,7 +310,7 @@ public:
        *this = String(str.c_str());
        return *this;
     }
-    
+
 
     String& operator=(const std::string& str)
     {
@@ -311,7 +319,7 @@ public:
         return *this;
     }
 
-    String& operator=(const String& str) 
+    String& operator=(const String& str)
     {
         if (this == &str)
             return *this;
@@ -1003,7 +1011,7 @@ inline long long ToInt64(const char* source, int base = 10)
 inline unsigned ToUInt(const char* source, int base = 10)
 {
     if (!source)
-        return 0;   
+        return 0;
 
     // Shield against runtime library assert by converting illegal base values to 0 (autodetect)
     if (base < 2 || base > 36)
@@ -1243,57 +1251,39 @@ inline String ParcerTypeBlock(const char *c, const char *beginBlock, const char 
 
 
 template<typename T>
-inline std::string ToStringTypeId() {
-    std::string ret;
+inline std::string ToStringTypeId()
+{
+    auto typeOrig = typeid(T).name();
+    std::string result;
 
-    static auto typeIdIsNumber = [](char c) -> bool {
-        return c >= '0' && c <= '9';
-    };
+#ifdef _WIN32
+    char buffer[1024];
+    if (UnDecorateSymbolName(typeOrig, buffer, sizeof(buffer), UNDNAME_NAME_ONLY
+            // | UNDNAME_NO_LEADING_UNDERSCORES
+            // | UNDNAME_NO_RETURN_UDT_MODEL
+            ))
+    {
+        std::string demangled = std::regex_replace(buffer, std::regex(R"(\s+__ptr64)"), "");
+        demangled = std::regex_replace(demangled, std::regex(R"(\b(class\s+|struct\s+))"), "");
 
-    static std::unordered_map<char, const char*> basicTypes_{
-        {'i', "int"},
-        {'l', "long"},
-        {'f', "float"},
-        {'d', "double"},
-        {'b', "bool"},
-        {'c', "char"},
-        {'s', "short"},
-        {'u', "unsigned"},
-        {'v', "void"},
-        {'w', "wchar_t"}
-    };
-
-    std::string typeOrig = typeid(T).name();
-    const char *c = typeOrig.data();
-
-    if (typeOrig.length() == 1)
-        return basicTypes_[typeOrig[0]];
-
-    std::string numStuck;
-
-    bool isTemplate = false;
-
-    while(*c) {
-
-        if (typeIdIsNumber(*c)) {
-            numStuck.push_back(*c);
-        }
-        else if (!numStuck.empty()) {
-            size_t startPos = (c - typeOrig.data());
-            size_t sizeS = atoi(numStuck.c_str());
-            std::string tmp = typeOrig.substr(startPos, sizeS);
-            if (!ret.empty())
-                ret += "::";
-            ret += tmp;
-            numStuck.clear();
-            c = typeOrig.data() + startPos + sizeS;
-            continue;
-        }
-    
-        c++;
+        // if (demangled != demangled2)
+        //     result = demangled.substr(1);
+        result = demangled;
     }
+#else
+    int status = 0;
+    char* demangled = abi::__cxa_demangle(typeOrig, nullptr, nullptr, &status);
+    if (status == 0 && demangled) {
+        result = (demangled);
+        std::free(demangled);
+    }
+#endif
+    else
+        result = typeOrig;
 
-    return ret;
+    result = std::regex_replace(result, std::regex("([<,]) "), "$1");
+    result = std::regex_replace(result, std::regex(" ([>,])"), "$1");
+    return result;
 }
 
 using StringVector = std::vector<String>;

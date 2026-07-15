@@ -2,12 +2,11 @@
 
 #pragma once
 
+#include <SeMath/Vector4.hpp>
 #include <type_traits>
 #include <cstring>
 #include <string>
 #include <vector>
-#include <span>
-#include <numeric>
 #include <limits>
 
 #include <Se/StringHash.hpp>
@@ -320,7 +319,7 @@ inline void SerializeValue(Archive& archive, const char* name, StringHash& value
 
 /// @name Serialize std types
 /// @{
-// TODO: correct implenent without Se::String 
+// TODO: correct implenent without Se::String
 inline void SerializeValue(Archive& archive, const char* name, std::string& value) {
     String seStr = value;
     archive.Serialize(name, seStr);
@@ -506,5 +505,57 @@ bool ConsumeArchiveException(const T& lambda, bool errorOnException = true)
         return false;
     }
 }
+
+
+namespace SerializeAs {
+
+template <typename T, size_t N>
+inline void SerializeVec(Archive& archive, const char* name, T* data)
+{
+    if constexpr (!std::is_floating_point_v<T> && !std::is_integral_v<T>)
+        return;
+
+    // 1. Handle binary/non-human-readable format
+    if (!archive.IsHumanReadable()) {
+        archive.SerializeBytes(name, data, sizeof(T) * N);
+        return;
+    }
+
+    String str;
+    bool isInput = archive.IsInput();
+
+    // 2. Output: Convert array to string
+    if (!isInput) {
+        String formatStr = (std::is_integral_v<T>) ? "%d" : "%g";
+        for (size_t i = 0; i < N; ++i) {
+            str += cformat(formatStr.c_str(), data[i]);
+            if (i < N - 1)
+                str += " ";
+        }
+    }
+
+    archive.Serialize(name, str);
+
+    // 3. Input: Parse string back into array
+    if (isInput) {
+        auto elements = str.split(' ');
+        if (elements.size() < N)
+            return;
+
+        for (size_t i = 0; i < N; ++i) {
+            if constexpr (std::is_integral_v<T>)
+                data[i] = (T)atoi(elements[i].c_str());
+            else
+                data[i] = (T)atof(elements[i].c_str());
+        }
+    }
+}
+
+inline void Vec4(Archive& archive, const char* name, float* data)
+{
+     SerializeVec<float, 4>(archive, name, data);
+}
+
+} // namespace SerializeAsString
 
 }
