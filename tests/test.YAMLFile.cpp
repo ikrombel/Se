@@ -27,9 +27,9 @@ vector3: vector3(1.0, 2.0, 3.0)
 
 void TestYAMLFile() 
 {
-    std::cout << "-------------------------------------------------------" << std::endl 
-              << "Test YAMLFile" << std::endl
-              << "-------------------------------------------------------" << std::endl;
+    SE_LOG_PRINT("-------------------------------------------------------\n"
+              "Test YAMLFile\n"
+              "-------------------------------------------------------");
 
     MemoryBuffer buffer(yaml0.c_str(), yaml0.size());
 
@@ -51,12 +51,12 @@ void TestYAMLFile()
 
     // Access the root value
     JSONValue& root = yamlFile.GetRoot();
-    std::cout << "Root value:\n" << yamlFile.ToString() << std::endl;
+    SE_LOG_PRINT("Root value:\n{}", yamlFile.ToString());
 
     JSONFile jsonFile;
     jsonFile.GetRoot() = root;
 
-    std::cout << "JSON:\n" << jsonFile.ToString("  ") << std::endl;
+    SE_LOG_PRINT("JSON:\n{}", jsonFile.ToString("  ") );
 
 
     assert(root["assetType"].GetString() == "Texture");
@@ -65,9 +65,9 @@ void TestYAMLFile()
 
     // Example of accessing a specific key
     if (root.Contains("assetType")) {
-        std::cout << "Value for 'assetType': " << root["assetType"].GetString() << std::endl;
+        SE_LOG_PRINT("Value for 'assetType': {}", root["assetType"].GetString());
     } else {
-        std::cout << "'assetType' not found in YAML file." << std::endl;
+        SE_LOG_ERROR("'assetType' not found in YAML file.");
     }
 
 
