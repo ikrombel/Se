@@ -241,9 +241,13 @@ public:
     }
 
     template<class T>
-    T* ReadArray(std::size_t size) {
-        T buff[size];
-        Read(buff, sizeof(T)*size);
+    std::vector<T> ReadArray(std::size_t size)
+    {
+        std::vector<T> buff(size);
+        
+        if (size > 0)
+            Read(buff.data(), sizeof(T) * size);
+        
         return buff;
     }
 
