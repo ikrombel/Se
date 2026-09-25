@@ -7,7 +7,7 @@
 #include <SeMath/Color.hpp>
 #include <SeMath/Rect.hpp>
 
-#include <IconsFontAwesome5.h>
+#include <IconsFontAwesome6.h>
 
 
 #include <imgui_internal.h>
@@ -85,31 +85,16 @@ inline IntRect ToIntRect(const ImRect& value) { return {ToIntVector2(value.Min),
 
 
 template<>
-inline bool Render<String>(const char* label, AttributePtr& attr, const EditOptions& options)
+inline bool RenderParameter(const char* label, String& value, const EditOptions& options)
 {
-    auto attrAccesor = attr->AccesorCast<String>();
-
-    String value;
-    attrAccesor->Get(&value);
-    ImGui::SetNextItemWidth(options.componentWidth_ ? *options.componentWidth_ :  ImGui::GetContentRegionAvail().x);
-    if (ImGui::InputText(label, &value, ImGuiInputTextFlags_EnterReturnsTrue)) {
-        attrAccesor->Set(value);
-        return true;
-    }
-
-    return false;
+    ImGui::SetNextItemWidth(options.componentWidth_ ? *options.componentWidth_ : ImGui::GetContentRegionAvail().x);
+    return ImGui::InputText(label, &value, ImGuiInputTextFlags_EnterReturnsTrue);
 }
 
 template<>
-inline bool Render<StringVector>(const char* label, AttributePtr& attr, const EditOptions& options)
+inline bool RenderParameter(const char* label, StringVector& value, const EditOptions& options)
 {
-    //options.
-    auto attrAccesor = attr->AccesorCast<StringVector>();
-
     bool modified = false;
-
-    StringVector value;
-    attrAccesor->Get(&value);
 
     auto idHeader = format("{}###{:X}.header"
         , format("List [{}]",  value.size())
@@ -142,7 +127,7 @@ inline bool Render<StringVector>(const char* label, AttributePtr& attr, const Ed
         ColorScopeGuard guard({
             {ImGuiCol_Button, ToImGui(Color(.0f))}
         });
-        if (ImGui::Button(format("{}{}.delete", FontAwesomeIcons::FA_TIMES, itemId).c_str()))
+        if (ImGui::Button(format("{}{}.delete", ICON_FA_TIMELINE, itemId).c_str()))
         {
             modified = true;
             value.erase(value.begin() + i); // remo(std::move(buff));
@@ -163,7 +148,7 @@ inline bool Render<StringVector>(const char* label, AttributePtr& attr, const Ed
             {ImGuiCol_Text, ToImGui(Color::GREEN)},
             {ImGuiCol_Button, ToImGui(Color(.0f))}
         });
-        isButtonClicked = ImGui::Button(format("{}###{}.add", FontAwesomeIcons::FA_PLUS, label).c_str());
+        isButtonClicked = ImGui::Button(format("{}###{}.add", ICON_FA_PLUS, label).c_str());
     }
 
     if (isTextClicked || isButtonClicked) {
@@ -171,13 +156,8 @@ inline bool Render<StringVector>(const char* label, AttributePtr& attr, const Ed
         value.push_back(std::move(buff));
     }
 
-    if (modified)
-        attrAccesor->Set(value);
-
     return modified;
 }
-
-
 
 
 } // namespace Se

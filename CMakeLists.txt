@@ -186,6 +186,7 @@ target_link_libraries(SePlatform
 add_executable(test.SeResource 
         tests/main.cpp
         tests/test.Reflection.cpp
+        tests/test.ReflObjectJSON.cpp
         tests/test.YAMLFile.cpp
         # include/SeVFS/PackageFile.hpp        
 )

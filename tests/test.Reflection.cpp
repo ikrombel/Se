@@ -248,7 +248,7 @@ void TestReflection() {
 
         auto obj0 = Se::Reflected<ReflObject1>();
         assert(obj0.GetType() == "ReflObject1"
-            && obj0.GetStaticType() == "Se::ReflectedObject"
+            && obj0.GetStaticType() == "ReflObject1"
             );
         Se::SerializeValue(arc, "obj1", obj0);
 

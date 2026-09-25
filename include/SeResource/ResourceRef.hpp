@@ -3,11 +3,6 @@
 #include <Se/String.hpp>
 #include <Se/Hash.hpp>
 
-#if __has_include("SeArc/ArchiveSerialization.hpp")
-#include <SeArc/ArchiveSerialization.hpp>
-#define ARC_RESOURCREF
-#endif
-
 namespace Se
 {
 
@@ -143,7 +138,7 @@ struct ResourceRefList
 // } // Datail
 
 
-#ifdef ARC_RESOURCREF
+#ifdef USE_ARCHIVE_SERIALIZATION
 
 namespace Detail {
 

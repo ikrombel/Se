@@ -13,9 +13,7 @@
 #include <cstring>
 //#include <ranges>
 
-#ifndef USE_ARCHIVE_SERIALIZATION
-#  define USE_ARCHIVE_SERIALIZATION
-#endif
+
 
 namespace Se
 {

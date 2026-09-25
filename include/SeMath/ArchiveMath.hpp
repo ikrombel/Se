@@ -1,6 +1,6 @@
 #pragma once
 #include <SeMath/!Precompiler.hpp>
-#include <SeArc/ArchiveSerializationBasic.hpp>
+//#include <SeArc/ArchiveSerializationBasic.hpp>
 
 #include <SeMath/Color.hpp>
 #include <SeMath/Matrix3x4.hpp>
@@ -72,6 +72,23 @@ inline IntRect ToIntRect(const String& source)
     ret.top_ = ToInt(elements[1]);
     ret.right_ = ToInt(elements[2]);
     ret.bottom_ = ToInt(elements[3]);
+
+    return ret;
+}
+
+inline IntVector4 ToIntVector4(const String& source)
+{
+    IntVector4 ret;
+
+    auto elements = source.split(' ');
+
+    if (elements.size() < 4)
+        return ret;
+
+    ret.x_ = ToInt(elements[0]);
+    ret.y_ = ToInt(elements[1]);
+    ret.z_ = ToInt(elements[2]);
+    ret.w_ = ToInt(elements[3]);
 
     return ret;
 }
@@ -260,6 +277,7 @@ template <> inline Color FromString<Color>(const char* source) { return ToColor(
 template <> inline IntRect FromString<IntRect>(const char* source) { return ToIntRect(source); }
 template <> inline IntVector2 FromString<IntVector2>(const char* source) { return ToIntVector2(source); }
 template <> inline IntVector3 FromString<IntVector3>(const char* source) { return ToIntVector3(source); }
+template <> inline IntVector4 FromString<IntVector4>(const char* source) { return ToIntVector4(source); }
 template <> inline Quaternion FromString<Quaternion>(const char* source) { return ToQuaternion(source); }
 template <> inline Rect FromString<Rect>(const char* source) { return ToRect(source); }
 template <> inline Vector2 FromString<Vector2>(const char* source) { return ToVector2(source); }
@@ -269,6 +287,9 @@ template <> inline Vector4 FromString<Vector4>(const char* source) { return ToVe
 template <> inline Matrix3 FromString<Matrix3>(const char* source) { return ToMatrix3(source); }
 template <> inline Matrix3x4 FromString<Matrix3x4>(const char* source) { return ToMatrix3x4(source); }
 template <> inline Matrix4 FromString<Matrix4>(const char* source) { return ToMatrix4(source); }
+
+
+#ifdef USE_ARCHIVE_SERIALIZATION
 
 /// @name Serialize primitive array types
 /// @{
@@ -283,7 +304,10 @@ inline void SerializeValue(Archive& archive, const char* name, Quaternion& value
 inline void SerializeValue(Archive& archive, const char* name, Color& value) { Detail::SerializeAsString<Color>(archive, name, value); }
 inline void SerializeValue(Archive& archive, const char* name, IntVector2& value) { Detail::SerializeAsString<IntVector2>(archive, name, value); }
 inline void SerializeValue(Archive& archive, const char* name, IntVector3& value) { Detail::SerializeAsString<IntVector3>(archive, name, value); }
+inline void SerializeValue(Archive& archive, const char* name, IntVector4& value) { Detail::SerializeAsString<IntVector4>(archive, name, value); }
 inline void SerializeValue(Archive& archive, const char* name, IntRect& value) { Detail::SerializeAsString<IntRect>(archive, name, value); }
 /// @}
+
+#endif
 
 } // namespace Se

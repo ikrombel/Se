@@ -8,8 +8,9 @@
 
 #include <Se/Signal.hpp>
 #include <Se/IO/FileSystem.h>
-#include <SeMath/ArchiveMath.hpp>
+
 #include <SeArc/ArchiveSerialization.hpp>
+#include <SeMath/ArchiveMath.hpp>
 
 #ifdef __ANDROID__
 struct AAsset;

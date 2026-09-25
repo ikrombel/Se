@@ -2,12 +2,17 @@
 
 #pragma once
 
+#ifndef USE_ARCHIVE_SERIALIZATION
+#  define USE_ARCHIVE_SERIALIZATION
+#endif
+
 #include <SeMath/Vector4.hpp>
 #include <type_traits>
 #include <cstring>
 #include <string>
 #include <vector>
 #include <limits>
+#include <variant>
 
 #include <Se/StringHash.hpp>
 #include <Se/Console.hpp>
@@ -327,6 +332,16 @@ inline void SerializeValue(Archive& archive, const char* name, std::string& valu
     if (archive.IsInput())
         value = seStr;
 }
+
+/// Serialize std::variant by visiting the active type
+template <class... Types>
+inline void SerializeValue(Archive& archive, const char* name, std::variant<Types...>& value) {
+    std::visit([&archive, name](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        SerializeValue(archive, name, arg);
+    }, value);
+}
+
 /// @}
 
 namespace Detail {

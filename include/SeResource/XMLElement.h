@@ -290,6 +290,7 @@ public:
         SE_LOG_WARNING("Type {}: don't implemented. Create:"
             "template<> bool XMLElement::Set(const YOUR_TYPE& value) { \n\t//implementation\n}})"
             , typeid(T).name());
+        return false;
     }
     /// Return XML file.
     XMLFile* GetFile() const;

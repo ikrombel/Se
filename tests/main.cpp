@@ -177,6 +177,7 @@ void TestArch() {
 // tests/test.Reflection.cpp
 void TestReflection();
 void TestYAMLFile();
+void TestReflObjectJSON();
 
 int main() {
 
@@ -256,9 +257,7 @@ int main() {
 
 
     TestReflection();
-
-    //TestValue();
-    //TestCStuct();
-    TestYAMLFile();
+    TestReflObjectJSON();
+    //TestYAMLFile();
     
 }

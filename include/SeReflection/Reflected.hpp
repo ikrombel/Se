@@ -5,6 +5,10 @@
 #define SE_REFLACTION_STANDALONE
 #endif
 
+#if defined(SE_REFL_ATTRIBUTES_BLOCK) && !defined(IGNORE_ATTRIBUTES_BLOCK)
+#define SE_REFL_ATTRIBUTES_BLOCK "Attributes"
+#endif
+
 //#if __has_include("Se/String.hpp") && !SE_REFLACTION_STANDALONE
 #include <Se/String.hpp>
 #include <Se/Console.hpp>
@@ -12,14 +16,77 @@
 // #include <string>
 // using String = std::string;
 // #endif
-#if __has_include("SeArc/ArchiveSerialization.hpp")
-#  include <SeArc/ArchiveSerialization.hpp>
-#endif
-
 #include <memory>
 #include <functional>
 
+#if !defined(SE_REFLACTION_STANDALONE)
+#  include <SeArc/ArchiveSerialization.hpp>
+
 namespace Se {
+
+#else
+
+namespace Se {
+
+class ReflectedObject;
+
+class ReflArchive {
+public:
+    ReflArchive(bool humanReadable, bool isInput)
+        : humanReadable_(humanReadable)
+        , isInput_(isInput){}
+
+    virtual ~ReflArchive() = default;
+
+    virtual void Serialize(const std::string& name, ReflectedObject& value) = 0;
+
+    bool IsHumanReadable() const { return humanReadable_; }
+
+    bool IsInput() const { return isInput_; };
+
+private:
+    bool humanReadable_;
+    bool isInput_;
+    //virtual void SerializeInBlock(Archive& archive, const std::string& name) {}
+
+};
+
+
+
+template<typename T, typename = void>
+struct HasSerializeInBlock : std::false_type {};
+
+template<typename T>
+struct HasSerializeInBlock<T, 
+    std::void_t<decltype(std::declval<T>().SerializeInBlock(
+        std::declval<ReflArchive&>(), 
+        std::declval<const std::string&>()
+    ))>> : std::true_type {};
+
+
+template<typename T>
+void SerializeValue(ReflArchive& archive, const char* name, T& value)
+{
+    if constexpr (HasSerializeInBlock<T>::value) {
+        value.SerializeInBlock(archive, name);
+        return;
+    }
+
+    assert(0 && "SeArc Serialization is disabled");
+}
+
+inline void ReflArchive::Serialize(const std::string& name, ReflectedObject& value) {
+    //ToStringTypeId<T>()
+}
+
+// void Archive::Serialize(const std::string& name, ReflectedObject& value)
+// {
+
+// }
+
+#endif
+
+class Archive;
 
 enum class AttributeType {
     AT_None, 
@@ -68,9 +135,7 @@ public:
 
     virtual std::size_t GetValueType() { 
             return 0; }
-#ifdef USE_ARCHIVE_SERIALIZATION
     virtual void SerializeInBlock(Se::Archive& archive, const String& name) {}
-#endif
 
     virtual const std::vector<String> GetEnumNames() const { 
         return {}; }
@@ -138,10 +203,12 @@ protected:
 
 class AttributeEmpty : public AttributeAccessor<char>
 {
+public:
     using EmptyType = char;
     //AttributeEmptyValue emptyValue;
     /// Construct.
     AttributeEmpty() : AttributeAccessor<EmptyType>(0) {}
+    ~AttributeEmpty() override = default;
     /// Get the attribute.
     void Get(EmptyType* dest) const override {};
     /// Set the attribute.
@@ -176,11 +243,7 @@ public:
     ParameterType* GetPtr() override {
         return value_;
     }
-#ifdef USE_ARCHIVE_SERIALIZATION
-    void SerializeInBlock(Se::Archive& archive, const String& name) override {
-        SerializeValue(archive, name, *value_);
-    }
-#endif
+    void SerializeInBlock(Se::Archive& archive, const String& name) override;
 private:
     ParameterType* value_;
 };
@@ -221,11 +284,7 @@ public:
 
     const std::vector<String> GetEnumNames() const override {
         return namesPtr_ ? *namesPtr_ : names_; }
-#ifdef USE_ARCHIVE_SERIALIZATION
-    void SerializeInBlock(Se::Archive& archive, const String& name) override {
-        SerializeValue(archive, name, *value_);
-    }
-#endif
+    void SerializeInBlock(Se::Archive& archive, const String& name) override;
 private:
     ParameterType* value_;
     std::vector<String> names_;
@@ -258,15 +317,9 @@ public:
     {
         setFunction_(value);
     }
-#ifdef USE_ARCHIVE_SERIALIZATION
-    void SerializeInBlock(Se::Archive& archive, const String& name) override {
-        ParameterType value = getFunction_();
-        SerializeValue(archive, name, value);
+    void SerializeInBlock(Se::Archive& archive, const String& name) override;
 
-        if (archive.IsInput())
-            setFunction_(value);
-    }
-#endif
+
     bool IsDefault() const override {
         return this->defaultValue_ == getFunction_();
     }
@@ -277,6 +330,39 @@ private:
     /// Set functor.
     TSetFunction setFunction_;
 };
+
+#ifdef USE_ARCHIVE_SERIALIZATION
+template<class ParameterType>
+inline void AttributeValue<ParameterType>::SerializeInBlock(Se::Archive& archive, const String& name)
+{
+    SerializeValue(archive, name, *value_);
+}
+
+template<class ParameterType>
+inline void AttributeEnum<ParameterType>::SerializeInBlock(Se::Archive& archive, const String& name)
+{
+    SerializeValue(archive, name, *value_);
+}
+
+template<class ParameterType, class TGetFunction, class TSetFunction>
+inline void AttributeAccessorImpl<ParameterType, TGetFunction, TSetFunction>::SerializeInBlock(Se::Archive& archive, const String& name)
+{
+    ParameterType value = getFunction_();
+    SerializeValue(archive, name, value);
+
+    if (archive.IsInput())
+        setFunction_(value);
+}
+#else
+template<class ParameterType>
+inline void AttributeValue<ParameterType>::SerializeInBlock(Se::Archive&, const String&) {}
+
+template<class ParameterType>
+inline void AttributeEnum<ParameterType>::SerializeInBlock(Se::Archive&, const String&) {}
+
+template<class ParameterType, class TGetFunction, class TSetFunction>
+inline void AttributeAccessorImpl<ParameterType, TGetFunction, TSetFunction>::SerializeInBlock(Se::Archive&, const String&) {}
+#endif
 
 // template <class ParameterType>
 // class AttributeEnumImpl : public AttributeAccessor<ParameterType>
@@ -477,29 +563,32 @@ public:
 
         return attr->Call();
     }
-#ifdef USE_ARCHIVE_SERIALIZATION
-    virtual void SerializeInBlock(Archive& archive) 
-    {
-        for  (auto& attr : values_)
-            attr.second->SerializeInBlock(archive, attr.first);
-    }
-#endif
+    virtual void SerializeInBlock(Archive& archive);
 protected:
     std::vector<std::pair<String, std::shared_ptr<AttributeEmpty>>> values_;
     inline static std::unordered_map<String, std::shared_ptr<AttributeEmpty>> staticValues_{};
 };
 
-template<typename T, typename = void>
+#ifdef USE_ARCHIVE_SERIALIZATION
+inline void Attributes::SerializeInBlock(Archive& archive)
+{
+    for (auto& attr : values_)
+        attr.second->SerializeInBlock(archive, attr.first);
+}
+#else
+inline void Attributes::SerializeInBlock(Archive&) {}
+#endif
+
+template <typename T, typename = std::void_t<>>
 struct HasRegisterAttributes : std::false_type {};
 
-template<typename T>
+template <typename T>
 struct HasRegisterAttributes<T, 
-    std::void_t<decltype(std::declval<T>().RegisterAttributes(std::declval<Attributes&>()))>> 
+    std::void_t<decltype(std::declval<T>().template RegisterAttributes(std::declval<Se::Attributes&>()))>> 
     : std::true_type {};
 
-
 template<class T>
-void ReflectionRegisterAttributes(T* refl, Se::Attributes* attr)
+void IsReflected(T* refl, Se::Attributes* attr)
 {
     if constexpr (HasRegisterAttributes<T>::value) {
         refl->RegisterAttributes(*attr);
@@ -507,6 +596,18 @@ void ReflectionRegisterAttributes(T* refl, Se::Attributes* attr)
     }
 
     SE_LOG_WARNING("Do not registered Attributes for type: {}", ToStringTypeId<T>());
+}
+
+template<class T>
+bool ReflectionRegisterAttributes(T* refl, Se::Attributes* attr)
+{
+    if constexpr (HasRegisterAttributes<T>::value) {
+        if (attr)
+            refl->RegisterAttributes(*attr);
+        return true;
+    }
+
+    return false;
 }
 
 class ReflectedObject;
@@ -521,11 +622,12 @@ public:
     Reflected()
         : type_(ToStringTypeId<T>())
     {
-        Reflected* ptr = this;
+        //Reflected* ptr = this;
         object_ = new T();// reinterpret_cast<T*>(ptr);
         baseType_ = ToStringTypeId<decltype(*object_)>(); // GetTypeOrig();
 
-        ReflectionRegisterAttributes(object_, &attributes_);
+        if (!ReflectionRegisterAttributes(object_, &attributes_))
+            SE_LOG_WARNING("Do not registered Attributes for type: {}", ToStringTypeId<T>());
 
         generated_ = true;
 
@@ -540,7 +642,8 @@ public:
         object_ = obj;
         baseType_ = ToStringTypeId<decltype(*obj)>(); // GetTypeOrig();
 
-        ReflectionRegisterAttributes(object_, &attributes_);
+        if (!ReflectionRegisterAttributes(object_, &attributes_))
+            SE_LOG_WARNING("Do not registered Attributes for type: {}", ToStringTypeId<T>());
         generated_ = generated;
 
         if (generated)
@@ -553,22 +656,32 @@ public:
         if (generated_)
             delete object_;
     }
+    template<typename... Args>
+    static std::shared_ptr<ReflectedObject> ToReflectedObject(T* object) {
+
+        // auto obj = new Se::Reflected<T>(object, false);
+        // ReflectionRegisterAttributes(obj, &obj->attributes_);
+        // return std::shared_ptr<Se::ReflectedObject>(reinterpret_cast<Se::ReflectedObject*>(obj));
+
+        auto obj = new Se::Reflected<T>(object, false);
+        return std::shared_ptr<Se::ReflectedObject>(reinterpret_cast<Se::ReflectedObject*>(obj));
+    }
+
 
     template<typename... Args>
     static std::shared_ptr<ReflectedObject> CreateReflectedObject(Args&&... args) {
 
-        auto obj = new Se::Reflected<T>(new T(std::forward<Args>(args)...), true);
-        ReflectionRegisterAttributes(obj, &obj->attributes_);
-        return std::shared_ptr<Se::ReflectedObject>(reinterpret_cast<Se::ReflectedObject*>(obj));
+        auto obj = std::make_shared<Se::Reflected<T>>(std::forward<Args>(args)...);
+        obj->generated_ = true;
+        return std::dynamic_pointer_cast<Se::ReflectedObject>(std::move(obj));
+
+        // auto obj = new Se::Reflected<T>(new T(std::forward<Args>(args)...), true);
+        // ReflectionRegisterAttributes(obj, &obj->attributes_);
+        // return std::shared_ptr<Se::ReflectedObject>(reinterpret_cast<Se::ReflectedObject*>(obj));
     }
 
-#ifdef USE_ARCHIVE_SERIALIZATION
-    virtual void SerializeInBlock(Archive& archive)
-    {
-        SerializeValue(archive, "Attributes", attributes_);
-        //SE_LOG_ERROR("{} is not reflected object. Need to override method: void SerializeInBlock(Archive& archive)", type_);
-    }
-#endif
+    virtual void SerializeInBlock(Archive& archive);
+
     template<class U> 
     U* GetObject() {
         return reinterpret_cast<U*>(object_);
@@ -588,11 +701,11 @@ public:
         return attributes_.GetAttriburesNames();
     }
 
-    virtual void RegisterAttributes(Attributes& attributes)
-    {
-        //SE_LOG_WARNING("{} attributes is empty", type_);
-        //ReflectionRegisterAttributes(object_, attributes_);
-    }
+    // virtual void RegisterAttributes(Attributes& attributes)
+    // {
+    //     //SE_LOG_WARNING("{} attributes is empty", type_);
+    //     //ReflectionRegisterAttributes(object_, attributes_);
+    // }
 
     std::shared_ptr<AttributeEmpty> FindAttribute(const String& name) {
         return attributes_.FindAttribute(name);
@@ -613,8 +726,10 @@ public:
     static std::shared_ptr<T> Create() {
         auto newObject = std::make_shared<T>();
         //newObject->baseType_ = ToStringTypeId<T>();
-        //auto attributes = Attributes(object_);
-        newObject->initAttributes();
+        auto attributes = Reflected<T>::CreateReflectedObject()->attributes_;
+        if (!ReflectionRegisterAttributes<T>(newObject.get(), &attributes))
+            SE_LOG_WARNING("Do not registered Attributes for type: {}", ToStringTypeId<T>());
+        //newObject->initAttributes<T>();
         return newObject;
     }
 
@@ -649,7 +764,7 @@ public:
 
     void initAttributes()
     {
-        RegisterAttributes(attributes_);
+        //RegisterAttributes(attributes_);
     }
 
 protected:
@@ -665,6 +780,21 @@ private:
     
     Attributes attributes_;
 };
+
+#ifdef USE_ARCHIVE_SERIALIZATION
+template<class T>
+inline void Reflected<T>::SerializeInBlock(Archive& archive)
+{
+#ifdef SE_REFL_ATTRIBUTES_BLOCK
+    SerializeValue(archive, SE_REFL_ATTRIBUTES_BLOCK, attributes_);
+#else
+    attributes_.SerializeInBlock(archive);
+#endif
+}
+#else
+template<class T>
+inline void Reflected<T>::SerializeInBlock(Archive&) {}
+#endif
 
 class ReflectedObject : public Reflected<ReflectedObject> 
 {
